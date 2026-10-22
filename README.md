@@ -78,7 +78,8 @@ Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 - ✅ Database & seed tersedia, termasuk akun admin awal.
 - ✅ Landing page publik, login web, proteksi route, dan manajemen pengguna/hak akses (khusus admin) tersedia.
 - ✅ Halaman Lahan, Unggah Foto, Verifikasi, Klaim, dan Katalog sudah terhubung API.
-- ◐ Dashboard masih memakai data mock.
+- ✅ Dashboard sudah terhubung API: ringkasan program/personal dan aktivitas terbaru dari database.
+- ◐ Halaman distribusi insentif dan UI verifikasi komunitas belum tersedia.
 - ◐ Aplikasi mobile Flutter masih skeleton.
 - ☐ Pengujian otomatis & deployment produksi belum.
 

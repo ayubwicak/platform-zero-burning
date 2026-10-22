@@ -8,6 +8,12 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ## [Unreleased]
 
+### Added
+
+- Endpoint `GET /api/dashboard` yang mengembalikan ringkasan role-aware: metrik program untuk admin/petugas, metrik personal untuk petani, serta aktivitas terbaru dari database.
+- Integrasi dashboard web dengan API: kartu statistik, KPI banner, aktivitas terkini, dan status kesiapan klaim memakai data nyata; data mock dihapus.
+- Loading skeleton, state error dengan tombol coba lagi, dan empty state aktivitas pada dashboard.
+
 ### Changed
 
 - Menyederhanakan desain landing page: palet hijau-netral, tipografi Inter, hero dua kolom, kartu sederhana, dan tata letak yang lebih tenang.
@@ -16,13 +22,17 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Menambahkan aksen warna hijau, kuning, dan biru pada statistik, ikon, serta kartu agar tampilan lebih hidup namun tetap sederhana.
 - Melembutkan tampilan landing page dengan sudut membulat, kartu berwarna lembut, timeline langkah, dan tombol pill.
 - Menambahkan favicon ZB serta metadata halaman utama.
+- Menyesuaikan label dan CTA dashboard berdasarkan role; petani mendapat ringkasan personal tanpa feed aktivitas program.
+- Menyempurnakan aksesibilitas dan perilaku UI: skip link, kontras, serta penutupan notifikasi via Escape/backdrop.
+- Mengganti angka dampak ilustratif di landing dengan jaminan sistem yang faktual agar tidak bertentangan dengan data dashboard.
+- "Ingat saya" kini menyimpan sesi di `localStorage`, sedangkan sesi tanpa "Ingat saya" disimpan di `sessionStorage`.
 
 ### Rencana
 
-- Integrasi dashboard ke API (mengganti data mock).
+- Halaman distribusi insentif dan UI verifikasi komunitas untuk petani.
 - Endpoint profil, ubah password, update/hapus lahan, serta daftar lahan untuk petugas/admin.
-- Endpoint hapus/nonaktifkan pengguna serta audit log perubahan role.
-- Konfigurasi ESLint backend dan unit/integration test.
+- Endpoint hapus/nonaktifkan pengguna, audit log perubahan role, dan pengelolaan katalog.
+- Unit/integration test backend (ESLint sudah aktif).
 - Pembangunan aplikasi mobile Flutter petani/petugas.
 - Persiapan deployment produksi (object storage, HTTPS, ganti password admin).
 

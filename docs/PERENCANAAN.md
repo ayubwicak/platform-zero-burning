@@ -3,9 +3,9 @@
 | Atribut | Nilai |
 |---|---|
 | Nama sistem | Platform Insentif Zero Burning |
-| Versi dokumen | 1.3.0 |
+| Versi dokumen | 1.4.1 |
 | Status | Aktif — Fase 3 (Dashboard Web) |
-| Terakhir diperbarui | 21 Oktober 2026 |
+| Terakhir diperbarui | 22 Oktober 2026 |
 | Pemilik | Tim Pengembang |
 | Dokumen terkait | [ATURAN.md](./ATURAN.md), [STATUS-IMPLEMENTASI.md](./STATUS-IMPLEMENTASI.md), [CHANGELOG.md](./CHANGELOG.md) |
 
@@ -79,7 +79,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-10 | Katalog kategori insentif | ✅ | Data seed tersedia |
 | FR-11 | Pengajuan klaim insentif | ✅ | Syarat: foto terbaru lahan terverifikasi, stok tersedia, tanpa klaim aktif ganda |
 | FR-12 | Pencatatan distribusi insentif | ✅ | Transaksi + bukti opsional; stok berkurang 1 |
-| FR-13 | Dashboard web admin | ◐ | UI selesai; login, pengguna, lahan, unggah, verifikasi, klaim & katalog terhubung API; dashboard masih data mock |
+| FR-13 | Dashboard web admin | ◐ | Ringkasan program/personal + aktivitas sudah terhubung `GET /api/dashboard`; halaman distribusi dan UI verifikasi komunitas belum |
 | FR-14 | Notifikasi status | ☐ | Belum direncanakan detail |
 | FR-15 | Audit log aktivitas | ☐ | Belum |
 | FR-16 | Laporan/ekspor data | ☐ | Belum |
@@ -200,6 +200,7 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | GET | `/health` | Publik | — | Status layanan |
 | POST | `/api/auth/register` | Publik | `nama`, `email`, `password`, `role` (`petani`/`petugas`), `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun + profil; role `admin` ditolak (403) |
 | POST | `/api/auth/login` | Publik | `email`, `password` | Mengembalikan token + user |
+| GET | `/api/dashboard` | Terautentikasi | — | Ringkasan role-aware: metrik program untuk admin/petugas, metrik personal untuk petani, serta aktivitas terbaru untuk admin/petugas |
 | GET | `/api/users` | Admin | — | Daftar pengguna beserta data profil |
 | POST | `/api/users` | Admin | `nama`, `email`, `password`, `role`, `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun dengan role apa pun |
 | PATCH | `/api/users/:id/role` | Admin | `role`, `nik?`, `nip?`, `position?`, `unit?` | Ubah hak akses; profil dibuat bila belum ada |
@@ -301,7 +302,7 @@ Menghentikan database: `npm run db:stop`. Setelah komputer restart, jalankan `np
 |---|---|---|
 | 1 | Fondasi proyek, monorepo, konfigurasi lingkungan | ✅ Selesai |
 | 2 | Database, autentikasi, API lahan/foto/verifikasi/insentif | ✅ Selesai (inti) |
-| 3 | Landing page + Dashboard web admin (UI/UX + auth + manajemen pengguna) | ◐ Landing page, UI, auth, pengguna, lahan, unggah, verifikasi, klaim & katalog selesai; dashboard masih data mock |
+| 3 | Landing page + Dashboard web admin (UI/UX + auth + manajemen pengguna) | ◐ Landing page, UI, auth, pengguna, lahan, unggah, verifikasi, klaim, katalog, dan ringkasan dashboard selesai; halaman distribusi & UI verifikasi komunitas belum |
 | 4 | Aplikasi mobile Flutter petani/petugas | ◐ Skeleton |
 | 5 | Integrasi end-to-end, pengujian, dokumentasi, deployment | ☐ Belum |
 
@@ -317,10 +318,10 @@ Rencana disesuaikan dengan kondisi nyata lingkungan pengembangan. Perubahan ini 
 | A-04 | Tailwind CSS v4 | Tailwind CSS 3.4.17 | Kompatibilitas konfigurasi & PostCSS | Konfigurasi memakai `tailwind.config.js` |
 | A-05 | Entry `app.js` menjalankan server | `app.js` (konfigurasi) + `server.js` (listen) | Pemisahan tanggung jawab | Script `dev`/`start` menunjuk `server.js` |
 | A-06 | Middleware profil terpisah | Profil dilampirkan di `authenticateToken` | Menghindari query ganda & bug `farmerId` | `req.user.farmerId`/`officerId` tersedia |
-| A-07 | Dashboard langsung terhubung API | Login, pengguna, lahan, unggah, verifikasi, klaim & katalog terhubung API; dashboard masih mock | Fokus penyelesaian UI/UX lebih dulu | Integrasi dashboard menjadi pekerjaan Fase 3 lanjutan |
+| A-07 | Dashboard langsung terhubung API | Ringkasan dashboard memakai `GET /api/dashboard`; halaman distribusi masih stub dan verifikasi komunitas baru tersedia via API | Integrasi bertahap sambil menyelesaikan UI/UX | Sisa pekerjaan: UI distribusi, UI verifikasi komunitas, dan pengelolaan katalog admin |
 | A-08 | Klaim divalidasi dari seluruh riwayat verifikasi | Dicek dari foto **terbaru** lahan | Penyederhanaan logika | Perlu pengayaan aturan bila diperlukan |
 | A-09 | Ambang verifikasi komunitas otomatis | Jumlah suara dikembalikan, status belum otomatis | Menunggu definisi ambang | Status akhir ditentukan petugas |
-| A-10 | CI lengkap (lint + test) | Workflow ada, konfigurasi ESLint & test belum | Prioritas fitur inti | CI belum efektif; perlu dilengkapi |
+| A-10 | CI lengkap (lint + test) | Workflow ada, ESLint backend sudah berjalan, test otomatis belum | Prioritas fitur inti | CI belum efektif; perlu test |
 | A-11 | Admin dibuat melalui registrasi | Registrasi publik menolak `admin`; admin awal via seed `admin@zeroburning.id` | Mencegah eskalasi hak akses | Password seed wajib diganti di produksi |
 | A-12 | Role dari klaim JWT | Role dibaca ulang dari database setiap request | Perubahan hak akses langsung berlaku | Tambahan satu query per request |
 
@@ -361,6 +362,8 @@ Sistem dinyatakan memenuhi rencana inti apabila:
 7. Dokumen perencanaan, status, dan changelog selalu sinkron dengan implementasi.
 8. Admin dapat membuat pengguna baru dan mengubah role; pengguna non-admin ditolak saat mengakses menu maupun endpoint manajemen pengguna.
 9. Halaman informasi publik dapat diakses tanpa login dan menjelaskan alur, fitur, manfaat, serta kebijakan pendaftaran akun.
+
+> Status 22 Oktober 2026: butir 6 belum sepenuhnya terpenuhi. Ringkasan dashboard sudah memakai API, tetapi halaman distribusi dan UI verifikasi komunitas belum tersedia.
 
 ## 20. Referensi Dokumen
 
