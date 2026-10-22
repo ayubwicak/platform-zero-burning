@@ -10,6 +10,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Halaman **Registrasi Petani** (`/register`): formulir nama, email, NIK 16 digit, telepon, alamat, password, dan konfirmasi password dengan validasi klien serta state loading/error.
+- Registrasi mandiri petani melalui `POST /api/auth/register`: normalisasi email, validasi server, pembuatan profil `farmers`, dan penanganan email/NIK duplikat.
+- Status pendaftaran berhasil pada halaman login beserta email yang otomatis terisi.
+- Tautan “Daftar sebagai petani” pada halaman login, navigasi landing, hero, langkah cara kerja, CTA, dan footer.
 - Endpoint `GET /api/dashboard` yang mengembalikan ringkasan role-aware: metrik program untuk admin/petugas, metrik personal untuk petani, serta aktivitas terbaru dari database.
 - Integrasi dashboard web dengan API: kartu statistik, KPI banner, aktivitas terkini, dan status kesiapan klaim memakai data nyata; data mock dihapus.
 - Loading skeleton, state error dengan tombol coba lagi, dan empty state aktivitas pada dashboard.
@@ -18,10 +22,17 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Endpoint `GET /api/incentives/claims/pending` untuk antrean distribusi petugas/admin.
 - Endpoint `GET /api/incentives/distributions` untuk riwayat distribusi terbaru beserta totalnya.
 - Endpoint `GET /api/verifications/community` untuk daftar foto pending petani lain, jumlah suara, dan status suara pengguna.
+- Halaman **Profil & Keamanan** (`/profil`) untuk semua role: ringkasan akun, ubah nama/kontak sesuai role, dan ubah password.
+- Endpoint `GET /api/auth/me`, `PATCH /api/auth/profile`, dan `PATCH /api/auth/password`.
+- Endpoint `PATCH /api/fields/:id` dan `DELETE /api/fields/:id`; hapus lahan memakai soft delete dan ditolak bila masih ada klaim `diajukan`.
+- Aksi ubah dan hapus pada kartu lahan beserta modal konfirmasi, state loading, dan notifikasi hasil.
 - Menu sidebar dan aksi cepat dashboard untuk Distribusi (petugas/admin) serta Verifikasi Warga (petani).
 
 ### Changed
 
+- Kebijakan akun: registrasi publik hanya untuk petani; akun petugas dan admin tetap dibuat administrator melalui menu Pengguna.
+- Landing page kini mengarahkan pengunjung ke pendaftaran petani, sementara pengguna lama dapat memilih masuk ke sistem.
+- FAQ, langkah “Daftar akun”, dan footer landing menjelaskan perbedaan registrasi petani mandiri dengan pembuatan akun petugas/admin.
 - Menyederhanakan desain landing page: palet hijau-netral, tipografi Inter, hero dua kolom, kartu sederhana, dan tata letak yang lebih tenang.
 - Mengganti kartu contoh verifikasi di hero dengan foto petani menanam padi di sawah.
 - Membuat kontainer landing page memenuhi lebar layar dengan padding responsif.
@@ -34,6 +45,9 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - "Ingat saya" kini menyimpan sesi di `localStorage`, sedangkan sesi tanpa "Ingat saya" disimpan di `sessionStorage`.
 - Menambahkan `min-w-0` pada area konten agar tabel lebar tidak menyebabkan overflow horizontal di halaman mobile.
 - Menyesuaikan kontras label, badge peringatan, tombol aksi, dan teks bantuan pada halaman distribusi/verifikasi komunitas.
+- Nama pada navbar ikut diperbarui setelah profil disimpan; avatar/name navbar dan kartu profil sidebar kini menuju `/profil`.
+- Lahan nonaktif tidak lagi muncul pada antrean verifikasi komunitas/resmi dan tidak dapat dipakai untuk unggah foto atau klaim baru.
+- Validasi input lahan dipusatkan agar tambah dan ubah lahan memakai aturan yang sama.
 
 ### Fixed
 
@@ -44,13 +58,12 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Docs
 
-- Memperbarui status implementasi, perencanaan (versi 1.5.0), README, dan changelog untuk halaman distribusi serta verifikasi warga.
+- Memperbarui status implementasi, perencanaan (versi 1.7.0), README, dan changelog untuk registrasi petani mandiri, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
 
 ### Rencana
 
-- UI registrasi mandiri, profil/ubah password, pengelolaan katalog admin, serta daftar lahan untuk petugas/admin.
-- Endpoint profil, ubah password, update/hapus lahan, serta daftar lahan untuk petugas/admin.
-- Endpoint hapus/nonaktifkan pengguna, audit log perubahan role, dan pengelolaan katalog.
+- Pengelolaan katalog admin serta daftar lahan untuk petugas/admin.
+- Verifikasi email/WhatsApp pada registrasi, endpoint hapus/nonaktifkan pengguna, dan audit log perubahan role.
 - Unit/integration test backend (ESLint sudah aktif).
 - Pembangunan aplikasi mobile Flutter petani/petugas.
 - Persiapan deployment produksi (object storage, HTTPS, ganti password admin).

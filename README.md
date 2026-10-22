@@ -52,6 +52,7 @@ npm run dev
 | Layanan | URL |
 |---|---|
 | Halaman informasi publik | http://localhost:5173 |
+| Registrasi Petani | http://localhost:5173/register |
 | Login | http://localhost:5173/login |
 | Dashboard Web | http://localhost:5173/dashboard |
 | API Backend | http://localhost:3000 |
@@ -70,16 +71,17 @@ Perintah lain:
 
 Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 
-**Akun admin awal (development):** `admin@zeroburning.id` / `admin123`. Ganti password sebelum produksi. Akun petani/petugas baru dapat dibuat melalui menu **Pengguna** setelah login sebagai admin.
+**Akun admin awal (development):** `admin@zeroburning.id` / `admin123`. Ganti password sebelum produksi. **Petani dapat mendaftar mandiri** melalui `/register`; akun **petugas dan admin** hanya dapat dibuat melalui menu **Pengguna** setelah login sebagai admin. Setelah login, klik nama/avatar di navbar atau kartu profil sidebar untuk membuka **Profil & Keamanan**.
 
 ## Status Singkat
 
 - ✅ Backend API inti (auth, lahan, foto, verifikasi, insentif) berjalan.
 - ✅ Database & seed tersedia, termasuk akun admin awal.
-- ✅ Landing page publik, login web, proteksi route, dan manajemen pengguna/hak akses (khusus admin) tersedia.
-- ✅ Halaman Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi sudah terhubung API.
+- ✅ Landing page publik, registrasi petani mandiri, login web, proteksi route, dan manajemen pengguna/hak akses (khusus admin) tersedia.
+- ✅ Halaman Lahan (termasuk ubah/hapus), Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi sudah terhubung API.
+- ✅ Halaman Profil & Keamanan tersedia: ubah nama/kontak sesuai role dan ubah password; akses dari navbar atau kartu profil di sidebar.
 - ✅ Dashboard sudah terhubung API: ringkasan program/personal dan aktivitas terbaru dari database.
-- ◐ UI registrasi mandiri, profil/ubah password, dan pengelolaan katalog admin belum tersedia.
+- ◐ Pengelolaan katalog admin (tambah/ubah stok dan kategori) belum tersedia.
 - ◐ Aplikasi mobile Flutter masih skeleton.
 - ☐ Pengujian otomatis & deployment produksi belum.
 
@@ -87,7 +89,7 @@ Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 
 Login sebagai **admin**, lalu buka menu **Pengguna**:
 
-- **Tambah Pengguna** — membuat akun petani (butuh NIK) atau petugas (butuh NIP).
+- **Tambah Pengguna** — membuat akun petani (butuh NIK) atau petugas (butuh NIP). Petani juga dapat mendaftar mandiri di `/register`; petugas dan admin hanya dibuat dari menu ini.
 - **Atur Akses** — mengubah role pengguna menjadi petani, petugas, atau admin.
 - Perubahan role langsung berlaku; pengguna perlu login ulang agar menu barunya tampil.
 - Admin tidak dapat mengubah role akunnya sendiri.
