@@ -81,7 +81,7 @@
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-gray-200 bg-white text-gray-600 transition-colors cursor-pointer hover:border-green-300 hover:text-green-700;
   }
   .chip-active {
-    @apply bg-green-600 text-white border-green-600 hover:text-white shadow-sm shadow-green-200;
+    @apply bg-green-700 text-white border-green-700 hover:text-white shadow-sm shadow-green-200;
   }
   .icon-tile {
     @apply flex items-center justify-center rounded-xl;
