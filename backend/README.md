@@ -79,6 +79,8 @@ npm start
 | POST | /api/incentives/claims | Petani |
 | POST | /api/incentives/distributions | Petugas/Admin |
 
+`POST /api/auth/register` hanya menerima role `petani`; akun `petugas` dan `admin` dibuat oleh admin melalui `/api/users`.
+
 Pencatatan distribusi berjalan dalam satu transaksi: status klaim menjadi `disetujui` dan stok kategori berkurang 1. `category_id` mengikuti klaim, bukan dikirim ulang oleh klien.
 | GET | /api/users | Admin |
 | POST | /api/users | Admin |

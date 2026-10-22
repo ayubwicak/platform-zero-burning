@@ -20,7 +20,7 @@ async function communityVerify(req, res, next) {
       `SELECT fp.id
        FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE fp.id = $1 AND f.farmer_id <> $2`,
+       WHERE fp.id = $1 AND f.farmer_id <> $2 AND f.is_active = TRUE`,
       [photo_id, verifierId]
     );
     if (photo.rows.length === 0) {
@@ -55,7 +55,13 @@ async function officialVerify(req, res, next) {
   }
 
   try {
-    const photo = await pool.query('SELECT id FROM field_photos WHERE id = $1', [photo_id]);
+    const photo = await pool.query(
+      `SELECT fp.id
+       FROM field_photos fp
+       JOIN fields f ON fp.field_id = f.id
+       WHERE fp.id = $1 AND f.is_active = TRUE`,
+      [photo_id]
+    );
     if (photo.rows.length === 0) {
       return res.status(404).json({ error: 'Foto tidak ditemukan' });
     }
@@ -108,6 +114,7 @@ async function listCommunityPhotos(req, res, next) {
        JOIN users u ON u.id = fa.id_user
        LEFT JOIN community_verifications cv ON cv.photo_id = fp.id
        WHERE f.farmer_id <> $1
+         AND f.is_active = TRUE
          AND fp.status = 'menunggu_verifikasi'
        GROUP BY fp.id, f.id, f.name, u.nama
        ORDER BY fp.created_at DESC
@@ -123,14 +130,14 @@ async function listCommunityPhotos(req, res, next) {
 async function listPhotos(req, res, next) {
   const { status } = req.query;
   const params = [];
-  let filter = '';
+  let filter = 'WHERE f.is_active = TRUE';
 
   if (status && status !== 'semua') {
     if (!PHOTO_STATUSES.includes(status)) {
       return res.status(400).json({ error: 'Status verifikasi tidak valid' });
     }
     params.push(status);
-    filter = 'WHERE fp.status = $1';
+    filter += ' AND fp.status = $1';
   }
 
   try {

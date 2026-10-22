@@ -132,7 +132,7 @@ async function createClaim(req, res, next) {
     const fieldCheck = await pool.query(
       `SELECT fp.status FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE f.id = $1 AND f.farmer_id = $2
+       WHERE f.id = $1 AND f.farmer_id = $2 AND f.is_active = TRUE
        ORDER BY fp.created_at DESC LIMIT 1`,
       [field_id, farmerId]
     );

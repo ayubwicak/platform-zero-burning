@@ -1,6 +1,9 @@
 const pool = require('../config/db');
 
 function toNumber(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
@@ -30,33 +33,49 @@ async function listFields(req, res, next) {
   }
 }
 
+function parseFieldInput(body) {
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const cropType = typeof body.crop_type === 'string' ? body.crop_type.trim() : '';
+  const area = toNumber(body.area);
+  const latitude = toNumber(body.latitude);
+  const longitude = toNumber(body.longitude);
+
+  if (!name) {
+    return { error: 'Nama lahan wajib diisi' };
+  }
+  if (name.length > 100) {
+    return { error: 'Nama lahan maksimal 100 karakter' };
+  }
+  if (area === null || area <= 0) {
+    return { error: 'Luas lahan harus berupa angka lebih dari 0' };
+  }
+  if (!cropType) {
+    return { error: 'Jenis tanaman wajib diisi' };
+  }
+  if (cropType.length > 50) {
+    return { error: 'Jenis tanaman maksimal 50 karakter' };
+  }
+  if (latitude === null || latitude < -90 || latitude > 90) {
+    return { error: 'Latitude tidak valid' };
+  }
+  if (longitude === null || longitude < -180 || longitude > 180) {
+    return { error: 'Longitude tidak valid' };
+  }
+
+  return { value: { name, cropType, area, latitude, longitude } };
+}
+
 async function createField(req, res, next) {
   const farmerId = req.user.farmerId;
   if (!farmerId) {
     return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
   }
 
-  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
-  const cropType = typeof req.body.crop_type === 'string' ? req.body.crop_type.trim() : '';
-  const area = toNumber(req.body.area);
-  const latitude = toNumber(req.body.latitude);
-  const longitude = toNumber(req.body.longitude);
-
-  if (!name) {
-    return res.status(400).json({ error: 'Nama lahan wajib diisi' });
+  const parsed = parseFieldInput(req.body);
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error });
   }
-  if (area === null || area <= 0) {
-    return res.status(400).json({ error: 'Luas lahan harus berupa angka lebih dari 0' });
-  }
-  if (!cropType) {
-    return res.status(400).json({ error: 'Jenis tanaman wajib diisi' });
-  }
-  if (latitude === null || latitude < -90 || latitude > 90) {
-    return res.status(400).json({ error: 'Latitude tidak valid' });
-  }
-  if (longitude === null || longitude < -180 || longitude > 180) {
-    return res.status(400).json({ error: 'Longitude tidak valid' });
-  }
+  const { name, cropType, area, latitude, longitude } = parsed.value;
 
   try {
     const result = await pool.query(
@@ -101,4 +120,88 @@ async function getField(req, res, next) {
   }
 }
 
-module.exports = { listFields, createField, getField };
+async function updateField(req, res, next) {
+  const id = Number(req.params.id);
+  const farmerId = req.user.farmerId;
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID lahan tidak valid' });
+  }
+  if (!farmerId) {
+    return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
+  }
+
+  const parsed = parseFieldInput(req.body);
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error });
+  }
+  const { name, cropType, area, latitude, longitude } = parsed.value;
+
+  try {
+    const existing = await pool.query(
+      'SELECT id FROM fields WHERE id = $1 AND farmer_id = $2 AND is_active = TRUE',
+      [id, farmerId]
+    );
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Lahan tidak ditemukan' });
+    }
+
+    const result = await pool.query(
+      `UPDATE fields
+       SET name = $1, area = $2, crop_type = $3, latitude = $4, longitude = $5,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6 AND farmer_id = $7 AND is_active = TRUE
+       RETURNING *`,
+      [name, area, cropType, latitude, longitude, id, farmerId]
+    );
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteField(req, res, next) {
+  const id = Number(req.params.id);
+  const farmerId = req.user.farmerId;
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID lahan tidak valid' });
+  }
+  if (!farmerId) {
+    return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
+  }
+
+  try {
+    const existing = await pool.query(
+      'SELECT id FROM fields WHERE id = $1 AND farmer_id = $2 AND is_active = TRUE',
+      [id, farmerId]
+    );
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Lahan tidak ditemukan' });
+    }
+
+    const pendingClaim = await pool.query(
+      `SELECT id FROM incentive_claims
+       WHERE field_id = $1 AND status = 'diajukan'
+       LIMIT 1`,
+      [id]
+    );
+    if (pendingClaim.rows.length > 0) {
+      return res.status(409).json({
+        error: 'Lahan masih memiliki klaim yang menunggu distribusi. Selesaikan klaim terlebih dahulu.',
+      });
+    }
+
+    await pool.query(
+      'UPDATE fields SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [id]
+    );
+
+    res.json({ success: true, message: 'Lahan berhasil dihapus' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listFields, createField, getField, updateField, deleteField };
