@@ -75,16 +75,23 @@ npm start
 | POST | /api/verifications/official | Petugas/Admin |
 | GET | /api/verifications/pending | Petugas/Admin |
 | GET | /api/incentives/categories | Terautentikasi |
+| POST | /api/incentives/categories | Admin |
+| PATCH | /api/incentives/categories/:id | Admin |
 | GET | /api/incentives/claims | Petani |
 | POST | /api/incentives/claims | Petani |
 | POST | /api/incentives/distributions | Petugas/Admin |
-
-`POST /api/auth/register` hanya menerima role `petani`; akun `petugas` dan `admin` dibuat oleh admin melalui `/api/users`.
-
-Pencatatan distribusi berjalan dalam satu transaksi: status klaim menjadi `disetujui` dan stok kategori berkurang 1. `category_id` mengikuti klaim, bukan dikirim ulang oleh klien.
 | GET | /api/users | Admin |
 | POST | /api/users | Admin |
 | PATCH | /api/users/:id/role | Admin |
+| PATCH | /api/users/:id/status | Admin |
+
+`POST /api/auth/register` hanya menerima role `petani`; akun `petugas` dan `admin` dibuat oleh admin melalui `/api/users`.
+
+Admin dapat menonaktifkan atau mengaktifkan akun melalui `PATCH /api/users/:id/status` dengan body `{ "is_active": false }` atau `true`. Akun nonaktif ditolak saat login dan token yang masih aktif langsung tidak berlaku; admin tidak dapat menonaktifkan akun sendiri.
+
+Admin dapat menambah kategori lewat `POST /api/incentives/categories` dan mengubah nama, persyaratan, atau stok lewat `PATCH /api/incentives/categories/:id`. Nama kategori harus unik tanpa membedakan huruf besar/kecil dan stok wajib bilangan bulat `>= 0`.
+
+Pencatatan distribusi berjalan dalam satu transaksi: status klaim menjadi `disetujui` dan stok kategori berkurang 1. `category_id` mengikuti klaim, bukan dikirim ulang oleh klien.
 
 Detail kontrak API: [`docs/PERENCANAAN.md`](../docs/PERENCANAAN.md) §10.
 

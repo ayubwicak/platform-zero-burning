@@ -5,9 +5,13 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(150) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL CHECK (role IN ('petani', 'petugas', 'admin')),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Penyesuaian untuk database yang dibuat sebelum kolom status akun tersedia
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Tabel farmers (data petani)
 CREATE TABLE IF NOT EXISTS farmers (

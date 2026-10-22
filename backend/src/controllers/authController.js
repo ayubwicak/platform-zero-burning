@@ -122,6 +122,11 @@ async function login(req, res, next) {
     if (!valid) {
       return res.status(401).json({ error: 'Email atau password salah' });
     }
+    if (!user.is_active) {
+      return res.status(403).json({
+        error: 'Akun dinonaktifkan. Hubungi administrator untuk mengaktifkan kembali.',
+      });
+    }
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },

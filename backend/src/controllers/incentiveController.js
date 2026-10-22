@@ -1,9 +1,144 @@
 const pool = require('../config/db');
 
+const MAX_STOCK = 2147483647;
+
+function cleanText(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function parseQuantity(value) {
+  if (typeof value !== 'number' && typeof value !== 'string') return NaN;
+  const normalized = typeof value === 'string' ? value.trim() : value;
+  if (normalized === '') return NaN;
+  const quantity = Number(normalized);
+  return Number.isSafeInteger(quantity) && quantity >= 0 && quantity <= MAX_STOCK
+    ? quantity
+    : NaN;
+}
+
+async function categoryNameExists(name, excludeId = null) {
+  const result = excludeId
+    ? await pool.query(
+        'SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1) AND id <> $2',
+        [name, excludeId]
+      )
+    : await pool.query('SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1)', [
+        name,
+      ]);
+  return result.rows.length > 0;
+}
+
 async function listCategories(req, res, next) {
   try {
     const result = await pool.query('SELECT * FROM incentive_categories ORDER BY name');
     res.json({ success: true, data: result.rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function createCategory(req, res, next) {
+  const body = req.body || {};
+  const name = cleanText(body.name);
+  const quantity = body.quantity === undefined ? 0 : parseQuantity(body.quantity);
+  const requirements = cleanText(body.requirements);
+
+  if (!name) {
+    return res.status(400).json({ error: 'Nama kategori wajib diisi' });
+  }
+  if (name.length > 100) {
+    return res.status(400).json({ error: 'Nama kategori maksimal 100 karakter' });
+  }
+  if (Number.isNaN(quantity)) {
+    return res.status(400).json({ error: 'Stok harus berupa bilangan bulat 0 atau lebih' });
+  }
+  if (requirements.length > 500) {
+    return res.status(400).json({ error: 'Persyaratan maksimal 500 karakter' });
+  }
+
+  try {
+    if (await categoryNameExists(name)) {
+      return res.status(400).json({ error: 'Nama kategori sudah digunakan' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO incentive_categories (name, quantity, requirements)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [name, quantity, requirements || null]
+    );
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateCategory(req, res, next) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(404).json({ error: 'Kategori insentif tidak ditemukan' });
+  }
+
+  const updates = [];
+  const values = [];
+  const body = req.body || {};
+
+  if (Object.prototype.hasOwnProperty.call(body, 'name')) {
+    const name = cleanText(body.name);
+    if (!name) {
+      return res.status(400).json({ error: 'Nama kategori wajib diisi' });
+    }
+    if (name.length > 100) {
+      return res.status(400).json({ error: 'Nama kategori maksimal 100 karakter' });
+    }
+    values.push(name);
+    updates.push(`name = $${values.length}`);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'quantity')) {
+    const quantity = parseQuantity(body.quantity);
+    if (Number.isNaN(quantity)) {
+      return res.status(400).json({ error: 'Stok harus berupa bilangan bulat 0 atau lebih' });
+    }
+    values.push(quantity);
+    updates.push(`quantity = $${values.length}`);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'requirements')) {
+    const requirements = cleanText(body.requirements);
+    if (requirements.length > 500) {
+      return res.status(400).json({ error: 'Persyaratan maksimal 500 karakter' });
+    }
+    values.push(requirements || null);
+    updates.push(`requirements = $${values.length}`);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'Tidak ada perubahan yang dikirim' });
+  }
+
+  try {
+    if (Object.prototype.hasOwnProperty.call(body, 'name')) {
+      const name = cleanText(body.name);
+      if (await categoryNameExists(name, id)) {
+        return res.status(400).json({ error: 'Nama kategori sudah digunakan' });
+      }
+    }
+
+    values.push(id);
+    const result = await pool.query(
+      `UPDATE incentive_categories
+       SET ${updates.join(', ')}
+       WHERE id = $${values.length}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Kategori insentif tidak ditemukan' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
   } catch (err) {
     next(err);
   }
@@ -228,6 +363,8 @@ async function recordDistribution(req, res, next) {
 
 module.exports = {
   listCategories,
+  createCategory,
+  updateCategory,
   listClaims,
   listPendingClaims,
   listDistributions,
