@@ -20,7 +20,6 @@ import {
   Wrench,
   X,
   Star,
-  Map,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -197,11 +196,35 @@ const faqs = [
   },
 ];
 
-const impactStats = [
-  { value: '146', label: 'Petani Aktif', icon: Users, tone: 'text-green-700' },
-  { value: '89', label: 'Lahan Terverifikasi', icon: Map, tone: 'text-sky-700' },
-  { value: '72%', label: 'Tingkat Verifikasi Lolos', icon: CheckCircle2, tone: 'text-amber-700' },
-  { value: 'Rp45 jt', label: 'Insentif Tersalurkan', icon: Gift, tone: 'text-green-700' },
+const assuranceStats = [
+  {
+    value: '50 m',
+    label: 'Batas radius foto',
+    desc: 'Foto di luar radius lahan ditolak server.',
+    icon: MapPin,
+    tone: 'text-sky-700',
+  },
+  {
+    value: 'SHA-256',
+    label: 'Sidik jari berkas',
+    desc: 'Duplikat dan perubahan berkas dapat dideteksi.',
+    icon: Hash,
+    tone: 'text-amber-700',
+  },
+  {
+    value: '2 lapis',
+    label: 'Verifikasi berlapis',
+    desc: 'Komunitas dan petugas memeriksa setiap bukti.',
+    icon: Users,
+    tone: 'text-green-700',
+  },
+  {
+    value: 'Transaksi',
+    label: 'Stok terjaga',
+    desc: 'Klaim dan distribusi memperbarui stok secara konsisten.',
+    icon: ShieldCheck,
+    tone: 'text-green-700',
+  },
 ];
 
 const testimonials = [
@@ -559,24 +582,25 @@ export default function Landing() {
         <section className="bg-white">
           <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
             <div className="max-w-2xl">
-              <SectionLabel>Dampak Nyata</SectionLabel>
+              <SectionLabel>Jaminan Sistem</SectionLabel>
               <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-gray-900">
-                Dampak yang terukur, bukan sekadar janji.
+                Bukti yang bisa diperiksa, bukan sekadar janji.
               </h2>
               <p className="mt-3 text-base leading-relaxed text-gray-600">
-                Indikator capaian program yang kami pantau untuk memastikan manfaatnya
-                dirasakan petani.
+                Setiap foto dan klaim melewati pemeriksaan yang sama sebelum insentif
+                disalurkan. Angka capaian program tersedia di dashboard pengguna.
               </p>
             </div>
 
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {impactStats.map((stat) => (
+              {assuranceStats.map((stat) => (
                 <div key={stat.label} className="rounded-2xl bg-stone-50/80 p-6">
                   <div className={`icon-tile h-11 w-11 bg-white/80 ${stat.tone}`}>
                     <stat.icon className="h-5 w-5" />
                   </div>
                   <p className="mt-5 text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-gray-600">{stat.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-800">{stat.label}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-600">{stat.desc}</p>
                 </div>
               ))}
             </div>
