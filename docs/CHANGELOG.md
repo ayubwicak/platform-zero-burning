@@ -1,0 +1,183 @@
+# Changelog
+
+Semua perubahan penting pada proyek ini dicatat di sini.
+
+Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan penomoran versi [Semantic Versioning](https://semver.org/lang/id/).
+
+---
+
+## [Unreleased]
+
+### Changed
+
+- Menyederhanakan desain landing page: palet hijau-netral, tipografi Inter, hero dua kolom, kartu sederhana, dan tata letak yang lebih tenang.
+- Mengganti kartu contoh verifikasi di hero dengan foto petani menanam padi di sawah.
+- Membuat kontainer landing page memenuhi lebar layar dengan padding responsif.
+- Menambahkan aksen warna hijau, kuning, dan biru pada statistik, ikon, serta kartu agar tampilan lebih hidup namun tetap sederhana.
+- Melembutkan tampilan landing page dengan sudut membulat, kartu berwarna lembut, timeline langkah, dan tombol pill.
+- Menambahkan favicon ZB serta metadata halaman utama.
+
+### Rencana
+
+- Integrasi dashboard ke API (mengganti data mock).
+- Endpoint profil, ubah password, update/hapus lahan, serta daftar lahan untuk petugas/admin.
+- Endpoint hapus/nonaktifkan pengguna serta audit log perubahan role.
+- Konfigurasi ESLint backend dan unit/integration test.
+- Pembangunan aplikasi mobile Flutter petani/petugas.
+- Persiapan deployment produksi (object storage, HTTPS, ganti password admin).
+
+---
+
+## [1.4.0] - 2026-10-21
+
+### Added
+
+- Integrasi halaman **Lahan** dengan API: daftar lahan, tambah lahan, statistik luas/foto, koordinat GPS, dan progres verifikasi.
+- Integrasi halaman **Unggah Foto** dengan API: pilih lahan, pengambilan lokasi GPS, unggah multipart, hash SHA-256, dan riwayat 30 unggahan terbaru.
+- Integrasi halaman **Verifikasi** dengan API: daftar semua status, pencarian petani/lahan, thumbnail, serta aksi setujui/tolak.
+- Integrasi halaman **Klaim** dengan API: pilih kategori/lahan, validasi lahan terverifikasi dan stok, stepper, serta riwayat klaim.
+- Integrasi halaman **Katalog** dengan API: daftar kategori, stok, filter, pencarian, dan tautan pengajuan klaim.
+- Endpoint `GET /api/photos` untuk daftar foto milik petani (filter `field_id` opsional).
+- Endpoint `GET /api/verifications` untuk daftar foto semua status beserta nama petani (filter `status` opsional).
+- Endpoint `GET /api/incentives/claims` untuk riwayat klaim petani beserta lahan, kategori, dan distribusi.
+- Deteksi foto duplikat per lahan berdasarkan hash SHA-256 (HTTP 409).
+- Utilitas format tanggal/luas/koordinat di `frontend-web/src/lib/format.js`.
+- Proxy Vite `/uploads` agar foto lokal tampil di lingkungan pengembangan.
+
+### Changed
+
+- `GET /api/fields` dan `POST /api/fields` kini khusus role `petani`.
+- Detail lahan memeriksa kepemilikan: petani hanya dapat mengakses lahannya sendiri.
+- Geofencing memvalidasi koordinat, memeriksa kepemilikan lahan, dan menghapus berkas sementara saat validasi gagal.
+- Pengajuan klaim menolak kategori tanpa stok, lahan tanpa foto terverifikasi, dan klaim aktif ganda untuk lahan/kategori yang sama.
+- `POST /api/incentives/distributions` kini hanya membutuhkan `claim_id` dan `receipt_proof` opsional; `category_id` mengikuti klaim.
+- Distribusi berjalan dalam transaksi, mengubah status klaim menjadi `disetujui`, dan mengurangi stok kategori sebanyak 1 tanpa boleh negatif.
+- `taken_at` pada unggah foto otomatis memakai waktu server bila tidak dikirim.
+- Berkas unggahan dibersihkan bila penyimpanan gagal atau duplikat.
+- `/api/verifications/pending` dibatasi untuk petugas/admin; verifikasi komunitas khusus petani.
+- Aksi verifikasi resmi memvalidasi keberadaan foto dan status `lolos`/`tidak_lolos`.
+
+### Security
+
+- Petani tidak dapat mengunggah foto ke lahan milik petani lain.
+- Foto identik tidak dapat diunggah berulang kali pada lahan yang sama.
+- Petani tidak dapat memberikan verifikasi komunitas pada foto lahannya sendiri.
+- Daftar verifikasi hanya dapat diakses petugas dan admin.
+
+### Docs
+
+- Memperbarui status implementasi, perencanaan, README, dan README backend.
+
+---
+
+## [1.3.0] - 2026-10-21
+
+### Added
+
+- Landing page publik di `/` berisi hero, masalah & solusi, cara kerja lima langkah, fitur verifikasi, manfaat per aktor, pratinjau katalog insentif, kebijakan pendaftaran akun, FAQ interaktif, CTA, dan footer.
+- Navigasi publik responsif (menu mobile) dengan tombol masuk/dashboard sesuai status login.
+- Ilustrasi kartu verifikasi contoh (foto, GPS, jarak, hash) pada hero.
+
+### Changed
+
+- Dashboard admin dipindah dari `/` ke `/dashboard`; route `/` kini publik.
+- Route tak dikenal diarahkan ke landing page.
+- Statistik dampak tidak ditampilkan sebagai angka nyata; landing memakai indikator fitur yang faktual.
+
+### Docs
+
+- Memperbarui perencanaan, status implementasi, dan README untuk landing page.
+
+---
+
+## [1.2.0] - 2026-10-21
+
+### Added
+
+- Modul **Manajemen Pengguna** khusus admin: statistik pengguna, filter role, pencarian, daftar pengguna + profil, tambah pengguna, dan ubah hak akses.
+- Endpoint admin `GET /api/users`, `POST /api/users`, dan `PATCH /api/users/:id/role`.
+- Halaman Login terhubung ke `/api/auth/login` dengan penyimpanan token, pesan error, dan redirect.
+- `AuthContext` + instance axios dengan header `Authorization: Bearer`.
+- Guard route `RequireAuth` & `RequireAdmin` serta menu sidebar dinamis berdasarkan role.
+- Profil pengguna (nama, role, inisial) pada navbar dan sidebar, termasuk tombol keluar.
+- Akun admin awal melalui seed: `admin@zeroburning.id` (password pengembangan di `database/seed.sql`).
+
+### Changed
+
+- Registrasi publik sekarang hanya menerima role `petani` dan `petugas`.
+- `authenticateToken` membaca ulang role dan profil dari database setiap request agar perubahan hak akses langsung berlaku.
+- Seed kategori insentif dibuat idempoten (tidak menggandakan data saat dijalankan ulang).
+
+### Security
+
+- Menutup celah pendaftaran admin melalui endpoint publik.
+- Admin tidak dapat mengubah role akunnya sendiri.
+- Password minimal 6 karakter dan email dinormalisasi menjadi huruf kecil.
+- Seluruh endpoint manajemen pengguna dilindungi `authorizeRoles('admin')`.
+
+### Docs
+
+- Memperbarui perencanaan, status implementasi, README, dan README backend sesuai fitur baru.
+
+### Fixed
+
+- Perubahan role tidak lagi tertunda sampai token JWT kedaluwarsa.
+
+---
+
+## [1.1.0] - 2026-10-21
+
+### Added
+
+- Dokumen pedoman sistem: `docs/PERENCANAAN.md`, `docs/ATURAN.md`, `docs/STATUS-IMPLEMENTASI.md`, `docs/CHANGELOG.md`.
+- `CONTRIBUTING.md` sebagai panduan kontribusi.
+- Komponen `PageHeader` untuk konsistensi judul halaman.
+- Kelas komponen & animasi baru di `frontend-web/src/index.css` (`.card`, `.btn-primary`, `.chip`, `.badge-*`, `.icon-tile`, fade-up, dll.).
+- Halaman Login split-screen dengan panel branding.
+
+### Changed
+
+- Redesign UI/UX seluruh dashboard web:
+  - Dashboard: banner gradient, kartu statistik, timeline aktivitas, aksi cepat.
+  - Lahan: ringkasan status, kartu progres verifikasi, modal gradient.
+  - Unggah Foto: layout dua kolom, preview foto + hash, panduan bernomor.
+  - Verifikasi: kartu statistik, tab filter, pencarian, tabel dengan aksi setujui/tolak.
+  - Klaim: stepper tiga langkah, kartu kategori dengan stok, panel konfirmasi, riwayat.
+  - Katalog: chip filter, pencarian, kartu stok dan harga.
+- Navbar menampilkan ikon perisai gradient + identitas "Zero Burning / Admin Panel".
+- Struktur `README.md` diperbarui mengikuti implementasi nyata (tanpa PostGIS, menyertakan dokumen pedoman).
+- `frontend-web/package.json` memakai `"type": "module"` untuk menghilangkan peringatan Node.
+
+### Fixed
+
+- Peringatan reparsing ES module pada saat build Vite.
+- Ketidaksesuaian dokumentasi lama yang masih menyebut PostGIS.
+
+### Docs
+
+- Mencatat seluruh penyimpangan implementasi terhadap rencana awal (PostGIS, MinIO, Tailwind, entry point, data mock, dan lainnya).
+
+---
+
+## [1.0.0] - 2026-10-21
+
+### Added
+
+- Struktur monorepo: `backend/`, `frontend-web/`, `frontend-mobile/`, `database/`.
+- Backend Express: autentikasi JWT, pengelolaan lahan, unggah foto, verifikasi komunitas & petugas, katalog/klaim/distribusi insentif.
+- Geofencing radius 50 meter dengan formula Haversine.
+- Hash SHA-256 untuk integritas foto; penyimpanan lokal `uploads/`.
+- Skema database PostgreSQL 10 tabel dan seed 3 kategori insentif.
+- Script root: `install:all`, `dev`, `start`, `build:web`, `db:start`, `db:stop`, `db:setup`.
+- Dashboard web React + Vite + Tailwind (versi awal).
+- Workflow CI dasar (`.github/workflows/ci.yml`).
+- Skeleton aplikasi mobile Flutter.
+
+### Fixed
+
+- Script `dev`/`start` backend menunjuk entry point yang benar (`server.js`).
+- `farmerId`/`officerId` tidak terbaca pada controller akibat middleware terpisah.
+- Ikon `Corn` tidak tersedia di `lucide-react` (diganti `Wheat`).
+- Konflik nama komponen `Upload` pada halaman Unggah.
+- `App.js` berisi JSX (di-rename menjadi `App.jsx`).
+- Tailwind v4 tidak kompatibel dengan konfigurasi (diturunkan ke v3.4.17).

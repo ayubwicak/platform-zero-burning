@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+*.pem
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.apk
+*.aab
+ios/
+android/app/build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Thumbs
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db
+
+# Flutter
+.dart_tool/
+flutter_build/
+.pgdata/
+uploads/

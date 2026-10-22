@@ -1,0 +1,21 @@
+{
+  "name": "platform-zero-burning",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Platform Insentif Zero Burning - Monorepo (Backend + Frontend)",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend-web && npm install",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend-web\"",
+    "start": "npm start --prefix backend",
+    "build:web": "npm run build --prefix frontend-web",
+    "db:start": "/usr/lib/postgresql/18/bin/pg_ctl -D .pgdata -o \"-p 5433 -k /tmp\" -l .pgdata/postgres.log start",
+    "db:stop": "/usr/lib/postgresql/18/bin/pg_ctl -D .pgdata stop",
+    "db:setup": "createdb -h /tmp -p 5433 -U postgres zero_burning && psql -h /tmp -p 5433 -U postgres -d zero_burning -f database/schema.sql && psql -h /tmp -p 5433 -U postgres -d zero_burning -f database/seed.sql"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
