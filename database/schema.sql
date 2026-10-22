@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS community_verifications (
   id SERIAL PRIMARY KEY,
   photo_id INTEGER REFERENCES field_photos(id) ON DELETE CASCADE,
   verifier_id INTEGER REFERENCES farmers(id) ON DELETE CASCADE,
-  status VARCHAR(10) NOT NULL CHECK (status IN ('setuju', 'tidak_setuju')),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('setuju', 'tidak_setuju')),
   note TEXT,
   verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (photo_id, verifier_id)
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS official_verifications (
   id SERIAL PRIMARY KEY,
   photo_id INTEGER UNIQUE REFERENCES field_photos(id) ON DELETE CASCADE,
   officer_id INTEGER REFERENCES officers(id) ON DELETE CASCADE,
-  status VARCHAR(10) NOT NULL CHECK (status IN ('lolos', 'tidak_lolos')),
+  status VARCHAR(20) NOT NULL CHECK (status IN ('lolos', 'tidak_lolos')),
   note TEXT,
   verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

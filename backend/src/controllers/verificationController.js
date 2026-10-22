@@ -87,6 +87,39 @@ async function officialVerify(req, res, next) {
   }
 }
 
+async function listCommunityPhotos(req, res, next) {
+  const verifierId = req.user.farmerId;
+
+  if (!verifierId) {
+    return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT fp.id, fp.photo_url, fp.taken_at, fp.latitude, fp.longitude, fp.status,
+              f.id AS field_id, f.name AS field_name,
+              u.nama AS farmer_name,
+              COUNT(cv.id) FILTER (WHERE cv.status = 'setuju')::int AS setuju_count,
+              COUNT(cv.id) FILTER (WHERE cv.status = 'tidak_setuju')::int AS tidak_setuju_count,
+              MAX(cv.status) FILTER (WHERE cv.verifier_id = $1) AS my_status
+       FROM field_photos fp
+       JOIN fields f ON f.id = fp.field_id
+       JOIN farmers fa ON fa.id = f.farmer_id
+       JOIN users u ON u.id = fa.id_user
+       LEFT JOIN community_verifications cv ON cv.photo_id = fp.id
+       WHERE f.farmer_id <> $1
+         AND fp.status = 'menunggu_verifikasi'
+       GROUP BY fp.id, f.id, f.name, u.nama
+       ORDER BY fp.created_at DESC
+       LIMIT 50`,
+      [verifierId]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listPhotos(req, res, next) {
   const { status } = req.query;
   const params = [];
@@ -123,4 +156,10 @@ async function listPending(req, res, next) {
   return listPhotos(req, res, next);
 }
 
-module.exports = { communityVerify, officialVerify, listPhotos, listPending };
+module.exports = {
+  communityVerify,
+  officialVerify,
+  listCommunityPhotos,
+  listPhotos,
+  listPending,
+};

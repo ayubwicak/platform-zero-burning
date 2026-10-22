@@ -32,7 +32,7 @@ app.use('/api/incentives', incentiveRoutes);
 app.use('/api/users', userRoutes);
 
 // Serve uploaded photos
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {

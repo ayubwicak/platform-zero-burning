@@ -46,7 +46,7 @@ async function uploadPhoto(req, res, next) {
          (field_id, photo_url, taken_at, latitude, longitude, timestamp, photo_hash, geofencing_valid)
        VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
        RETURNING *`,
-      [field_id, photoUrl, takenAt.toISOString(), latitude, longitude, timestamp || null, photoHash]
+      [field_id, photoUrl, takenAt, latitude, longitude, timestamp || null, photoHash]
     );
 
     res.status(201).json({

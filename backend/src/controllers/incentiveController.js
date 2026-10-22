@@ -34,6 +34,78 @@ async function listClaims(req, res, next) {
   }
 }
 
+async function listPendingClaims(req, res, next) {
+  try {
+    const [claimsResult, countResult] = await Promise.all([
+      pool.query(
+        `SELECT c.id, c.claim_date, c.status,
+                f.id AS field_id, f.name AS field_name, f.area AS field_area,
+                f.latitude, f.longitude,
+                u.nama AS farmer_name, fa.phone AS farmer_phone, fa.address AS farmer_address,
+                ic.id AS category_id, ic.name AS category_name, ic.quantity AS stock,
+                p.photo_url AS verified_photo_url, p.taken_at AS verified_photo_at
+         FROM incentive_claims c
+         JOIN fields f ON f.id = c.field_id
+         JOIN farmers fa ON fa.id = c.farmer_id
+         JOIN users u ON u.id = fa.id_user
+         JOIN incentive_categories ic ON ic.id = c.category_id
+         LEFT JOIN LATERAL (
+           SELECT fp.photo_url, fp.taken_at
+           FROM field_photos fp
+           WHERE fp.field_id = c.field_id AND fp.status = 'terverifikasi'
+           ORDER BY fp.created_at DESC, fp.id DESC
+           LIMIT 1
+         ) p ON TRUE
+         WHERE c.status = 'diajukan'
+         ORDER BY c.claim_date ASC
+         LIMIT 100`
+      ),
+      pool.query(`SELECT COUNT(*)::int AS total FROM incentive_claims WHERE status = 'diajukan'`),
+    ]);
+
+    res.json({
+      success: true,
+      data: claimsResult.rows,
+      total: countResult.rows[0]?.total || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function listDistributions(req, res, next) {
+  try {
+    const [historyResult, countResult] = await Promise.all([
+      pool.query(
+        `SELECT d.id, d.claim_id, d.distribution_date, d.receipt_proof,
+                ic.name AS category_name,
+                f.name AS field_name,
+                u.nama AS farmer_name,
+                COALESCE(uo.nama, 'Admin') AS officer_name
+         FROM incentive_distributions d
+         JOIN incentive_claims c ON c.id = d.claim_id
+         JOIN fields f ON f.id = c.field_id
+         JOIN farmers fa ON fa.id = c.farmer_id
+         JOIN users u ON u.id = fa.id_user
+         JOIN incentive_categories ic ON ic.id = d.category_id
+         LEFT JOIN officers o ON o.id = d.officer_id
+         LEFT JOIN users uo ON uo.id = o.id_user
+         ORDER BY d.distribution_date DESC, d.id DESC
+         LIMIT 20`
+      ),
+      pool.query('SELECT COUNT(*)::int AS total FROM incentive_distributions'),
+    ]);
+
+    res.json({
+      success: true,
+      data: historyResult.rows,
+      total: countResult.rows[0]?.total || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function createClaim(req, res, next) {
   const { field_id, category_id } = req.body;
   const farmerId = req.user.farmerId;
@@ -154,4 +226,11 @@ async function recordDistribution(req, res, next) {
   }
 }
 
-module.exports = { listCategories, listClaims, createClaim, recordDistribution };
+module.exports = {
+  listCategories,
+  listClaims,
+  listPendingClaims,
+  listDistributions,
+  createClaim,
+  recordDistribution,
+};
