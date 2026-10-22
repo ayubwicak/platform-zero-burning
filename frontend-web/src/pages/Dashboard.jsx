@@ -23,16 +23,19 @@ import api from '../lib/api';
 const quickActionsByRole = {
   petani: [
     { label: 'Unggah Foto', desc: 'Kirim bukti progres', icon: Camera, to: '/upload', color: 'bg-green-600' },
+    { label: 'Verifikasi Warga', desc: 'Bantu nilai foto petani lain', icon: ShieldCheck, to: '/verifikasi-komunitas', color: 'bg-teal-600' },
     { label: 'Klaim Insentif', desc: 'Ajukan bantuan', icon: CreditCard, to: '/klaim', color: 'bg-amber-500' },
     { label: 'Lahan Saya', desc: 'Kelola data lahan', icon: Sprout, to: '/fields', color: 'bg-sky-600' },
     { label: 'Katalog', desc: 'Lihat stok insentif', icon: Package, to: '/katalog', color: 'bg-purple-600' },
   ],
   petugas: [
     { label: 'Verifikasi', desc: 'Tinjau foto petani', icon: ShieldCheck, to: '/verifikasi', color: 'bg-blue-600' },
+    { label: 'Distribusi', desc: 'Catat penyaluran bantuan', icon: PackageCheck, to: '/distribusi', color: 'bg-green-600' },
     { label: 'Katalog', desc: 'Lihat stok insentif', icon: Package, to: '/katalog', color: 'bg-purple-600' },
   ],
   admin: [
     { label: 'Verifikasi', desc: 'Tinjau foto petani', icon: ShieldCheck, to: '/verifikasi', color: 'bg-blue-600' },
+    { label: 'Distribusi', desc: 'Catat penyaluran bantuan', icon: PackageCheck, to: '/distribusi', color: 'bg-green-600' },
     { label: 'Kelola Pengguna', desc: 'Atur akun & hak akses', icon: UserCog, to: '/pengguna', color: 'bg-emerald-600' },
     { label: 'Katalog', desc: 'Lihat stok insentif', icon: Package, to: '/katalog', color: 'bg-purple-600' },
   ],
@@ -308,9 +311,11 @@ export default function Dashboard() {
   const verificationRate = Number(metrics.verification_rate) || 0;
   const quickActionGridClass = showActivity
     ? ''
-    : quickActions.length >= 4
-      ? 'xl:grid-cols-4'
-      : 'xl:grid-cols-3';
+    : quickActions.length >= 5
+      ? 'xl:grid-cols-5'
+      : quickActions.length >= 4
+        ? 'xl:grid-cols-4'
+        : 'xl:grid-cols-3';
   const activityViews = (data?.activities || []).map((event) => {
     const meta = activityMeta[event.type] || activityMeta.field;
     const badge = statusBadge[event.status] || [event.status || 'Aktivitas', 'badge-info'];
