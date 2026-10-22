@@ -10,6 +10,10 @@ import {
   Loader2,
   LocateFixed,
   AlertCircle,
+  CheckCircle2,
+  Pencil,
+  Save,
+  Trash2,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import api from '../lib/api';
@@ -46,8 +50,13 @@ export default function Fields() {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingField, setEditingField] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [locating, setLocating] = useState(false);
   const [formError, setFormError] = useState('');
+  const [notice, setNotice] = useState('');
   const [form, setForm] = useState(emptyForm);
 
   const loadFields = useCallback(async () => {
@@ -67,11 +76,46 @@ export default function Fields() {
     loadFields();
   }, [loadFields]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(''), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  useEffect(() => {
+    if (!open && !deleteTarget) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Escape') return;
+      if (deleteTarget) {
+        closeDelete();
+      } else {
+        closeModal();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, deleteTarget, saving, deleting]);
+
   const totalArea = fields.reduce((sum, field) => sum + (Number(field.area) || 0), 0);
   const totalPhotos = fields.reduce((sum, field) => sum + (Number(field.photo_count) || 0), 0);
 
   function openModal() {
+    setEditingField(null);
     setForm(emptyForm);
+    setFormError('');
+    setOpen(true);
+  }
+
+  function openEdit(field) {
+    setEditingField(field);
+    setForm({
+      name: field.name || '',
+      area: field.area !== null && field.area !== undefined ? String(field.area) : '',
+      crop_type: field.crop_type || '',
+      latitude: field.latitude !== null && field.latitude !== undefined ? String(field.latitude) : '',
+      longitude: field.longitude !== null && field.longitude !== undefined ? String(field.longitude) : '',
+    });
     setFormError('');
     setOpen(true);
   }
@@ -79,6 +123,17 @@ export default function Fields() {
   function closeModal() {
     if (saving) return;
     setOpen(false);
+  }
+
+  function openDelete(field) {
+    setDeleteTarget(field);
+    setDeleteError('');
+  }
+
+  function closeDelete() {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError('');
   }
 
   function handleUseLocation() {
@@ -111,28 +166,55 @@ export default function Fields() {
     );
   }
 
-  async function handleCreate(event) {
+  async function handleSave(event) {
     event.preventDefault();
     if (saving) return;
 
     setSaving(true);
     setFormError('');
 
+    const payload = {
+      name: form.name.trim(),
+      area: Number(form.area),
+      crop_type: form.crop_type.trim(),
+      latitude: Number(form.latitude),
+      longitude: Number(form.longitude),
+    };
+    const wasEditing = Boolean(editingField);
+
     try {
-      await api.post('/fields', {
-        name: form.name.trim(),
-        area: Number(form.area),
-        crop_type: form.crop_type.trim(),
-        latitude: Number(form.latitude),
-        longitude: Number(form.longitude),
-      });
+      if (wasEditing) {
+        await api.patch(`/fields/${editingField.id}`, payload);
+      } else {
+        await api.post('/fields', payload);
+      }
       setOpen(false);
+      setEditingField(null);
       setForm(emptyForm);
+      setNotice(wasEditing ? 'Data lahan berhasil diperbarui.' : 'Lahan berhasil ditambahkan.');
       await loadFields();
     } catch (err) {
       setFormError(err.response?.data?.error || 'Gagal menyimpan lahan.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget || deleting) return;
+
+    setDeleting(true);
+    setDeleteError('');
+
+    try {
+      await api.delete(`/fields/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      setNotice('Lahan berhasil dihapus.');
+      await loadFields();
+    } catch (err) {
+      setDeleteError(err.response?.data?.error || 'Gagal menghapus lahan.');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -155,25 +237,50 @@ export default function Fields() {
         title="Lahan Saya"
         subtitle="Kelola dan pantau lahan pertanian zero burning Anda dalam satu tampilan."
         action={
-          <button onClick={openModal} className="btn-primary">
-            <Plus className="w-4 h-4" /> Tambah Lahan
-          </button>
+          <>
+            <button
+              onClick={loadFields}
+              className="btn-secondary"
+              aria-label="Segarkan daftar lahan"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Segarkan</span>
+            </button>
+            <button onClick={openModal} className="btn-primary">
+              <Plus className="w-4 h-4" /> Tambah Lahan
+            </button>
+          </>
         }
       >
         <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-xl">
           {stats.map((stat) => (
-            <div key={stat.label} className="card p-3.5 flex items-center gap-3">
-              <div className={`icon-tile w-9 h-9 ${stat.bg} ${stat.color}`}>
-                <stat.icon className="w-4 h-4" />
+            <div
+              key={stat.label}
+              className="card flex flex-col items-start gap-2 p-2.5 sm:flex-row sm:items-center sm:gap-3 sm:p-3.5"
+            >
+              <div className={`icon-tile h-8 w-8 shrink-0 sm:h-9 sm:w-9 ${stat.bg} ${stat.color}`}>
+                <stat.icon className="h-4 w-4" />
               </div>
-              <div className="min-w-0">
-                <p className="text-lg font-extrabold text-gray-900 leading-none truncate">{stat.value}</p>
-                <p className="text-[11px] text-gray-500 mt-1">{stat.label}</p>
+              <div className="min-w-0 w-full">
+                <p className="truncate text-base font-extrabold leading-none text-gray-900 sm:text-lg">
+                  {stat.value}
+                </p>
+                <p className="mt-1 text-[10px] leading-tight text-gray-500 sm:text-[11px]">{stat.label}</p>
               </div>
             </div>
           ))}
         </div>
       </PageHeader>
+
+      {notice && (
+        <div
+          role="status"
+          className="mt-6 flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-800"
+        >
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{notice}</span>
+        </div>
+      )}
 
       {error && (
         <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
@@ -234,7 +341,7 @@ export default function Fields() {
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-[11px] font-semibold mb-1.5">
                       <span className="text-gray-500">Progres verifikasi</span>
-                      <span className={status.progress === 100 ? 'text-green-600' : 'text-amber-600'}>
+                      <span className={status.progress === 100 ? 'text-green-700' : 'text-amber-800'}>
                         {verifiedCount}/{photoCount} foto
                       </span>
                     </div>
@@ -246,18 +353,26 @@ export default function Fields() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-gray-400">
+                  <div className="mt-4 flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-[11px] text-gray-500">
                       {field.last_photo_at
                         ? `Foto ${timeAgo(field.last_photo_at)}`
                         : `Didaftarkan ${timeAgo(field.created_at)}`}
                     </span>
-                    <button
-                      onClick={loadFields}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-600 hover:text-green-700"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" /> Segarkan
-                    </button>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        onClick={() => openEdit(field)}
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-50"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> Ubah
+                      </button>
+                      <button
+                        onClick={() => openDelete(field)}
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Hapus
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -289,10 +404,14 @@ export default function Fields() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in"
           onClick={closeModal}
+          role="presentation"
         >
           <div
             className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-fade-up"
             onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="field-modal-title"
           >
             <div className="relative overflow-hidden bg-gradient-to-br from-green-600 to-emerald-700 p-6 text-white">
               <div className="absolute -top-10 -right-8 w-32 h-32 rounded-full bg-white/10" />
@@ -301,28 +420,41 @@ export default function Fields() {
                   <Sprout className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold">Daftarkan Lahan Baru</h2>
-                  <p className="text-xs text-green-100/90">Lengkapi data lahan Anda</p>
+                  <h2 id="field-modal-title" className="text-lg font-bold">
+                    {editingField ? 'Ubah Data Lahan' : 'Daftarkan Lahan Baru'}
+                  </h2>
+                  <p className="text-xs text-green-100/90">
+                    {editingField
+                      ? 'Perbarui informasi lahan Anda'
+                      : 'Lengkapi data lahan Anda'}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
+            <form onSubmit={handleSave} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Lahan</label>
+                <label htmlFor="field-name" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Nama Lahan
+                </label>
                 <input
+                  id="field-name"
                   className="input-field"
                   value={form.name}
                   onChange={(event) => setForm({ ...form, name: event.target.value })}
                   placeholder="Contoh: Lahan Gambut A"
+                  maxLength={100}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Luas (ha)</label>
+                  <label htmlFor="field-area" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Luas (ha)
+                  </label>
                   <input
+                    id="field-area"
                     className="input-field"
                     type="number"
                     min="0.01"
@@ -334,23 +466,30 @@ export default function Fields() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanaman</label>
+                  <label htmlFor="field-crop" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Tanaman
+                  </label>
                   <input
+                    id="field-crop"
                     className="input-field"
                     value={form.crop_type}
                     onChange={(event) => setForm({ ...form, crop_type: event.target.value })}
                     placeholder="Padi"
+                    maxLength={50}
                     required
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lokasi Lahan (GPS)</label>
+              <fieldset>
+                <legend className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Lokasi Lahan (GPS)
+                </legend>
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     className="input-field font-mono text-xs"
                     inputMode="decimal"
+                    aria-label="Latitude"
                     value={form.latitude}
                     onChange={(event) => setForm({ ...form, latitude: event.target.value })}
                     placeholder="Latitude"
@@ -359,6 +498,7 @@ export default function Fields() {
                   <input
                     className="input-field font-mono text-xs"
                     inputMode="decimal"
+                    aria-label="Longitude"
                     value={form.longitude}
                     onChange={(event) => setForm({ ...form, longitude: event.target.value })}
                     placeholder="Longitude"
@@ -381,10 +521,10 @@ export default function Fields() {
                 <p className="mt-1 text-[11px] text-gray-500">
                   Koordinat dipakai untuk validasi radius 50 meter saat unggah foto.
                 </p>
-              </div>
+              </fieldset>
 
               {formError && (
-                <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700">
+                <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{formError}</span>
                 </div>
@@ -397,13 +537,84 @@ export default function Fields() {
                 <button type="submit" className="btn-primary flex-1" disabled={saving}>
                   {saving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : editingField ? (
+                    <Save className="w-4 h-4" />
                   ) : (
                     <Plus className="w-4 h-4" />
                   )}
-                  {saving ? 'Menyimpan...' : 'Simpan Lahan'}
+                  {saving ? 'Menyimpan...' : editingField ? 'Simpan Perubahan' : 'Simpan Lahan'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in"
+          onClick={closeDelete}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl animate-fade-up"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-field-title"
+          >
+            <div className="flex items-start gap-4">
+              <div className="icon-tile w-12 h-12 shrink-0 bg-rose-100 text-rose-600">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 id="delete-field-title" className="text-lg font-bold text-gray-900">
+                  Hapus lahan?
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                  Lahan akan dihapus dari daftar dan tidak dapat digunakan untuk unggah foto baru.
+                  Riwayat foto dan klaim yang sudah ada tetap tersimpan.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="text-sm font-semibold text-gray-900">{deleteTarget.name}</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                {deleteTarget.crop_type || 'Tanaman belum diisi'} · {formatArea(deleteTarget.area)}
+              </p>
+            </div>
+
+            {deleteError && (
+              <div role="alert" className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={closeDelete}
+                className="btn-secondary flex-1"
+                disabled={deleting}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="btn-danger flex-1"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                {deleting ? 'Menghapus...' : 'Hapus Lahan'}
+              </button>
+            </div>
           </div>
         </div>
       )}

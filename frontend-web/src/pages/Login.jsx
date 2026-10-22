@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   Mail,
   Lock,
@@ -21,7 +21,8 @@ const features = [
 ];
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.registeredEmail || '');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
@@ -29,7 +30,6 @@ export default function Login() {
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   if (isAuthenticated) {
     return <Navigate to={location.state?.from || '/dashboard'} replace />;
@@ -131,6 +131,22 @@ export default function Login() {
               </p>
             </div>
 
+            {location.state?.registered && (
+              <div
+                role="status"
+                className="mb-5 flex items-start gap-2 rounded-xl border border-green-100 bg-green-50 px-3.5 py-3 text-xs text-green-800"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-green-600" />
+                <div>
+                  <p className="font-semibold">Pendaftaran selesai</p>
+                  <p className="mt-0.5 leading-relaxed">
+                    {location.state.registrationMessage ||
+                      'Akun petani Anda sudah dibuat. Silakan masuk dengan email dan password yang didaftarkan.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
@@ -195,10 +211,21 @@ export default function Login() {
               </div>
             )}
 
-            <p className="text-center text-sm text-gray-500 mt-6">
-              Belum punya akun? Hubungi{' '}
-              <span className="text-green-700 font-semibold">administrator</span>.
-            </p>
+            <div className="mt-6 border-t border-gray-100 pt-5">
+              <p className="text-center text-sm text-gray-500">
+                Belum punya akun?{' '}
+                <Link
+                  to="/register"
+                  state={location.state?.from ? { from: location.state.from } : undefined}
+                  className="font-semibold text-green-700 hover:text-green-800 hover:underline"
+                >
+                  Daftar sebagai petani
+                </Link>
+              </p>
+              <p className="mt-1 text-center text-[11px] text-gray-500">
+                Akun petugas dan admin dibuat oleh administrator.
+              </p>
+            </div>
           </div>
 
           <p className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 mt-6">

@@ -58,12 +58,20 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = (updates) => {
+    const nextUser = { ...user, ...updates };
+    const storage = localStorage.getItem('zb_token') ? localStorage : sessionStorage;
+    storage.setItem('zb_user', JSON.stringify(nextUser));
+    setUser(nextUser);
+  };
+
   const value = useMemo(
     () => ({
       user,
       token,
       login,
       logout,
+      updateUser,
       isAuthenticated: Boolean(token),
       isAdmin: user?.role === 'admin',
     }),

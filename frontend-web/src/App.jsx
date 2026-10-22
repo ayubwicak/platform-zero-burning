@@ -4,7 +4,9 @@ import { RequireAuth, RequireAdmin, RequireRoles } from './components/RouteGuard
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Profil from './pages/Profil';
 import Fields from './pages/Fields';
 import Upload from './pages/Upload';
 import Verifikasi from './pages/Verifikasi';
@@ -21,9 +23,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profil" element={<Profil />} />
               <Route path="/katalog" element={<Katalog />} />
               <Route element={<RequireRoles roles={['petani']} />}>
                 <Route path="/fields" element={<Fields />} />

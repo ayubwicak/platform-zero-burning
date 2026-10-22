@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -76,21 +76,24 @@ export default function Sidebar({ onClose }) {
       </nav>
 
       <div className="mt-auto space-y-3">
-        <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold">
-              {initial}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
-                {user?.nama || 'Pengguna'}
-              </p>
-              <p className="text-[11px] text-gray-500 truncate">
-                {roleLabels[user?.role] || 'Belum masuk'}
-              </p>
-            </div>
+        <Link
+          to="/profil"
+          onClick={onClose}
+          className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 transition-colors hover:border-green-200 hover:bg-green-50/60"
+        >
+          <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold">
+            {initial}
           </div>
-        </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {user?.nama || 'Pengguna'}
+            </p>
+            <p className="text-[11px] text-gray-500 truncate">
+              {roleLabels[user?.role] || 'Belum masuk'}
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+        </Link>
 
         <button
           onClick={handleLogout}

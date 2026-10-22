@@ -12,6 +12,7 @@ import {
   Leaf,
   LogIn,
   MapPin,
+  UserPlus,
   Menu,
   ShieldCheck,
   Sprout,
@@ -64,8 +65,8 @@ const problems = [
 const steps = [
   {
     icon: ClipboardList,
-    title: 'Akun & akses',
-    desc: 'Akun petani atau petugas dibuatkan oleh admin melalui sistem.',
+    title: 'Daftar akun',
+    desc: 'Petani mendaftar mandiri; akun petugas dan admin dibuat administrator.',
     tone: 'bg-green-50 text-green-700',
   },
   {
@@ -176,7 +177,7 @@ const catalog = [
 const faqs = [
   {
     q: 'Siapa yang dapat menggunakan sistem ini?',
-    a: 'Sistem digunakan oleh petani, petugas lapangan, dan admin program. Pendaftaran akun dilakukan oleh admin atau petugas, kemudian pengguna masuk menggunakan email dan password yang diberikan.',
+    a: 'Sistem digunakan oleh petani, petugas lapangan, dan admin program. Petani dapat mendaftar sendiri melalui halaman registrasi, lalu masuk menggunakan email dan password yang dibuatnya. Akun petugas lapangan dan admin dibuat oleh administrator.',
   },
   {
     q: 'Bagaimana bukti foto divalidasi?',
@@ -279,8 +280,9 @@ export default function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
 
-  const primaryHref = isAuthenticated ? '/dashboard' : '/login';
-  const primaryLabel = isAuthenticated ? 'Buka Dashboard' : 'Masuk ke Sistem';
+  const primaryHref = isAuthenticated ? '/dashboard' : '/register';
+  const primaryLabel = isAuthenticated ? 'Buka Dashboard' : 'Daftar sebagai Petani';
+  const PrimaryIcon = isAuthenticated ? ArrowRight : UserPlus;
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -312,11 +314,20 @@ export default function Landing() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {!isAuthenticated && (
+              <Link
+                to="/login"
+                className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-green-100 transition-colors hover:bg-green-600 hover:text-white sm:inline-flex"
+              >
+                <LogIn className="h-4 w-4" />
+                Masuk
+              </Link>
+            )}
             <Link
               to={primaryHref}
               className="hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50 sm:inline-flex"
             >
-              {isAuthenticated ? <ArrowRight className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+              <PrimaryIcon className="h-4 w-4" />
               {primaryLabel}
             </Link>
             <button
@@ -331,24 +342,34 @@ export default function Landing() {
         </div>
 
         {menuOpen && (
-          <div className="bg-green-600 px-5 py-3 sm:px-8 md:hidden">
+          <div className="bg-green-700 px-5 py-3 sm:px-8 md:hidden">
             <nav className="space-y-1">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-green-100 hover:bg-green-500 hover:text-white"
+                  className="block rounded-lg px-3 py-2 text-sm font-medium text-white hover:bg-green-800"
                 >
                   {link.label}
                 </a>
               ))}
+              {!isAuthenticated && (
+                <Link
+                  to="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Masuk
+                </Link>
+              )}
               <Link
                 to={primaryHref}
                 onClick={() => setMenuOpen(false)}
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50"
               >
-                {isAuthenticated ? <ArrowRight className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+                <PrimaryIcon className="h-4 w-4" />
                 {primaryLabel}
               </Link>
             </nav>
@@ -394,7 +415,7 @@ export default function Landing() {
                   to={primaryHref}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-green-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-800"
                 >
-                  {isAuthenticated ? <ArrowRight className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+                  <PrimaryIcon className="h-4 w-4" />
                   {primaryLabel}
                 </Link>
                 <a
@@ -405,12 +426,17 @@ export default function Landing() {
                 </a>
               </div>
 
-              <p className="mt-4 text-sm text-gray-600">
-                Belum punya akun?{' '}
-                <a href="#faq" className="font-semibold text-green-700 hover:text-green-800 hover:underline">
-                  Lihat cara pendaftaran
-                </a>
-              </p>
+              {!isAuthenticated && (
+                <p className="mt-4 text-sm text-gray-600">
+                  Sudah punya akun?{' '}
+                  <Link
+                    to="/login"
+                    className="font-semibold text-green-700 hover:text-green-800 hover:underline"
+                  >
+                    Masuk ke sistem
+                  </Link>
+                </p>
+              )}
 
               <div className="mt-5 flex flex-wrap gap-3">
                 {trustItems.map((item) => (
@@ -545,10 +571,15 @@ export default function Landing() {
             </div>
 
             <p className="mt-10 text-sm text-gray-600">
-              Pendaftaran akun dilakukan oleh admin atau petugas lapangan.{' '}
+              Petani dapat mendaftar mandiri. Akun petugas dan admin dibuat oleh administrator.{' '}
+              <Link to="/register" className="font-semibold text-green-700 hover:underline">
+                Daftar sebagai petani
+              </Link>{' '}
+              atau{' '}
               <Link to="/login" className="font-semibold text-green-700 hover:underline">
-                Sudah punya akun? Masuk
+                masuk
               </Link>
+              .
             </p>
           </div>
         </section>
@@ -693,7 +724,8 @@ export default function Landing() {
                 to={primaryHref}
                 className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-stone-200"
               >
-                {isAuthenticated ? 'Buka Dashboard' : 'Masuk untuk melihat'} <ArrowRight className="h-4 w-4" />
+                {isAuthenticated ? 'Buka Dashboard' : 'Daftar untuk mengakses'}{' '}
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
@@ -783,15 +815,16 @@ export default function Landing() {
                   Siap mengelola lahan tanpa membakar?
                 </h2>
                 <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-green-50">
-                  Masuk untuk memantau lahan, mengunggah bukti, dan mengajukan insentif
-                  dalam satu sistem.
+                  {isAuthenticated
+                    ? 'Masuk untuk memantau lahan, mengunggah bukti, dan mengajukan insentif dalam satu sistem.'
+                    : 'Daftar sebagai petani untuk memantau lahan, mengunggah bukti, dan mengajukan insentif dalam satu sistem.'}
                 </p>
                 <div className="mt-7 flex flex-wrap justify-center gap-3">
                   <Link
                     to={primaryHref}
                     className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50"
                   >
-                    {isAuthenticated ? <ArrowRight className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+                    <PrimaryIcon className="h-4 w-4" />
                     {primaryLabel}
                   </Link>
                   <a
@@ -844,8 +877,8 @@ export default function Landing() {
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Akses</p>
             <ul className="mt-3 space-y-2">
               <li><Link to="/login" className="text-sm text-gray-600 hover:text-green-700">Masuk ke Sistem</Link></li>
+              <li><Link to="/register" className="text-sm text-gray-600 hover:text-green-700">Daftar sebagai Petani</Link></li>
               <li><Link to="/dashboard" className="text-sm text-gray-600 hover:text-green-700">Dashboard</Link></li>
-              <li><a href="#faq" className="text-sm text-gray-600 hover:text-green-700">Pendaftaran via Admin</a></li>
             </ul>
           </div>
         </div>
@@ -853,7 +886,7 @@ export default function Landing() {
         <div className="border-t border-green-200">
           <div className="content-wide flex flex-col items-center justify-between gap-2 px-5 py-5 text-xs text-gray-500 sm:flex-row sm:px-8 lg:px-10">
             <p>&copy; 2026 Platform Insentif Zero Burning.</p>
-            <p>Pendaftaran akun melalui admin atau petugas lapangan.</p>
+            <p>Petani mendaftar mandiri. Akun petugas dan admin dibuat administrator.</p>
           </div>
         </div>
       </footer>
