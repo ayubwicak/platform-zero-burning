@@ -78,7 +78,7 @@ Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 - ✅ Backend API inti (auth, lahan, foto, verifikasi, insentif) berjalan.
 - ✅ Database & seed tersedia, termasuk akun admin awal.
 - ✅ Landing page publik, registrasi petani mandiri, login web, proteksi route, serta manajemen pengguna/hak akses dan status akun (khusus admin) tersedia.
-- ✅ Halaman Lahan (termasuk ubah/hapus), Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi sudah terhubung API.
+- ✅ Halaman Lahan (termasuk ubah/hapus), Data Lahan untuk petugas/admin, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi sudah terhubung API.
 - ✅ Halaman Profil & Keamanan tersedia: ubah nama/kontak sesuai role dan ubah password; akses dari navbar atau kartu profil di sidebar.
 - ✅ Dashboard sudah terhubung API: ringkasan program/personal dan aktivitas terbaru dari database.
 - ✅ Pengelolaan katalog khusus admin: tambah kategori, ubah nama/persyaratan, dan perbarui stok dari halaman `/katalog`.
@@ -98,10 +98,19 @@ Login sebagai **admin**, lalu buka menu **Pengguna**:
 | Role | Hak akses |
 |---|---|
 | `petani` | Lahan, unggah foto, verifikasi komunitas, klaim insentif |
-| `petugas` | Verifikasi resmi, distribusi insentif |
-| `admin` | Semua akses + manajemen pengguna + pengelolaan katalog |
+| `petugas` | Verifikasi resmi, distribusi insentif, pemantauan data lahan |
+| `admin` | Semua akses + manajemen pengguna + pengelolaan katalog + pemantauan data lahan |
 
 Detail: [`docs/STATUS-IMPLEMENTASI.md`](docs/STATUS-IMPLEMENTASI.md).
+
+## Pemantauan Data Lahan (Petugas/Admin)
+
+Login sebagai **petugas** atau **admin**, lalu buka menu **Data Lahan**:
+
+- Melihat seluruh lahan aktif milik petani, termasuk nama dan nomor telepon pemilik, tanaman, luas, serta koordinat.
+- Memantau jumlah foto **terverifikasi**, **menunggu**, dan **ditolak** per lahan.
+- Memfilter berdasarkan status foto dan mencari nama lahan, pemilik, nomor telepon, atau tanaman.
+- Halaman bersifat **read-only**; tambah, ubah, dan hapus lahan tetap hanya dapat dilakukan petani pemilik melalui menu **Lahan Saya**.
 
 ## Pengelolaan Katalog (Admin)
 

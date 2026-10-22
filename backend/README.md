@@ -65,7 +65,7 @@ npm start
 | GET | /health | Publik |
 | POST | /api/auth/register | Publik |
 | POST | /api/auth/login | Publik |
-| GET | /api/fields | Petani |
+| GET | /api/fields | Petani (milik sendiri), Petugas/Admin (semua) |
 | POST | /api/fields | Petani |
 | GET | /api/fields/:id | Terautentikasi (petani hanya miliknya) |
 | GET | /api/photos | Petani |
@@ -86,6 +86,8 @@ npm start
 | PATCH | /api/users/:id/status | Admin |
 
 `POST /api/auth/register` hanya menerima role `petani`; akun `petugas` dan `admin` dibuat oleh admin melalui `/api/users`.
+
+`GET /api/fields` bersifat role-aware: petani hanya menerima lahan miliknya, sedangkan petugas/admin menerima seluruh lahan aktif beserta `owner_name`, `owner_phone`, hitungan foto, dan `latest_photo_status`. Mutasi lahan tetap khusus petani.
 
 Admin dapat menonaktifkan atau mengaktifkan akun melalui `PATCH /api/users/:id/status` dengan body `{ "is_active": false }` atau `true`. Akun nonaktif ditolak saat login dan token yang masih aktif langsung tidak berlaku; admin tidak dapat menonaktifkan akun sendiri.
 

@@ -30,6 +30,9 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Endpoint admin `POST /api/incentives/categories` dan `PATCH /api/incentives/categories/:id` untuk menambah kategori serta mengubah nama, persyaratan, dan stok.
 - **Status akun pengguna**: endpoint `PATCH /api/users/:id/status` dan aksi nonaktifkan/aktifkan pada halaman Pengguna; akun nonaktif tidak dapat login dan token aktifnya langsung ditolak.
 - Filter status akun, badge `Nonaktif`, modal konfirmasi status, dan ringkasan jumlah akun nonaktif.
+- Halaman **Data Lahan** (`/data-lahan`) untuk petugas/admin: daftar read-only seluruh lahan aktif, nama/kontak pemilik, tanaman, luas, koordinat, serta hitungan foto terverifikasi/menunggu/ditolak dan status foto terbaru.
+- Pencarian, filter status foto, statistik lahan/luas, dan state loading/error/empty pada halaman Data Lahan.
+- Endpoint `GET /api/fields` kini role-aware: petani melihat lahan miliknya, sedangkan petugas/admin melihat seluruh lahan aktif beserta data pemilik dan ringkasan foto.
 - Menu sidebar dan aksi cepat dashboard untuk Distribusi (petugas/admin) serta Verifikasi Warga (petani).
 
 ### Changed
@@ -53,6 +56,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Halaman Katalog menampilkan aksi dan ringkasan khusus admin tanpa mengubah tampilan petani/petugas.
 - Nama pada navbar ikut diperbarui setelah profil disimpan; avatar/name navbar dan kartu profil sidebar kini menuju `/profil`.
 - Manajemen pengguna kini menampilkan status aktif/nonaktif dan mencegah admin menonaktifkan akun sendiri.
+- Menu **Data Lahan** ditambahkan untuk petugas/admin; mutasi lahan tetap khusus petani pemilik.
 - Lahan nonaktif tidak lagi muncul pada antrean verifikasi komunitas/resmi dan tidak dapat dipakai untuk unggah foto atau klaim baru.
 - Validasi input lahan dipusatkan agar tambah dan ubah lahan memakai aturan yang sama.
 
@@ -66,11 +70,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Docs
 
-- Memperbarui status implementasi, perencanaan (versi 1.9.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, pengelolaan katalog admin, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
+- Memperbarui status implementasi, perencanaan (versi 1.10.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, data lahan petugas/admin, pengelolaan katalog admin, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
 
 ### Rencana
 
-- Daftar lahan untuk petugas/admin.
 - Verifikasi email/WhatsApp pada registrasi, audit log perubahan role dan stok/kategori, serta kebijakan hapus permanen/retensi akun.
 - Unit/integration test backend (ESLint sudah aktif).
 - Pembangunan aplikasi mobile Flutter petani/petugas.

@@ -15,7 +15,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 - Backend API inti **berjalan** dan telah diuji manual (registrasi, login, lahan, unggah foto, verifikasi, insentif, serta pengelolaan katalog oleh admin).
 - Database PostgreSQL lokal **berjalan** di port 5433 dengan skema non-PostGIS.
 - **Landing page publik** tersedia di `/` dengan informasi sistem, alur, fitur, manfaat, katalog, dan FAQ.
-- Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), serta **Profil, Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
+- Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
 - Aplikasi mobile Flutter masih **skeleton**.
 - Lint backend sudah berjalan; test otomatis belum tersedia sehingga CI belum efektif.
 
@@ -31,6 +31,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Manajemen pengguna | ✅ Selesai | Khusus admin: daftar, tambah pengguna, ubah role + profil, nonaktifkan/aktifkan akun | `backend/src/controllers/userController.js` |
 | Proteksi route & menu | ✅ Selesai | Guard login/admin, sidebar dinamis berdasarkan role | `frontend-web/src/components/RouteGuards.jsx`, `Sidebar.jsx` |
 | Pengelolaan lahan | ✅ Selesai | List/tambah/detail/ubah/hapus (soft delete) + integrasi web; hapus diblokir bila ada klaim `diajukan` | `fieldController.js`, `pages/Fields.jsx` |
+| Pemantauan lahan | ✅ Selesai | `GET /api/fields` role-aware; petugas/admin melihat semua lahan aktif beserta pemilik, kontak, dan progres foto | `fieldController.js`, `pages/DataLahan.jsx` |
 | Unggah foto + hash | ✅ Selesai | Multer 5 MB, SHA-256, tolak duplikat, riwayat foto | `photoController.js`, `uploadMiddleware.js` |
 | Geofencing 50 m | ✅ Selesai | Haversine, tolak di server | `geofencingMiddleware.js` |
 | Verifikasi komunitas | ✅ Selesai | Upsert suara per petani/foto + halaman Verifikasi Warga untuk petani | `verificationController.js`, `pages/VerifikasiKomunitas.jsx` |
@@ -42,6 +43,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Layout & navigasi web | ✅ Selesai | Navbar fixed, sidebar, drawer mobile | `frontend-web/src/components/` |
 | Dashboard web | ✅ Selesai | Ringkasan program/personal + aktivitas dari `GET /api/dashboard`; loading, error, dan empty state role-aware | `pages/Dashboard.jsx`, `dashboardController.js` |
 | Halaman Lahan | ✅ Selesai | Terhubung API: daftar, tambah, ubah, hapus, GPS, statistik & progres foto | `pages/Fields.jsx` |
+| Halaman Data Lahan | ✅ Selesai | Khusus petugas/admin, read-only: seluruh lahan aktif, pemilik/kontak, koordinat, filter status, pencarian, dan progres foto | `pages/DataLahan.jsx` |
 | Halaman Unggah Foto | ✅ Selesai | Pilih lahan, GPS, unggah multipart, riwayat & status | `pages/Upload.jsx` |
 | Halaman Verifikasi | ✅ Selesai | Verifikasi resmi petugas: semua status, pencarian, setujui/tolak, thumbnail | `pages/Verifikasi.jsx` |
 | Halaman Verifikasi Warga | ✅ Selesai | Foto pending petani lain, jumlah suara komunitas, ubah suara | `pages/VerifikasiKomunitas.jsx` |
@@ -52,7 +54,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Halaman Login | ✅ Selesai | Terhubung `/api/auth/login`, simpan token, redirect; menampilkan status pendaftaran berhasil | `pages/Login.jsx` |
 | Halaman Profil | ✅ Selesai | Ringkasan akun, ubah nama/kontak sesuai role, ubah password; akses dari navbar & kartu sidebar | `pages/Profil.jsx` |
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter role/status, pencarian, tambah pengguna, ubah role, nonaktifkan/aktifkan akun | `pages/Pengguna.jsx` |
-| Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
+| Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, lahan, data lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
 | Mobile Flutter | ◐ Skeleton | Belum dijalankan/diuji | `frontend-mobile/` |
 | CI (lint + test) | ◐ Sebagian | Workflow ada; ESLint backend sudah berjalan, test otomatis belum | `.github/workflows/ci.yml` |
 
@@ -68,7 +70,7 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 4. **Tailwind v4 → v3.4.17.** Kompatibilitas konfigurasi.
 5. **`app.js` → `app.js` + `server.js`.** Entry point listen dipisahkan.
 6. **Profil petugas/petani dilampirkan di `authenticateToken`.** Menghilangkan middleware terpisah dan bug `farmerId`.
-7. **Dashboard dan seluruh modul inti sudah ber-UI.** Ringkasan dashboard memakai API; halaman distribusi, verifikasi warga, profil, registrasi petani, ubah/hapus lahan, serta pengelolaan katalog admin sudah tersedia. Akun petugas/admin dibuat admin melalui menu Pengguna.
+7. **Dashboard dan seluruh modul inti sudah ber-UI.** Ringkasan dashboard memakai API; halaman distribusi, verifikasi warga, profil, registrasi petani, ubah/hapus lahan, data lahan petugas/admin, serta pengelolaan katalog admin sudah tersedia. Akun petugas/admin dibuat admin melalui menu Pengguna.
 8. **Klaim memeriksa foto terbaru lahan.** Belum mempertimbangkan seluruh riwayat.
 9. **Ambang verifikasi komunitas belum otomatis.** Status akhir ditentukan petugas.
 10. **CI belum lengkap.** ESLint backend sudah berjalan; unit/integration test belum tersedia.
@@ -81,7 +83,6 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 - Registrasi mandiri belum memverifikasi kepemilikan email/WhatsApp dan belum mencocokkan NIK ke Dukcapil; validasi saat ini hanya format 16 digit dan keunikan NIK.
 - Perubahan stok dan kategori belum memiliki audit log khusus; riwayat lengkap hanya terlihat dari data distribusi.
 - Penonaktifan akun bersifat soft status; belum ada endpoint hapus permanen atau kebijakan retensi data akun.
-- `GET /api/fields` hanya tersedia untuk petani; petugas/admin belum memiliki endpoint daftar lahan.
 - Jarak geofencing hanya dikembalikan di respons, tidak disimpan di database.
 - Belum ada pagination, rate limiting, Helmet, dan validasi input menyeluruh.
 - Belum ada unit/integration test; `npm test` baru lulus karena `--passWithNoTests`.
@@ -90,7 +91,7 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 
 ## 5. Langkah Berikutnya (Prioritas)
 
-1. Tambahkan verifikasi email/WhatsApp pada registrasi, audit log perubahan role/stok, daftar lahan untuk petugas/admin, serta kebijakan hapus permanen/retensi akun.
+1. Tambahkan verifikasi email/WhatsApp pada registrasi, audit log perubahan role/stok, serta kebijakan hapus permanen/retensi akun.
 2. Tambahkan unit/integration test backend (registrasi, geofencing, klaim, verifikasi, distribusi, katalog, dashboard, akses role).
 3. Bangun aplikasi Flutter petani/petugas.
 4. Siapkan deployment (object storage, HTTPS, environment produksi, ganti password admin).
@@ -126,3 +127,4 @@ npm run dev
 | 22 Okt 2026 | Registrasi mandiri petani `/register` + validasi API; login menampilkan status berhasil dan email terisi; landing, FAQ, CTA, serta dokumentasi diselaraskan dengan kebijakan registrasi publik khusus petani |
 | 22 Okt 2026 | Pengelolaan katalog admin: tambah kategori, ubah nama/persyaratan, dan perbarui stok melalui `/katalog`; API `POST/PATCH /api/incentives/categories` dengan proteksi role admin dan validasi nama/stok |
 | 22 Okt 2026 | Status akun pengguna: admin dapat menonaktifkan/mengaktifkan akun melalui `/pengguna`; login dan token akun nonaktif langsung ditolak, dengan proteksi akun sendiri |
+| 22 Okt 2026 | Data Lahan untuk petugas/admin: `/data-lahan` read-only dengan pemilik/kontak, koordinat, filter status, pencarian, dan progres foto; `GET /api/fields` menjadi role-aware tanpa membuka mutasi lahan |

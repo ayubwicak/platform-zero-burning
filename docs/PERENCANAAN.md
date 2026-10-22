@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 |---|---|
 | Nama sistem | Platform Insentif Zero Burning |
-| Versi dokumen | 1.9.0 |
+| Versi dokumen | 1.10.0 |
 | Status | Aktif — Fase 3 selesai; lanjut pengujian & fitur pendukung |
 | Terakhir diperbarui | 22 Oktober 2026 |
 | Pemilik | Tim Pengembang |
@@ -86,6 +86,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-17 | Manajemen pengguna & hak akses | ✅ | Khusus admin: daftar, tambah pengguna, ubah role, serta nonaktifkan/aktifkan akun |
 | FR-18 | Proteksi route & menu berdasarkan role | ✅ | Guard route, menu sidebar dinamis, profil navbar |
 | FR-19 | Halaman informasi publik (landing) | ✅ | Hero, masalah/solusi, cara kerja, fitur, manfaat, katalog, FAQ, footer |
+| FR-20 | Pemantauan seluruh lahan aktif oleh petugas/admin | ✅ | Halaman `/data-lahan` read-only: pemilik, kontak, koordinat, dan progres foto; `GET /api/fields` role-aware |
 
 ## 6. Aturan Bisnis
 
@@ -109,6 +110,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | BR-16 | Password 6–72 karakter; email disimpan dalam huruf kecil dan harus unik; NIK wajib 16 digit angka dan unik. |
 | BR-17 | Hanya `admin` yang dapat menambah atau mengubah kategori katalog dan stok; stok tidak boleh negatif, dan perubahan nama/persyaratan tidak mengubah riwayat klaim yang sudah ada. |
 | BR-18 | Penonaktifan akun memakai soft status (`users.is_active = FALSE`). Akun nonaktif tidak dapat login dan token aktifnya langsung ditolak; data serta riwayat tetap tersimpan. Admin tidak dapat menonaktifkan akun sendiri. |
+| BR-19 | Petugas dan admin dapat melihat seluruh lahan aktif beserta nama/kontak pemilik untuk pemantauan. Hanya petani pemilik yang dapat menambah, mengubah, atau menghapus lahan. |
 
 ## 7. Alur Bisnis Utama
 
@@ -210,7 +212,7 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | POST | `/api/users` | Admin | `nama`, `email`, `password`, `role`, `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun dengan role apa pun |
 | PATCH | `/api/users/:id/role` | Admin | `role`, `nik?`, `nip?`, `position?`, `unit?` | Ubah hak akses; profil dibuat bila belum ada |
 | PATCH | `/api/users/:id/status` | Admin | `is_active` (boolean) | Nonaktifkan/aktifkan akun; akun sendiri tidak dapat dinonaktifkan |
-| GET | `/api/fields` | Petani | — | Daftar lahan aktif milik petani + hitungan foto |
+| GET | `/api/fields` | Petani, Petugas, Admin | — | Role-aware: petani melihat miliknya; petugas/admin melihat semua lahan aktif + pemilik, kontak, hitungan foto, dan status foto terbaru |
 | POST | `/api/fields` | Petani | `name`, `area`, `crop_type`, `latitude`, `longitude` | Tambah lahan + validasi input |
 | GET | `/api/fields/:id` | Terautentikasi | — | Detail lahan aktif; petani hanya miliknya |
 | PATCH | `/api/fields/:id` | Petani | `name`, `area`, `crop_type`, `latitude`, `longitude` | Ubah lahan aktif milik sendiri + validasi input |
@@ -377,8 +379,9 @@ Sistem dinyatakan memenuhi rencana inti apabila:
 8. Admin dapat membuat pengguna baru, mengubah role, serta menonaktifkan/mengaktifkan akun; pengguna non-admin ditolak saat mengakses menu maupun endpoint manajemen pengguna.
 9. Halaman informasi publik dapat diakses tanpa login dan menjelaskan alur, fitur, manfaat, serta kebijakan pendaftaran akun.
 10. Admin dapat menambah/mengubah kategori katalog dan stok dengan validasi nama unik serta stok bilangan bulat `>= 0`; petani/petugas tidak dapat mengubah katalog.
+11. Petugas/admin dapat melihat seluruh lahan aktif melalui halaman Data Lahan tanpa dapat menambah, mengubah, atau menghapus lahan petani.
 
-> Status 22 Oktober 2026: butir 1, 6, 8, dan 10 terpenuhi untuk seluruh modul inti, termasuk registrasi petani mandiri, status akun, dashboard, distribusi, verifikasi warga, profil, pengelolaan lahan, dan pengelolaan katalog oleh admin. Akun petugas dan admin tetap dibuat oleh administrator sesuai kebijakan keamanan.
+> Status 22 Oktober 2026: butir 1, 6, 8, 10, dan 11 terpenuhi untuk seluruh modul inti, termasuk registrasi petani mandiri, status akun, dashboard, distribusi, verifikasi warga, profil, pengelolaan lahan, pemantauan lahan oleh petugas/admin, dan pengelolaan katalog oleh admin. Akun petugas dan admin tetap dibuat oleh administrator sesuai kebijakan keamanan.
 
 ## 20. Referensi Dokumen
 
