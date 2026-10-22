@@ -10,7 +10,7 @@ const {
 
 const router = express.Router();
 
-router.get('/', authenticateToken, authorizeRoles('petani'), listFields);
+router.get('/', authenticateToken, authorizeRoles('petani', 'petugas', 'admin'), listFields);
 router.post('/', authenticateToken, authorizeRoles('petani'), createField);
 router.get('/:id', authenticateToken, getField);
 router.patch('/:id', authenticateToken, authorizeRoles('petani'), updateField);

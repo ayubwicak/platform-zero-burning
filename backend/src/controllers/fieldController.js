@@ -9,23 +9,46 @@ function toNumber(value) {
 }
 
 async function listFields(req, res, next) {
+  const isFarmer = req.user.role === 'petani';
   const farmerId = req.user.farmerId;
-  if (!farmerId) {
+
+  if (isFarmer && !farmerId) {
     return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
+  }
+
+  const params = [];
+  let scope = '';
+  if (isFarmer) {
+    scope = 'AND f.farmer_id = $1';
+    params.push(farmerId);
   }
 
   try {
     const result = await pool.query(
       `SELECT f.*,
+              u.nama AS owner_name,
+              fa.phone AS owner_phone,
+              latest.status AS latest_photo_status,
               COUNT(fp.id)::int AS photo_count,
               COUNT(fp.id) FILTER (WHERE fp.status = 'terverifikasi')::int AS verified_photo_count,
+              COUNT(fp.id) FILTER (WHERE fp.status = 'menunggu_verifikasi')::int AS pending_photo_count,
+              COUNT(fp.id) FILTER (WHERE fp.status = 'ditolak')::int AS rejected_photo_count,
               MAX(fp.created_at) AS last_photo_at
        FROM fields f
+       JOIN farmers fa ON fa.id = f.farmer_id
+       JOIN users u ON u.id = fa.id_user
        LEFT JOIN field_photos fp ON fp.field_id = f.id
-       WHERE f.farmer_id = $1 AND f.is_active = TRUE
-       GROUP BY f.id
-       ORDER BY f.created_at DESC`,
-      [farmerId]
+       LEFT JOIN LATERAL (
+         SELECT fp2.status
+         FROM field_photos fp2
+         WHERE fp2.field_id = f.id
+         ORDER BY fp2.created_at DESC, fp2.id DESC
+         LIMIT 1
+       ) latest ON TRUE
+       WHERE f.is_active = TRUE ${scope}
+       GROUP BY f.id, u.nama, fa.phone, latest.status
+       ORDER BY f.created_at DESC, f.id DESC`,
+      params
     );
     res.json({ success: true, data: result.rows });
   } catch (err) {
