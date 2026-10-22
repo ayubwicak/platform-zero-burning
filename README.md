@@ -7,7 +7,7 @@ Sistem pencegahan karhutla berbasis insentif bagi petani dengan verifikasi fotog
 ```
 platform-zero-burning/
 ├── backend/              # API Node.js + Express + PostgreSQL
-├── frontend-web/         # Dashboard Admin (React + Vite + Tailwind)
+├── frontend-web/         # Dashboard Web petani/petugas/admin (React + Vite + Tailwind)
 ├── frontend-mobile/      # Skeleton aplikasi Flutter (petani & petugas)
 ├── database/             # Skema & seed SQL (PostgreSQL, tanpa PostGIS)
 ├── docs/                 # Pedoman sistem (perencanaan, aturan, status)
@@ -77,9 +77,9 @@ Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 - ✅ Backend API inti (auth, lahan, foto, verifikasi, insentif) berjalan.
 - ✅ Database & seed tersedia, termasuk akun admin awal.
 - ✅ Landing page publik, login web, proteksi route, dan manajemen pengguna/hak akses (khusus admin) tersedia.
-- ✅ Halaman Lahan, Unggah Foto, Verifikasi, Klaim, dan Katalog sudah terhubung API.
+- ✅ Halaman Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi sudah terhubung API.
 - ✅ Dashboard sudah terhubung API: ringkasan program/personal dan aktivitas terbaru dari database.
-- ◐ Halaman distribusi insentif dan UI verifikasi komunitas belum tersedia.
+- ◐ UI registrasi mandiri, profil/ubah password, dan pengelolaan katalog admin belum tersedia.
 - ◐ Aplikasi mobile Flutter masih skeleton.
 - ☐ Pengujian otomatis & deployment produksi belum.
 

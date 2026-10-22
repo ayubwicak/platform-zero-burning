@@ -3,8 +3,8 @@
 | Atribut | Nilai |
 |---|---|
 | Nama sistem | Platform Insentif Zero Burning |
-| Versi dokumen | 1.4.1 |
-| Status | Aktif — Fase 3 (Dashboard Web) |
+| Versi dokumen | 1.5.0 |
+| Status | Aktif — Fase 3 selesai; lanjut pengujian & fitur pendukung |
 | Terakhir diperbarui | 22 Oktober 2026 |
 | Pemilik | Tim Pengembang |
 | Dokumen terkait | [ATURAN.md](./ATURAN.md), [STATUS-IMPLEMENTASI.md](./STATUS-IMPLEMENTASI.md), [CHANGELOG.md](./CHANGELOG.md) |
@@ -74,12 +74,12 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-05 | Unggah foto progres lahan | ✅ | API multipart + halaman web, maksimal 5 MB, hanya gambar |
 | FR-06 | Hash SHA-256 berkas foto | ✅ | Disimpan di `field_photos.photo_hash` |
 | FR-07 | Validasi geofencing radius 50 m | ✅ | Ditolak server bila di luar radius |
-| FR-08 | Verifikasi komunitas | ✅ | Satu suara per petani per foto |
+| FR-08 | Verifikasi komunitas | ✅ | API + halaman Verifikasi Warga; satu suara per petani per foto |
 | FR-09 | Verifikasi resmi petugas | ✅ | API + halaman web; menentukan status akhir foto |
 | FR-10 | Katalog kategori insentif | ✅ | Data seed tersedia |
 | FR-11 | Pengajuan klaim insentif | ✅ | Syarat: foto terbaru lahan terverifikasi, stok tersedia, tanpa klaim aktif ganda |
-| FR-12 | Pencatatan distribusi insentif | ✅ | Transaksi + bukti opsional; stok berkurang 1 |
-| FR-13 | Dashboard web admin | ◐ | Ringkasan program/personal + aktivitas sudah terhubung `GET /api/dashboard`; halaman distribusi dan UI verifikasi komunitas belum |
+| FR-12 | Pencatatan distribusi insentif | ✅ | API + halaman distribusi; antrean, bukti opsional, stok berkurang 1 |
+| FR-13 | Dashboard web admin | ✅ | Ringkasan `GET /api/dashboard` + halaman distribusi & verifikasi warga |
 | FR-14 | Notifikasi status | ☐ | Belum direncanakan detail |
 | FR-15 | Audit log aktivitas | ☐ | Belum |
 | FR-16 | Laporan/ekspor data | ☐ | Belum |
@@ -142,7 +142,7 @@ Ajukan klaim insentif (kategori: benih/pupuk/alat)
 Petugas mencatat distribusi + bukti penerimaan
 ```
 
-Catatan implementasi: jumlah suara komunitas sudah dihitung dan dikembalikan API, namun ambang batas otomatis untuk mengubah status foto **belum** diaktifkan. Status akhir saat ini ditentukan oleh verifikasi resmi petugas.
+Catatan implementasi: halaman Verifikasi Warga sudah tersedia dan jumlah suara komunitas dihitung oleh API, namun ambang batas otomatis untuk mengubah status foto **belum** diaktifkan. Status akhir saat ini ditentukan oleh verifikasi resmi petugas.
 
 ## 8. Arsitektur Sistem
 
@@ -169,7 +169,7 @@ Catatan implementasi: jumlah suara komunitas sudah dihitung dan dikembalikan API
 ```
 
 - Monorepo dengan root `package.json` (concurrently) menjalankan backend dan frontend web bersamaan.
-- Frontend web memakai proxy Vite `/api` → `http://localhost:3000`.
+- Frontend web memakai proxy Vite `/api` dan `/uploads` → `http://localhost:3000`.
 - Pada `NODE_ENV=production`, Express menyajikan hasil build `frontend-web/dist`.
 
 ## 9. Model Data
@@ -210,12 +210,15 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | GET | `/api/photos` | Petani | `field_id?` | Daftar 30 foto terbaru milik petani |
 | POST | `/api/photos` | Petani | multipart: `foto`, `field_id`, `latitude`, `longitude`, `taken_at`, `timestamp` | Validasi radius + hash + duplikat |
 | GET | `/api/verifications` | Petugas/Admin | `status?` | Daftar foto semua status + nama petani |
+| GET | `/api/verifications/community` | Petani | — | Foto `menunggu_verifikasi` dari petani lain + jumlah suara + `my_status` |
 | POST | `/api/verifications/community` | Petani | `photo_id`, `status` (`setuju`/`tidak_setuju`), `note` | Upsert suara; foto sendiri ditolak |
 | POST | `/api/verifications/official` | Petugas/Admin | `photo_id`, `status` (`lolos`/`tidak_lolos`), `note` | Validasi status; menentukan status foto |
 | GET | `/api/verifications/pending` | Petugas/Admin | — | Foto menunggu verifikasi |
 | GET | `/api/incentives/categories` | Terautentikasi | — | Katalog insentif + stok |
 | GET | `/api/incentives/claims` | Petani | — | Riwayat klaim + lahan, kategori, distribusi |
+| GET | `/api/incentives/claims/pending` | Petugas/Admin | — | Antrean klaim `diajukan` + petani, lahan, kategori, stok, bukti foto |
 | POST | `/api/incentives/claims` | Petani | `field_id`, `category_id` | Syarat foto terverifikasi, stok > 0, tanpa klaim aktif ganda |
+| GET | `/api/incentives/distributions` | Petugas/Admin | — | 20 distribusi terbaru + total distribusi |
 | POST | `/api/incentives/distributions` | Petugas/Admin | `claim_id`, `receipt_proof?` | Catat distribusi; status klaim + stok diperbarui dalam transaksi |
 | GET | `/uploads/:filename` | Publik | — | Berkas foto statis |
 
@@ -302,7 +305,7 @@ Menghentikan database: `npm run db:stop`. Setelah komputer restart, jalankan `np
 |---|---|---|
 | 1 | Fondasi proyek, monorepo, konfigurasi lingkungan | ✅ Selesai |
 | 2 | Database, autentikasi, API lahan/foto/verifikasi/insentif | ✅ Selesai (inti) |
-| 3 | Landing page + Dashboard web admin (UI/UX + auth + manajemen pengguna) | ◐ Landing page, UI, auth, pengguna, lahan, unggah, verifikasi, klaim, katalog, dan ringkasan dashboard selesai; halaman distribusi & UI verifikasi komunitas belum |
+| 3 | Landing page + Dashboard web admin (UI/UX + auth + manajemen pengguna) | ✅ Selesai |
 | 4 | Aplikasi mobile Flutter petani/petugas | ◐ Skeleton |
 | 5 | Integrasi end-to-end, pengujian, dokumentasi, deployment | ☐ Belum |
 
@@ -318,7 +321,7 @@ Rencana disesuaikan dengan kondisi nyata lingkungan pengembangan. Perubahan ini 
 | A-04 | Tailwind CSS v4 | Tailwind CSS 3.4.17 | Kompatibilitas konfigurasi & PostCSS | Konfigurasi memakai `tailwind.config.js` |
 | A-05 | Entry `app.js` menjalankan server | `app.js` (konfigurasi) + `server.js` (listen) | Pemisahan tanggung jawab | Script `dev`/`start` menunjuk `server.js` |
 | A-06 | Middleware profil terpisah | Profil dilampirkan di `authenticateToken` | Menghindari query ganda & bug `farmerId` | `req.user.farmerId`/`officerId` tersedia |
-| A-07 | Dashboard langsung terhubung API | Ringkasan dashboard memakai `GET /api/dashboard`; halaman distribusi masih stub dan verifikasi komunitas baru tersedia via API | Integrasi bertahap sambil menyelesaikan UI/UX | Sisa pekerjaan: UI distribusi, UI verifikasi komunitas, dan pengelolaan katalog admin |
+| A-07 | Dashboard langsung terhubung API | Ringkasan dashboard memakai `GET /api/dashboard`; halaman distribusi dan verifikasi warga sudah tersedia | Integrasi bertahap selesai | Sisa pekerjaan: UI pendaftaran mandiri, profil, dan pengelolaan katalog admin |
 | A-08 | Klaim divalidasi dari seluruh riwayat verifikasi | Dicek dari foto **terbaru** lahan | Penyederhanaan logika | Perlu pengayaan aturan bila diperlukan |
 | A-09 | Ambang verifikasi komunitas otomatis | Jumlah suara dikembalikan, status belum otomatis | Menunggu definisi ambang | Status akhir ditentukan petugas |
 | A-10 | CI lengkap (lint + test) | Workflow ada, ESLint backend sudah berjalan, test otomatis belum | Prioritas fitur inti | CI belum efektif; perlu test |
@@ -363,7 +366,7 @@ Sistem dinyatakan memenuhi rencana inti apabila:
 8. Admin dapat membuat pengguna baru dan mengubah role; pengguna non-admin ditolak saat mengakses menu maupun endpoint manajemen pengguna.
 9. Halaman informasi publik dapat diakses tanpa login dan menjelaskan alur, fitur, manfaat, serta kebijakan pendaftaran akun.
 
-> Status 22 Oktober 2026: butir 6 belum sepenuhnya terpenuhi. Ringkasan dashboard sudah memakai API, tetapi halaman distribusi dan UI verifikasi komunitas belum tersedia.
+> Status 22 Oktober 2026: butir 6 terpenuhi untuk modul inti (dashboard, distribusi, dan verifikasi warga). UI registrasi mandiri, profil, serta pengelolaan katalog admin masih menjadi pekerjaan lanjutan.
 
 ## 20. Referensi Dokumen
 

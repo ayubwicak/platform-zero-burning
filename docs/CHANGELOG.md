@@ -13,6 +13,12 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Endpoint `GET /api/dashboard` yang mengembalikan ringkasan role-aware: metrik program untuk admin/petugas, metrik personal untuk petani, serta aktivitas terbaru dari database.
 - Integrasi dashboard web dengan API: kartu statistik, KPI banner, aktivitas terkini, dan status kesiapan klaim memakai data nyata; data mock dihapus.
 - Loading skeleton, state error dengan tombol coba lagi, dan empty state aktivitas pada dashboard.
+- Halaman **Distribusi Insentif** untuk petugas/admin: statistik antrean, pencarian, tabel klaim terverifikasi, modal pencatatan distribusi + bukti serah terima, dan riwayat distribusi.
+- Halaman **Verifikasi Warga** untuk petani: kartu foto pending dari petani lain, jumlah suara komunitas, serta aksi setuju/tidak setuju yang dapat diubah.
+- Endpoint `GET /api/incentives/claims/pending` untuk antrean distribusi petugas/admin.
+- Endpoint `GET /api/incentives/distributions` untuk riwayat distribusi terbaru beserta totalnya.
+- Endpoint `GET /api/verifications/community` untuk daftar foto pending petani lain, jumlah suara, dan status suara pengguna.
+- Menu sidebar dan aksi cepat dashboard untuk Distribusi (petugas/admin) serta Verifikasi Warga (petani).
 
 ### Changed
 
@@ -26,10 +32,23 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Menyempurnakan aksesibilitas dan perilaku UI: skip link, kontras, serta penutupan notifikasi via Escape/backdrop.
 - Mengganti angka dampak ilustratif di landing dengan jaminan sistem yang faktual agar tidak bertentangan dengan data dashboard.
 - "Ingat saya" kini menyimpan sesi di `localStorage`, sedangkan sesi tanpa "Ingat saya" disimpan di `sessionStorage`.
+- Menambahkan `min-w-0` pada area konten agar tabel lebar tidak menyebabkan overflow horizontal di halaman mobile.
+- Menyesuaikan kontras label, badge peringatan, tombol aksi, dan teks bantuan pada halaman distribusi/verifikasi komunitas.
+
+### Fixed
+
+- Kolom `community_verifications.status` dan `official_verifications.status` diperlebar dari `VARCHAR(10)` ke `VARCHAR(20)` agar nilai `tidak_setuju` dan `tidak_lolos` dapat disimpan.
+- Path static `/uploads` diperbaiki agar menyajikan berkas dari `backend/uploads`, sehingga foto tidak lagi 404 di UI.
+- `taken_at` foto kini dikirim sebagai objek tanggal agar waktu lokal tersimpan konsisten dan tidak bergeser beberapa jam.
+- Overflow horizontal halaman distribusi pada viewport mobile diperbaiki.
+
+### Docs
+
+- Memperbarui status implementasi, perencanaan (versi 1.5.0), README, dan changelog untuk halaman distribusi serta verifikasi warga.
 
 ### Rencana
 
-- Halaman distribusi insentif dan UI verifikasi komunitas untuk petani.
+- UI registrasi mandiri, profil/ubah password, pengelolaan katalog admin, serta daftar lahan untuk petugas/admin.
 - Endpoint profil, ubah password, update/hapus lahan, serta daftar lahan untuk petugas/admin.
 - Endpoint hapus/nonaktifkan pengguna, audit log perubahan role, dan pengelolaan katalog.
 - Unit/integration test backend (ESLint sudah aktif).

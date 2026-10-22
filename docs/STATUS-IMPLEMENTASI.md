@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 |---|---|
 | Diperbarui | 22 Oktober 2026 |
-| Fase aktif | Fase 3 — Dashboard Web (integrasi ringkasan selesai; lanjut UI distribusi & komunitas) |
+| Fase aktif | Fase 3 selesai; lanjut pengujian & fitur pendukung |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
 Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan yang memengaruhi status modul (wajib dalam PR yang sama).
@@ -15,7 +15,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 - Backend API inti **berjalan** dan telah diuji manual (registrasi, login, lahan, unggah foto, verifikasi, insentif).
 - Database PostgreSQL lokal **berjalan** di port 5433 dengan skema non-PostGIS.
 - **Landing page publik** tersedia di `/` dengan informasi sistem, alur, fitur, manfaat, katalog, dan FAQ.
-- Dashboard web **selesai dari sisi UI/UX dan ringkasannya sudah terhubung API**. Login, proteksi route, manajemen pengguna (khusus admin), serta **Lahan, Unggah Foto, Verifikasi, Klaim, dan Katalog** sudah terhubung ke API. Ringkasan dashboard kini memakai data program/personal dan aktivitas terbaru dari database; halaman distribusi dan UI verifikasi komunitas belum tersedia.
+- Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, proteksi route, manajemen pengguna (khusus admin), serta **Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
 - Aplikasi mobile Flutter masih **skeleton**.
 - Lint backend sudah berjalan; test otomatis belum tersedia sehingga CI belum efektif.
 
@@ -32,22 +32,24 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Pengelolaan lahan | ◐ Sebagian | List/tambah/detail + integrasi web; ubah/hapus belum | `fieldController.js` |
 | Unggah foto + hash | ✅ Selesai | Multer 5 MB, SHA-256, tolak duplikat, riwayat foto | `photoController.js`, `uploadMiddleware.js` |
 | Geofencing 50 m | ✅ Selesai | Haversine, tolak di server | `geofencingMiddleware.js` |
-| Verifikasi komunitas | ✅ Selesai | Upsert suara per petani/foto; UI khusus petani belum ada | `verificationController.js` |
+| Verifikasi komunitas | ✅ Selesai | Upsert suara per petani/foto + halaman Verifikasi Warga untuk petani | `verificationController.js`, `pages/VerifikasiKomunitas.jsx` |
 | Verifikasi petugas | ✅ Selesai | API + UI verifikasi resmi; menentukan status foto | `verificationController.js`, `pages/Verifikasi.jsx` |
 | Katalog insentif | ✅ Selesai | Endpoint kategori + seed; pengelolaan katalog admin belum | `incentiveController.js` |
 | Klaim insentif | ✅ Selesai | Syarat foto terbaru terverifikasi, cek stok, cegah klaim aktif ganda | `incentiveController.js` |
-| Distribusi insentif | ✅ Selesai | API transaksi, status klaim, stok berkurang 1, bukti opsional; UI distribusi belum | `incentiveController.js` |
+| Distribusi insentif | ✅ Selesai | API transaksi + halaman distribusi: antrean, catat penyaluran, riwayat; stok berkurang 1 | `incentiveController.js`, `pages/Distribusi.jsx` |
 | Landing page publik | ✅ Selesai | Hero, cara kerja, fitur, manfaat, katalog, FAQ, CTA, footer | `pages/Landing.jsx` |
 | Layout & navigasi web | ✅ Selesai | Navbar fixed, sidebar, drawer mobile | `frontend-web/src/components/` |
 | Dashboard web | ✅ Selesai | Ringkasan program/personal + aktivitas dari `GET /api/dashboard`; loading, error, dan empty state role-aware | `pages/Dashboard.jsx`, `dashboardController.js` |
 | Halaman Lahan | ✅ Selesai | Terhubung API: daftar, tambah, GPS, statistik & progres foto | `pages/Fields.jsx` |
 | Halaman Unggah Foto | ✅ Selesai | Pilih lahan, GPS, unggah multipart, riwayat & status | `pages/Upload.jsx` |
-| Halaman Verifikasi | ✅ Selesai | Terhubung API: semua status, pencarian, setujui/tolak, thumbnail | `pages/Verifikasi.jsx` |
+| Halaman Verifikasi | ✅ Selesai | Verifikasi resmi petugas: semua status, pencarian, setujui/tolak, thumbnail | `pages/Verifikasi.jsx` |
+| Halaman Verifikasi Warga | ✅ Selesai | Foto pending petani lain, jumlah suara komunitas, ubah suara | `pages/VerifikasiKomunitas.jsx` |
 | Halaman Klaim | ✅ Selesai | Terhubung API: pilih kategori/lahan, validasi verifikasi & stok, stepper, riwayat | `pages/Klaim.jsx` |
 | Halaman Katalog | ✅ Selesai | Terhubung API: kategori, stok, filter, pencarian, tautan klaim | `pages/Katalog.jsx` |
+| Halaman Distribusi | ✅ Selesai | Antrean klaim terverifikasi, catat distribusi + bukti, riwayat terbaru | `pages/Distribusi.jsx` |
 | Halaman Login | ✅ Selesai | Terhubung `/api/auth/login`, simpan token, redirect | `pages/Login.jsx` |
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter, pencarian, tambah pengguna, ubah role | `pages/Pengguna.jsx` |
-| Integrasi web ↔ API | ◐ Sebagian | Login, pengguna, lahan, unggah, verifikasi, klaim, katalog, dan ringkasan dashboard terhubung; halaman distribusi & UI verifikasi komunitas belum | `frontend-web/src/` |
+| Integrasi web ↔ API | ◐ Sebagian | Login, pengguna, lahan, unggah, verifikasi, verifikasi warga, klaim, katalog, distribusi, dan ringkasan dashboard terhubung; UI pendaftaran mandiri, profil, serta pengelolaan katalog admin belum | `frontend-web/src/` |
 | Mobile Flutter | ◐ Skeleton | Belum dijalankan/diuji | `frontend-mobile/` |
 | CI (lint + test) | ◐ Sebagian | Workflow ada; ESLint backend sudah berjalan, test otomatis belum | `.github/workflows/ci.yml` |
 
@@ -63,7 +65,7 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 4. **Tailwind v4 → v3.4.17.** Kompatibilitas konfigurasi.
 5. **`app.js` → `app.js` + `server.js`.** Entry point listen dipisahkan.
 6. **Profil petugas/petani dilampirkan di `authenticateToken`.** Menghilangkan middleware terpisah dan bug `farmerId`.
-7. **Dashboard memakai API, tetapi modul distribusi & komunitas belum ber-UI.** Ringkasan dashboard menampilkan metrik program/personal dan aktivitas dari database; halaman distribusi masih stub dan verifikasi komunitas baru tersedia melalui API.
+7. **Dashboard dan modul inti sudah ber-UI.** Ringkasan dashboard memakai API serta halaman distribusi dan verifikasi warga sudah tersedia; sisa UI pendaftaran mandiri, profil, dan pengelolaan katalog admin.
 8. **Klaim memeriksa foto terbaru lahan.** Belum mempertimbangkan seluruh riwayat.
 9. **Ambang verifikasi komunitas belum otomatis.** Status akhir ditentukan petugas.
 10. **CI belum lengkap.** ESLint backend sudah berjalan; unit/integration test belum tersedia.
@@ -72,9 +74,9 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 
 ## 4. Batasan & Isu Diketahui
 
-- Halaman distribusi insentif masih stub dan belum dirutekan; verifikasi komunitas belum punya UI khusus petani.
+- Belum ada halaman registrasi mandiri; akun petani/petugas dibuat admin melalui menu Pengguna.
+- Belum ada halaman profil/ubah password.
 - Belum ada halaman katalog untuk pengelolaan stok/kategori oleh admin.
-- Belum ada endpoint profil (`/api/auth/me`), ubah password, update/hapus lahan.
 - Belum ada endpoint hapus pengguna; akun nonaktif belum didukung.
 - `GET /api/fields` hanya tersedia untuk petani; petugas/admin belum memiliki endpoint daftar lahan.
 - Jarak geofencing hanya dikembalikan di respons, tidak disimpan di database.
@@ -85,12 +87,11 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 
 ## 5. Langkah Berikutnya (Prioritas)
 
-1. Bangun UI halaman distribusi insentif dan alur verifikasi komunitas untuk petani.
-2. Lengkapi endpoint profil, ubah password, update/hapus lahan, serta daftar lahan untuk petugas/admin.
-3. Tambahkan endpoint hapus/nonaktifkan pengguna, audit log perubahan role, dan pengelolaan katalog.
-4. Tambahkan unit/integration test backend (geofencing, klaim, verifikasi, dashboard, akses role).
-5. Bangun aplikasi Flutter petani/petugas.
-6. Siapkan deployment (object storage, HTTPS, environment produksi, ganti password admin).
+1. Lengkapi UI registrasi mandiri, profil/ubah password, serta update/hapus lahan.
+2. Tambahkan pengelolaan katalog admin, endpoint hapus/nonaktifkan pengguna, audit log perubahan role, dan daftar lahan untuk petugas/admin.
+3. Tambahkan unit/integration test backend (geofencing, klaim, verifikasi, distribusi, dashboard, akses role).
+4. Bangun aplikasi Flutter petani/petugas.
+5. Siapkan deployment (object storage, HTTPS, environment produksi, ganti password admin).
 
 ## 6. Cara Verifikasi Cepat
 
@@ -118,3 +119,4 @@ npm run dev
 | 21 Okt 2026 | Halaman Klaim & Katalog terhubung API; klaim divalidasi (stok, verifikasi lahan, duplikat) dan distribusi mengurangi stok dalam transaksi |
 | 22 Okt 2026 | Dashboard terhubung `GET /api/dashboard`: metrik program untuk admin/petugas, metrik personal untuk petani, aktivitas real dari database, serta state loading/error/empty |
 | 22 Okt 2026 | Penyempurnaan UI/UX landing, login, dashboard, notifikasi, dan aksesibilitas; build web, lint backend, serta pemeriksaan axe dan responsif selesai |
+| 22 Okt 2026 | Halaman Distribusi dan Verifikasi Warga terhubung API; endpoint antrean klaim, riwayat distribusi, dan daftar foto komunitas; perbaikan penyajian `/uploads`, tipe status verifikasi, zona waktu `taken_at`, overflow mobile, dan kontras |
