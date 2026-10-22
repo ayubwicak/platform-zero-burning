@@ -20,7 +20,7 @@ async function communityVerify(req, res, next) {
       `SELECT fp.id
        FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE fp.id = $1 AND f.farmer_id <> $2`,
+       WHERE fp.id = $1 AND f.farmer_id <> $2 AND f.is_active = TRUE`,
       [photo_id, verifierId]
     );
     if (photo.rows.length === 0) {
@@ -55,7 +55,13 @@ async function officialVerify(req, res, next) {
   }
 
   try {
-    const photo = await pool.query('SELECT id FROM field_photos WHERE id = $1', [photo_id]);
+    const photo = await pool.query(
+      `SELECT fp.id
+       FROM field_photos fp
+       JOIN fields f ON fp.field_id = f.id
+       WHERE fp.id = $1 AND f.is_active = TRUE`,
+      [photo_id]
+    );
     if (photo.rows.length === 0) {
       return res.status(404).json({ error: 'Foto tidak ditemukan' });
     }
@@ -87,17 +93,51 @@ async function officialVerify(req, res, next) {
   }
 }
 
+async function listCommunityPhotos(req, res, next) {
+  const verifierId = req.user.farmerId;
+
+  if (!verifierId) {
+    return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT fp.id, fp.photo_url, fp.taken_at, fp.latitude, fp.longitude, fp.status,
+              f.id AS field_id, f.name AS field_name,
+              u.nama AS farmer_name,
+              COUNT(cv.id) FILTER (WHERE cv.status = 'setuju')::int AS setuju_count,
+              COUNT(cv.id) FILTER (WHERE cv.status = 'tidak_setuju')::int AS tidak_setuju_count,
+              MAX(cv.status) FILTER (WHERE cv.verifier_id = $1) AS my_status
+       FROM field_photos fp
+       JOIN fields f ON f.id = fp.field_id
+       JOIN farmers fa ON fa.id = f.farmer_id
+       JOIN users u ON u.id = fa.id_user
+       LEFT JOIN community_verifications cv ON cv.photo_id = fp.id
+       WHERE f.farmer_id <> $1
+         AND f.is_active = TRUE
+         AND fp.status = 'menunggu_verifikasi'
+       GROUP BY fp.id, f.id, f.name, u.nama
+       ORDER BY fp.created_at DESC
+       LIMIT 50`,
+      [verifierId]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listPhotos(req, res, next) {
   const { status } = req.query;
   const params = [];
-  let filter = '';
+  let filter = 'WHERE f.is_active = TRUE';
 
   if (status && status !== 'semua') {
     if (!PHOTO_STATUSES.includes(status)) {
       return res.status(400).json({ error: 'Status verifikasi tidak valid' });
     }
     params.push(status);
-    filter = 'WHERE fp.status = $1';
+    filter += ' AND fp.status = $1';
   }
 
   try {
@@ -123,4 +163,10 @@ async function listPending(req, res, next) {
   return listPhotos(req, res, next);
 }
 
-module.exports = { communityVerify, officialVerify, listPhotos, listPending };
+module.exports = {
+  communityVerify,
+  officialVerify,
+  listCommunityPhotos,
+  listPhotos,
+  listPending,
+};

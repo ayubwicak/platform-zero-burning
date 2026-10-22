@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 const fieldRoutes = require('./routes/fieldRoutes');
 const photoRoutes = require('./routes/photoRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/fields', fieldRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/verifications', verificationRoutes);
@@ -30,7 +32,7 @@ app.use('/api/incentives', incentiveRoutes);
 app.use('/api/users', userRoutes);
 
 // Serve uploaded photos
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {

@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const ROLES = ['petani', 'petugas', 'admin'];
 
 const USER_SELECT = `
-  SELECT u.id, u.nama, u.email, u.role, u.created_at,
+  SELECT u.id, u.nama, u.email, u.role, u.is_active, u.created_at,
          f.nik, f.phone, f.address,
          o.nip, o.position, o.unit
   FROM users u
@@ -163,4 +163,36 @@ async function updateUserRole(req, res, next) {
   }
 }
 
-module.exports = { listUsers, createUser, updateUserRole };
+async function updateUserStatus(req, res, next) {
+  const id = Number(req.params.id);
+  const { is_active: isActive } = req.body || {};
+
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
+  }
+  if (typeof isActive !== 'boolean') {
+    return res.status(400).json({ error: 'Status akun harus berupa boolean' });
+  }
+  if (id === req.user.id) {
+    return res.status(400).json({ error: 'Anda tidak dapat mengubah status akun sendiri' });
+  }
+
+  try {
+    const target = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
+    if (target.rows.length === 0) {
+      return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
+    }
+
+    await pool.query(
+      'UPDATE users SET is_active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [isActive, id]
+    );
+
+    const updated = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
+    res.json({ success: true, data: updated.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listUsers, createUser, updateUserRole, updateUserStatus };

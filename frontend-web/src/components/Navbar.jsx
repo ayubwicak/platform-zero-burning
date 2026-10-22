@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, Bell, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -89,7 +90,10 @@ export default function Navbar({ onToggle }) {
 
           <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
 
-          <div className="flex items-center gap-2">
+          <Link
+            to="/profil"
+            className="flex items-center gap-2 rounded-xl px-1.5 py-1 -m-1.5 transition-colors hover:bg-green-50"
+          >
             <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm">
               {initial}
             </div>
@@ -97,7 +101,8 @@ export default function Navbar({ onToggle }) {
               <p className="text-sm font-semibold text-gray-900">{user?.nama || 'Pengguna'}</p>
               <p className="text-xs text-gray-500">{roleLabels[user?.role] || 'Belum masuk'}</p>
             </div>
-          </div>
+            <span className="sr-only">Buka profil</span>
+          </Link>
         </div>
       </div>
     </header>

@@ -13,7 +13,8 @@ async function authenticateToken(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const result = await pool.query(
-      `SELECT u.id, u.nama, u.email, u.role, f.id AS farmer_id, o.id AS officer_id
+      `SELECT u.id, u.nama, u.email, u.role, u.is_active,
+              f.id AS farmer_id, o.id AS officer_id
        FROM users u
        LEFT JOIN farmers f ON f.id_user = u.id
        LEFT JOIN officers o ON o.id_user = u.id
@@ -22,10 +23,14 @@ async function authenticateToken(req, res, next) {
     );
 
     if (result.rows.length === 0) {
-      return res.status(403).json({ error: 'Akun tidak ditemukan atau sudah tidak aktif' });
+      return res.status(403).json({ error: 'Akun tidak ditemukan' });
     }
 
     const row = result.rows[0];
+    if (!row.is_active) {
+      return res.status(401).json({ error: 'Akun dinonaktifkan. Sesi Anda telah berakhir.' });
+    }
+
     req.user = { id: row.id, nama: row.nama, email: row.email, role: row.role };
     if (row.farmer_id) req.user.farmerId = row.farmer_id;
     if (row.officer_id) req.user.officerId = row.officer_id;

@@ -3,12 +3,14 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
 const {
   communityVerify,
   officialVerify,
+  listCommunityPhotos,
   listPhotos,
   listPending,
 } = require('../controllers/verificationController');
 
 const router = express.Router();
 
+router.get('/community', authenticateToken, authorizeRoles('petani'), listCommunityPhotos);
 router.get('/', authenticateToken, authorizeRoles('petugas', 'admin'), listPhotos);
 router.get('/pending', authenticateToken, authorizeRoles('petugas', 'admin'), listPending);
 router.post('/community', authenticateToken, authorizeRoles('petani'), communityVerify);

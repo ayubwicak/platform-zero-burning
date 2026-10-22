@@ -11,6 +11,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  UserX,
+  UserCheck,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
@@ -108,16 +110,27 @@ function RolePicker({ value, onChange }) {
 }
 
 function ModalShell({ title, subtitle, icon: Icon, onClose, children }) {
+  useEffect(() => {
+    const handleKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl animate-fade-up"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative overflow-hidden bg-gradient-to-br from-green-600 to-emerald-700 p-6 text-white">
+        <div className="relative overflow-hidden bg-gradient-to-br from-green-800 to-emerald-900 p-6 text-white">
           <div className="absolute -top-10 -right-8 w-32 h-32 rounded-full bg-white/10" />
           <div className="relative flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -126,7 +139,7 @@ function ModalShell({ title, subtitle, icon: Icon, onClose, children }) {
               </div>
               <div>
                 <h2 className="text-lg font-bold">{title}</h2>
-                <p className="text-xs text-green-100/90">{subtitle}</p>
+                <p className="text-xs text-green-100">{subtitle}</p>
               </div>
             </div>
             <button
@@ -175,6 +188,11 @@ export default function Pengguna() {
   const [roleError, setRoleError] = useState('');
   const [roleSaving, setRoleSaving] = useState(false);
 
+  const [statusTarget, setStatusTarget] = useState(null);
+  const [statusError, setStatusError] = useState('');
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('semua');
+
   const loadUsers = async () => {
     setLoading(true);
     setLoadError('');
@@ -204,6 +222,8 @@ export default function Pengguna() {
       petani: users.filter((item) => item.role === 'petani').length,
       petugas: users.filter((item) => item.role === 'petugas').length,
       admin: users.filter((item) => item.role === 'admin').length,
+      aktif: users.filter((item) => item.is_active).length,
+      nonaktif: users.filter((item) => !item.is_active).length,
     }),
     [users]
   );
@@ -212,6 +232,9 @@ export default function Pengguna() {
     () =>
       users.filter((item) => {
         const matchRole = filter === 'semua' || item.role === filter;
+        const matchStatus =
+          statusFilter === 'semua' ||
+          (statusFilter === 'aktif' ? item.is_active : !item.is_active);
         const keyword = query.trim().toLowerCase();
         const matchQuery =
           !keyword ||
@@ -219,9 +242,9 @@ export default function Pengguna() {
           item.email.toLowerCase().includes(keyword) ||
           String(item.nik || '').includes(keyword) ||
           String(item.nip || '').includes(keyword);
-        return matchRole && matchQuery;
+        return matchRole && matchStatus && matchQuery;
       }),
-    [users, filter, query]
+    [users, filter, statusFilter, query]
   );
 
   const openCreate = () => {
@@ -304,6 +327,32 @@ export default function Pengguna() {
     }
   };
 
+  const openStatusModal = (target) => {
+    setStatusTarget(target);
+    setStatusError('');
+  };
+
+  const submitStatus = async () => {
+    if (!statusTarget || statusSaving) return;
+    const target = statusTarget;
+    const nextActive = !target.is_active;
+    setStatusSaving(true);
+    setStatusError('');
+
+    try {
+      await api.patch(`/users/${target.id}/status`, { is_active: nextActive });
+      setStatusTarget(null);
+      setNotice(
+        `${target.nama} berhasil ${nextActive ? 'diaktifkan' : 'dinonaktifkan'}.`
+      );
+      await loadUsers();
+    } catch (err) {
+      setStatusError(err.response?.data?.error || 'Gagal mengubah status akun.');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
   const roleUnchanged = roleTarget && selectedRole === roleTarget.role;
   const requiresNik = selectedRole === 'petani' && roleTarget && !roleTarget.nik;
   const requiresNip = selectedRole === 'petugas' && roleTarget && !roleTarget.nip;
@@ -320,13 +369,17 @@ export default function Pengguna() {
       <PageHeader
         eyebrow="Khusus Admin"
         title="Manajemen Pengguna"
-        subtitle="Kelola akun, tentukan role, dan atur hak akses pengguna sistem."
+        subtitle="Kelola akun, tentukan role, dan nonaktifkan akses tanpa menghapus data pengguna."
         action={
-          <div className="flex gap-2">
-            <button onClick={loadUsers} className="btn-secondary" disabled={loading}>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={loadUsers}
+              className="btn-secondary whitespace-nowrap"
+              disabled={loading}
+            >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Segarkan
             </button>
-            <button onClick={openCreate} className="btn-primary">
+            <button onClick={openCreate} className="btn-primary whitespace-nowrap">
               <Plus className="w-4 h-4" /> Tambah Pengguna
             </button>
           </div>
@@ -345,10 +398,18 @@ export default function Pengguna() {
             </div>
           ))}
         </div>
+        <p className="mt-3 text-xs text-gray-500">
+          {counts.nonaktif > 0
+            ? `${counts.nonaktif} akun nonaktif. Akun nonaktif tidak dapat login, tetapi data dan riwayatnya tetap tersimpan.`
+            : 'Semua akun aktif dan dapat mengakses sistem sesuai role masing-masing.'}
+        </p>
       </PageHeader>
 
       {notice && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 animate-fade-in">
+        <div
+          role="status"
+          className="mt-4 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 animate-fade-in"
+        >
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span className="flex-1">{notice}</span>
           <button onClick={() => setNotice('')} className="text-green-700/70 hover:text-green-900" aria-label="Tutup notifikasi">
@@ -377,14 +438,26 @@ export default function Pengguna() {
           ))}
         </div>
 
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Cari nama, email, NIK, atau NIP..."
-            className="input-field pl-10"
-          />
+        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="input-field w-full sm:w-44"
+            aria-label="Filter status akun"
+          >
+            <option value="semua">Semua status</option>
+            <option value="aktif">Aktif ({counts.aktif})</option>
+            <option value="nonaktif">Nonaktif ({counts.nonaktif})</option>
+          </select>
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Cari nama, email, NIK, atau NIP..."
+              className="input-field pl-10"
+            />
+          </div>
         </div>
       </div>
 
@@ -404,7 +477,7 @@ export default function Pengguna() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px]">
+              <table className="w-full min-w-[900px]">
                 <thead>
                   <tr>
                     <th className="table-header">Pengguna</th>
@@ -431,7 +504,7 @@ export default function Pengguna() {
                               <p className="font-semibold text-gray-900 truncate">
                                 {item.nama}
                                 {isSelf && (
-                                  <span className="ml-2 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500">
+                                  <span className="ml-2 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-700">
                                     Anda
                                   </span>
                                 )}
@@ -441,37 +514,62 @@ export default function Pengguna() {
                           </div>
                         </td>
                         <td className="table-cell">
-                          <span className={`badge ${meta.badge}`}>
-                            <meta.icon className="w-3 h-3" /> {meta.label}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className={`badge ${meta.badge}`}>
+                              <meta.icon className="w-3 h-3" /> {meta.label}
+                            </span>
+                            {!item.is_active && (
+                              <span className="badge badge-danger">Nonaktif</span>
+                            )}
+                          </div>
                         </td>
                         <td className="table-cell">
                           {item.nik && (
                             <p className="text-xs text-gray-700">
-                              <span className="text-gray-400">NIK </span>
+                              <span className="text-gray-500">NIK </span>
                               <span className="font-mono">{item.nik}</span>
                             </p>
                           )}
                           {item.nip && (
                             <p className="text-xs text-gray-700">
-                              <span className="text-gray-400">NIP </span>
+                              <span className="text-gray-500">NIP </span>
                               <span className="font-mono">{item.nip}</span>
                             </p>
                           )}
                           {item.position && <p className="text-[11px] text-gray-500">{item.position}</p>}
-                          {!item.nik && !item.nip && <span className="text-xs text-gray-400">—</span>}
+                          {!item.nik && !item.nip && <span className="text-xs text-gray-500">—</span>}
                         </td>
                         <td className="table-cell text-xs text-gray-500">{formatDate(item.created_at)}</td>
                         <td className="table-cell text-right">
                           {isSelf ? (
-                            <span className="text-[11px] font-semibold text-gray-400">Akun Anda</span>
+                            <span className="text-[11px] font-semibold text-gray-500">Akun Anda</span>
                           ) : (
-                            <button
-                              onClick={() => openRoleModal(item)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-[11px] font-semibold text-green-700 hover:bg-green-100 transition-colors"
-                            >
-                              <UserCog className="w-3.5 h-3.5" /> Atur Akses
-                            </button>
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              <button
+                                onClick={() => openRoleModal(item)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-[11px] font-semibold text-green-700 hover:bg-green-100 transition-colors"
+                              >
+                                <UserCog className="w-3.5 h-3.5" /> Atur Akses
+                              </button>
+                              <button
+                                onClick={() => openStatusModal(item)}
+                                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                                  item.is_active
+                                    ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                                    : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                                }`}
+                              >
+                                {item.is_active ? (
+                                  <>
+                                    <UserX className="w-3.5 h-3.5" /> Nonaktifkan
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="w-3.5 h-3.5" /> Aktifkan
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -721,6 +819,83 @@ export default function Pengguna() {
               </button>
             </div>
           </form>
+        </ModalShell>
+      )}
+
+      {statusTarget && (
+        <ModalShell
+          title={statusTarget.is_active ? 'Nonaktifkan Pengguna' : 'Aktifkan Pengguna'}
+          subtitle={
+            statusTarget.is_active
+              ? 'Cabut akses akun tanpa menghapus data'
+              : 'Pulihkan akses akun ke sistem'
+          }
+          icon={statusTarget.is_active ? UserX : UserCheck}
+          onClose={() => !statusSaving && setStatusTarget(null)}
+        >
+          <div className="space-y-4">
+            <ErrorAlert message={statusError} />
+
+            <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-3">
+              <div
+                className={`w-10 h-10 rounded-full bg-gradient-to-br ${roleMeta[statusTarget.role].avatar} flex items-center justify-center text-white text-xs font-bold`}
+              >
+                {initials(statusTarget.nama)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">{statusTarget.nama}</p>
+                <p className="text-xs text-gray-500 truncate">{statusTarget.email}</p>
+              </div>
+              <span className={`badge ml-auto ${statusTarget.is_active ? 'badge-success' : 'badge-danger'}`}>
+                {statusTarget.is_active ? 'Aktif' : 'Nonaktif'}
+              </span>
+            </div>
+
+            <div
+              className={`flex items-start gap-2 rounded-xl border px-3.5 py-3 text-xs ${
+                statusTarget.is_active
+                  ? 'border-rose-100 bg-rose-50 text-rose-800'
+                  : 'border-green-100 bg-green-50 text-green-800'
+              }`}
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                {statusTarget.is_active
+                  ? 'Pengguna tidak dapat login dan sesi aktifnya langsung ditolak. Data lahan, foto, klaim, dan riwayat distribusi tetap tersimpan.'
+                  : 'Pengguna dapat login kembali dengan password yang sama dan memperoleh akses sesuai role yang tersimpan.'}
+              </span>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setStatusTarget(null)}
+                disabled={statusSaving}
+                className="btn-secondary flex-1"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={submitStatus}
+                disabled={statusSaving}
+                className={`${statusTarget.is_active ? 'btn-danger' : 'btn-primary'} flex-1`}
+              >
+                {statusSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : statusTarget.is_active ? (
+                  <UserX className="w-4 h-4" />
+                ) : (
+                  <UserCheck className="w-4 h-4" />
+                )}
+                {statusSaving
+                  ? 'Menyimpan...'
+                  : statusTarget.is_active
+                    ? 'Nonaktifkan'
+                    : 'Aktifkan'}
+              </button>
+            </div>
+          </div>
         </ModalShell>
       )}
     </div>
