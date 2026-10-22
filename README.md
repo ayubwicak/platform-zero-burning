@@ -77,11 +77,11 @@ Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 
 - ✅ Backend API inti (auth, lahan, foto, verifikasi, insentif) berjalan.
 - ✅ Database & seed tersedia, termasuk akun admin awal.
-- ✅ Landing page publik, registrasi petani mandiri, login web, proteksi route, dan manajemen pengguna/hak akses (khusus admin) tersedia.
+- ✅ Landing page publik, registrasi petani mandiri, login web, proteksi route, serta manajemen pengguna/hak akses dan status akun (khusus admin) tersedia.
 - ✅ Halaman Lahan (termasuk ubah/hapus), Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi sudah terhubung API.
 - ✅ Halaman Profil & Keamanan tersedia: ubah nama/kontak sesuai role dan ubah password; akses dari navbar atau kartu profil di sidebar.
 - ✅ Dashboard sudah terhubung API: ringkasan program/personal dan aktivitas terbaru dari database.
-- ◐ Pengelolaan katalog admin (tambah/ubah stok dan kategori) belum tersedia.
+- ✅ Pengelolaan katalog khusus admin: tambah kategori, ubah nama/persyaratan, dan perbarui stok dari halaman `/katalog`.
 - ◐ Aplikasi mobile Flutter masih skeleton.
 - ☐ Pengujian otomatis & deployment produksi belum.
 
@@ -91,16 +91,27 @@ Login sebagai **admin**, lalu buka menu **Pengguna**:
 
 - **Tambah Pengguna** — membuat akun petani (butuh NIK) atau petugas (butuh NIP). Petani juga dapat mendaftar mandiri di `/register`; petugas dan admin hanya dibuat dari menu ini.
 - **Atur Akses** — mengubah role pengguna menjadi petani, petugas, atau admin.
-- Perubahan role langsung berlaku; pengguna perlu login ulang agar menu barunya tampil.
-- Admin tidak dapat mengubah role akunnya sendiri.
+- **Nonaktifkan/Aktifkan** — mencabut atau memulihkan akses akun tanpa menghapus data. Akun nonaktif tidak dapat login dan token aktifnya langsung ditolak.
+- Perubahan role dan status langsung berlaku; pengguna perlu login ulang agar menu barunya tampil.
+- Admin tidak dapat mengubah role atau menonaktifkan akunnya sendiri. Filter status dan badge `Nonaktif` memudahkan pencarian akun.
 
 | Role | Hak akses |
 |---|---|
 | `petani` | Lahan, unggah foto, verifikasi komunitas, klaim insentif |
 | `petugas` | Verifikasi resmi, distribusi insentif |
-| `admin` | Semua akses + manajemen pengguna |
+| `admin` | Semua akses + manajemen pengguna + pengelolaan katalog |
 
 Detail: [`docs/STATUS-IMPLEMENTASI.md`](docs/STATUS-IMPLEMENTASI.md).
+
+## Pengelolaan Katalog (Admin)
+
+Login sebagai **admin**, lalu buka menu **Katalog**:
+
+- **Tambah Kategori** — membuat kategori insentif baru dengan nama, stok awal, dan persyaratan opsional.
+- **Kelola Kategori** — mengubah nama, persyaratan, atau stok pada kartu kategori.
+- Nama kategori harus unik (tanpa membedakan huruf besar/kecil); stok harus bilangan bulat `>= 0`.
+- Stok berkurang otomatis saat petugas mencatat distribusi. Perubahan katalog hanya dapat dilakukan admin; petani dan petugas tetap dapat melihat katalog.
+- Endpoint: `POST /api/incentives/categories` dan `PATCH /api/incentives/categories/:id`.
 
 ## Aturan Kontribusi (Ringkas)
 

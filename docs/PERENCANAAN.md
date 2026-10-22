@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 |---|---|
 | Nama sistem | Platform Insentif Zero Burning |
-| Versi dokumen | 1.7.0 |
+| Versi dokumen | 1.9.0 |
 | Status | Aktif — Fase 3 selesai; lanjut pengujian & fitur pendukung |
 | Terakhir diperbarui | 22 Oktober 2026 |
 | Pemilik | Tim Pengembang |
@@ -68,7 +68,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | ID | Kebutuhan | Status | Catatan |
 |---|---|---|---|
 | FR-01 | Registrasi akun petani (mandiri) serta petugas/admin (oleh admin) | ✅ | Halaman `/register` khusus petani + profil otomatis; petugas/admin dibuat melalui menu Pengguna |
-| FR-02 | Login dan penerbitan token JWT | ✅ | Token berlaku 24 jam |
+| FR-02 | Login dan penerbitan token JWT | ✅ | Token berlaku 24 jam; akun nonaktif ditolak saat login dan request dengan token lama |
 | FR-03 | Lihat dan ubah profil pengguna | ✅ | `GET /api/auth/me`, `PATCH /api/auth/profile`, halaman Profil & Keamanan, ubah password |
 | FR-04 | Tambah, lihat, ubah, hapus lahan | ✅ | API + UI tambah/lihat/ubah; hapus memakai soft delete dan diblokir saat ada klaim `diajukan` |
 | FR-05 | Unggah foto progres lahan | ✅ | API multipart + halaman web, maksimal 5 MB, hanya gambar |
@@ -76,14 +76,14 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-07 | Validasi geofencing radius 50 m | ✅ | Ditolak server bila di luar radius |
 | FR-08 | Verifikasi komunitas | ✅ | API + halaman Verifikasi Warga; satu suara per petani per foto |
 | FR-09 | Verifikasi resmi petugas | ✅ | API + halaman web; menentukan status akhir foto |
-| FR-10 | Katalog kategori insentif | ✅ | Data seed tersedia |
+| FR-10 | Katalog kategori insentif | ✅ | Data seed + halaman admin untuk tambah kategori, ubah nama/persyaratan, dan perbarui stok |
 | FR-11 | Pengajuan klaim insentif | ✅ | Syarat: foto terbaru lahan terverifikasi, stok tersedia, tanpa klaim aktif ganda |
 | FR-12 | Pencatatan distribusi insentif | ✅ | API + halaman distribusi; antrean, bukti opsional, stok berkurang 1 |
 | FR-13 | Dashboard web admin | ✅ | Ringkasan `GET /api/dashboard` + halaman distribusi & verifikasi warga |
 | FR-14 | Notifikasi status | ☐ | Belum direncanakan detail |
 | FR-15 | Audit log aktivitas | ☐ | Belum |
 | FR-16 | Laporan/ekspor data | ☐ | Belum |
-| FR-17 | Manajemen pengguna & hak akses | ✅ | Khusus admin: daftar, tambah pengguna, ubah role |
+| FR-17 | Manajemen pengguna & hak akses | ✅ | Khusus admin: daftar, tambah pengguna, ubah role, serta nonaktifkan/aktifkan akun |
 | FR-18 | Proteksi route & menu berdasarkan role | ✅ | Guard route, menu sidebar dinamis, profil navbar |
 | FR-19 | Halaman informasi publik (landing) | ✅ | Hero, masalah/solusi, cara kerja, fitur, manfaat, katalog, FAQ, footer |
 
@@ -107,6 +107,8 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | BR-14 | Admin tidak dapat mengubah role akunnya sendiri untuk mencegah kehilangan akses. |
 | BR-15 | Perubahan role berlaku langsung: setiap request membaca ulang role dari database, bukan hanya dari klaim JWT. |
 | BR-16 | Password 6–72 karakter; email disimpan dalam huruf kecil dan harus unik; NIK wajib 16 digit angka dan unik. |
+| BR-17 | Hanya `admin` yang dapat menambah atau mengubah kategori katalog dan stok; stok tidak boleh negatif, dan perubahan nama/persyaratan tidak mengubah riwayat klaim yang sudah ada. |
+| BR-18 | Penonaktifan akun memakai soft status (`users.is_active = FALSE`). Akun nonaktif tidak dapat login dan token aktifnya langsung ditolak; data serta riwayat tetap tersimpan. Admin tidak dapat menonaktifkan akun sendiri. |
 
 ## 7. Alur Bisnis Utama
 
@@ -178,7 +180,7 @@ Database: `zero_burning` (PostgreSQL 18). Skema ada di `database/schema.sql`, se
 
 | Tabel | Fungsi | Kolom kunci |
 |---|---|---|
-| `users` | Akun semua aktor | `nama`, `email`, `password` (bcrypt), `role` |
+| `users` | Akun semua aktor | `nama`, `email`, `password` (bcrypt), `role`, `is_active` |
 | `farmers` | Profil petani | `id_user`, `nik`, `phone`, `address` |
 | `officers` | Profil petugas | `id_user`, `nip`, `position`, `unit` |
 | `fields` | Lahan petani | `farmer_id`, `name`, `area`, `crop_type`, `latitude`, `longitude`, `is_active` |
@@ -199,14 +201,15 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 |---|---|---|---|---|
 | GET | `/health` | Publik | — | Status layanan |
 | POST | `/api/auth/register` | Publik | `nama`, `email`, `password`, `nik` (16 digit), `role?` (`petani`), `phone?`, `address?` | Membuat akun + profil petani; role selain `petani` ditolak (403); email/NIK duplikat ditolak (400) |
-| POST | `/api/auth/login` | Publik | `email`, `password` | Mengembalikan token + user |
+| POST | `/api/auth/login` | Publik | `email`, `password` | Mengembalikan token + user; akun nonaktif ditolak (403) |
 | GET | `/api/auth/me` | Terautentikasi | — | Profil pengguna + data petani (`nik`, `phone`, `address`) atau petugas (`nip`, `position`, `unit`) |
 | PATCH | `/api/auth/profile` | Terautentikasi | `nama`, `phone?`, `address?` (petani), `position?`, `unit?` (petugas) | Memperbarui nama dan profil role; email/NIK/NIP/role tidak dapat diubah dari endpoint ini |
 | PATCH | `/api/auth/password` | Terautentikasi | `current_password`, `new_password` | Verifikasi password lama; password baru minimal 6 karakter |
 | GET | `/api/dashboard` | Terautentikasi | — | Ringkasan role-aware: metrik program untuk admin/petugas, metrik personal untuk petani, serta aktivitas terbaru untuk admin/petugas |
-| GET | `/api/users` | Admin | — | Daftar pengguna beserta data profil |
+| GET | `/api/users` | Admin | — | Daftar pengguna beserta data profil dan status akun |
 | POST | `/api/users` | Admin | `nama`, `email`, `password`, `role`, `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun dengan role apa pun |
 | PATCH | `/api/users/:id/role` | Admin | `role`, `nik?`, `nip?`, `position?`, `unit?` | Ubah hak akses; profil dibuat bila belum ada |
+| PATCH | `/api/users/:id/status` | Admin | `is_active` (boolean) | Nonaktifkan/aktifkan akun; akun sendiri tidak dapat dinonaktifkan |
 | GET | `/api/fields` | Petani | — | Daftar lahan aktif milik petani + hitungan foto |
 | POST | `/api/fields` | Petani | `name`, `area`, `crop_type`, `latitude`, `longitude` | Tambah lahan + validasi input |
 | GET | `/api/fields/:id` | Terautentikasi | — | Detail lahan aktif; petani hanya miliknya |
@@ -220,6 +223,8 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | POST | `/api/verifications/official` | Petugas/Admin | `photo_id`, `status` (`lolos`/`tidak_lolos`), `note` | Validasi status; menentukan status foto |
 | GET | `/api/verifications/pending` | Petugas/Admin | — | Foto menunggu verifikasi |
 | GET | `/api/incentives/categories` | Terautentikasi | — | Katalog insentif + stok |
+| POST | `/api/incentives/categories` | Admin | `name`, `quantity`, `requirements?` | Menambah kategori katalog; nama harus unik |
+| PATCH | `/api/incentives/categories/:id` | Admin | `name?`, `quantity?`, `requirements?` | Mengubah kategori atau stok; stok bilangan bulat ≥ 0 |
 | GET | `/api/incentives/claims` | Petani | — | Riwayat klaim + lahan, kategori, distribusi |
 | GET | `/api/incentives/claims/pending` | Petugas/Admin | — | Antrean klaim `diajukan` + petani, lahan, kategori, stok, bukti foto |
 | POST | `/api/incentives/claims` | Petani | `field_id`, `category_id` | Syarat foto terverifikasi, stok > 0, tanpa klaim aktif ganda |
@@ -326,7 +331,7 @@ Rencana disesuaikan dengan kondisi nyata lingkungan pengembangan. Perubahan ini 
 | A-04 | Tailwind CSS v4 | Tailwind CSS 3.4.17 | Kompatibilitas konfigurasi & PostCSS | Konfigurasi memakai `tailwind.config.js` |
 | A-05 | Entry `app.js` menjalankan server | `app.js` (konfigurasi) + `server.js` (listen) | Pemisahan tanggung jawab | Script `dev`/`start` menunjuk `server.js` |
 | A-06 | Middleware profil terpisah | Profil dilampirkan di `authenticateToken` | Menghindari query ganda & bug `farmerId` | `req.user.farmerId`/`officerId` tersedia |
-| A-07 | Dashboard langsung terhubung API | Ringkasan dashboard memakai `GET /api/dashboard`; halaman distribusi, verifikasi warga, profil, registrasi petani, dan pengelolaan lahan sudah tersedia | Integrasi bertahap selesai | Sisa pekerjaan: pengelolaan katalog admin |
+| A-07 | Dashboard langsung terhubung API | Ringkasan dashboard memakai `GET /api/dashboard`; halaman distribusi, verifikasi warga, profil, registrasi petani, pengelolaan lahan, dan pengelolaan katalog admin sudah tersedia | Integrasi selesai | Seluruh modul web utama terhubung API |
 | A-08 | Klaim divalidasi dari seluruh riwayat verifikasi | Dicek dari foto **terbaru** lahan | Penyederhanaan logika | Perlu pengayaan aturan bila diperlukan |
 | A-09 | Ambang verifikasi komunitas otomatis | Jumlah suara dikembalikan, status belum otomatis | Menunggu definisi ambang | Status akhir ditentukan petugas |
 | A-10 | CI lengkap (lint + test) | Workflow ada, ESLint backend sudah berjalan, test otomatis belum | Prioritas fitur inti | CI belum efektif; perlu test |
@@ -369,10 +374,11 @@ Sistem dinyatakan memenuhi rencana inti apabila:
 5. Petugas/admin dapat mencatat distribusi insentif.
 6. Dashboard web menampilkan seluruh modul dan terhubung ke API (bukan mock).
 7. Dokumen perencanaan, status, dan changelog selalu sinkron dengan implementasi.
-8. Admin dapat membuat pengguna baru dan mengubah role; pengguna non-admin ditolak saat mengakses menu maupun endpoint manajemen pengguna.
+8. Admin dapat membuat pengguna baru, mengubah role, serta menonaktifkan/mengaktifkan akun; pengguna non-admin ditolak saat mengakses menu maupun endpoint manajemen pengguna.
 9. Halaman informasi publik dapat diakses tanpa login dan menjelaskan alur, fitur, manfaat, serta kebijakan pendaftaran akun.
+10. Admin dapat menambah/mengubah kategori katalog dan stok dengan validasi nama unik serta stok bilangan bulat `>= 0`; petani/petugas tidak dapat mengubah katalog.
 
-> Status 22 Oktober 2026: butir 1 dan 6 terpenuhi untuk modul inti (registrasi petani mandiri, dashboard, distribusi, verifikasi warga, profil, dan pengelolaan lahan). Pengelolaan katalog admin masih menjadi pekerjaan lanjutan. Akun petugas dan admin tetap dibuat oleh administrator sesuai kebijakan keamanan.
+> Status 22 Oktober 2026: butir 1, 6, 8, dan 10 terpenuhi untuk seluruh modul inti, termasuk registrasi petani mandiri, status akun, dashboard, distribusi, verifikasi warga, profil, pengelolaan lahan, dan pengelolaan katalog oleh admin. Akun petugas dan admin tetap dibuat oleh administrator sesuai kebijakan keamanan.
 
 ## 20. Referensi Dokumen
 

@@ -26,6 +26,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Endpoint `GET /api/auth/me`, `PATCH /api/auth/profile`, dan `PATCH /api/auth/password`.
 - Endpoint `PATCH /api/fields/:id` dan `DELETE /api/fields/:id`; hapus lahan memakai soft delete dan ditolak bila masih ada klaim `diajukan`.
 - Aksi ubah dan hapus pada kartu lahan beserta modal konfirmasi, state loading, dan notifikasi hasil.
+- Mode admin pada halaman **Katalog**: ringkasan kategori/stok, tombol tambah kategori, modal tambah/kelola, serta notifikasi hasil.
+- Endpoint admin `POST /api/incentives/categories` dan `PATCH /api/incentives/categories/:id` untuk menambah kategori serta mengubah nama, persyaratan, dan stok.
+- **Status akun pengguna**: endpoint `PATCH /api/users/:id/status` dan aksi nonaktifkan/aktifkan pada halaman Pengguna; akun nonaktif tidak dapat login dan token aktifnya langsung ditolak.
+- Filter status akun, badge `Nonaktif`, modal konfirmasi status, dan ringkasan jumlah akun nonaktif.
 - Menu sidebar dan aksi cepat dashboard untuk Distribusi (petugas/admin) serta Verifikasi Warga (petani).
 
 ### Changed
@@ -45,7 +49,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - "Ingat saya" kini menyimpan sesi di `localStorage`, sedangkan sesi tanpa "Ingat saya" disimpan di `sessionStorage`.
 - Menambahkan `min-w-0` pada area konten agar tabel lebar tidak menyebabkan overflow horizontal di halaman mobile.
 - Menyesuaikan kontras label, badge peringatan, tombol aksi, dan teks bantuan pada halaman distribusi/verifikasi komunitas.
+- Meningkatkan kontras chip filter aktif (`.chip-active`) agar teks putih memenuhi rasio aksesibilitas pada latar hijau.
+- Halaman Katalog menampilkan aksi dan ringkasan khusus admin tanpa mengubah tampilan petani/petugas.
 - Nama pada navbar ikut diperbarui setelah profil disimpan; avatar/name navbar dan kartu profil sidebar kini menuju `/profil`.
+- Manajemen pengguna kini menampilkan status aktif/nonaktif dan mencegah admin menonaktifkan akun sendiri.
 - Lahan nonaktif tidak lagi muncul pada antrean verifikasi komunitas/resmi dan tidak dapat dipakai untuk unggah foto atau klaim baru.
 - Validasi input lahan dipusatkan agar tambah dan ubah lahan memakai aturan yang sama.
 
@@ -55,15 +62,16 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Path static `/uploads` diperbaiki agar menyajikan berkas dari `backend/uploads`, sehingga foto tidak lagi 404 di UI.
 - `taken_at` foto kini dikirim sebagai objek tanggal agar waktu lokal tersimpan konsisten dan tidak bergeser beberapa jam.
 - Overflow horizontal halaman distribusi pada viewport mobile diperbaiki.
+- Kontras label NIK/NIP, badge “Anda”, dan teks “Akun Anda” pada halaman Pengguna diperbaiki; modal pengguna kini memakai role dialog, label aksesibel, dan dapat ditutup dengan Escape.
 
 ### Docs
 
-- Memperbarui status implementasi, perencanaan (versi 1.7.0), README, dan changelog untuk registrasi petani mandiri, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
+- Memperbarui status implementasi, perencanaan (versi 1.9.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, pengelolaan katalog admin, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
 
 ### Rencana
 
-- Pengelolaan katalog admin serta daftar lahan untuk petugas/admin.
-- Verifikasi email/WhatsApp pada registrasi, endpoint hapus/nonaktifkan pengguna, dan audit log perubahan role.
+- Daftar lahan untuk petugas/admin.
+- Verifikasi email/WhatsApp pada registrasi, audit log perubahan role dan stok/kategori, serta kebijakan hapus permanen/retensi akun.
 - Unit/integration test backend (ESLint sudah aktif).
 - Pembangunan aplikasi mobile Flutter petani/petugas.
 - Persiapan deployment produksi (object storage, HTTPS, ganti password admin).
