@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profil from './pages/Profil';
 import Fields from './pages/Fields';
+import DataLahan from './pages/DataLahan';
 import Upload from './pages/Upload';
 import Verifikasi from './pages/Verifikasi';
 import VerifikasiKomunitas from './pages/VerifikasiKomunitas';
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/klaim" element={<Klaim />} />
               </Route>
               <Route element={<RequireRoles roles={['petugas', 'admin']} />}>
+                <Route path="/data-lahan" element={<DataLahan />} />
                 <Route path="/verifikasi" element={<Verifikasi />} />
                 <Route path="/distribusi" element={<Distribusi />} />
               </Route>
