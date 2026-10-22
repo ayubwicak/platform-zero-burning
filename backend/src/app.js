@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 const fieldRoutes = require('./routes/fieldRoutes');
 const photoRoutes = require('./routes/photoRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/fields', fieldRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/verifications', verificationRoutes);
