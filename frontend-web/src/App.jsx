@@ -16,6 +16,7 @@ import Distribusi from './pages/Distribusi';
 import Klaim from './pages/Klaim';
 import Katalog from './pages/Katalog';
 import Pengguna from './pages/Pengguna';
+import AuditLog from './pages/AuditLog';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
               </Route>
               <Route element={<RequireAdmin />}>
                 <Route path="/pengguna" element={<Pengguna />} />
+                <Route path="/audit-log" element={<AuditLog />} />
               </Route>
             </Route>
           </Route>
