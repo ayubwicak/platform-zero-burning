@@ -10,7 +10,18 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
-- Jest configuration dengan timeout 15s, maxWorkers 1, dan forceExit
+- Halaman VerifyEmail (`/verify-email`): form OTP 6 digit, tombol resend dengan countdown 60 detik
+- Verifikasi OTP dengan max 5 percobaan, error handling per percobaan
+- Masked email display pada halaman verifikasi
+- Success state dengan auto-redirect ke login setelah 2 detik
+- Update Register flow: redirect ke `/verify-email` setelah sukses register
+- Info box dengan tips cek folder spam/promotions
+- Kolom `email_verified` dan `verified_at` di tabel `users`
+- OTP service utility: generate OTP 6 digit, create/verify/resend OTP dengan ekspirasi
+- Endpoint `POST /api/auth/send-otp` - generate dan kirim OTP ke email user
+- Endpoint `POST /api/auth/verify-email` - verifikasi OTP dan set email_verified = true
+- Endpoint `POST /api/auth/resend-otp` - buat OTP baru dan kirim ulang
+- Mock email sending untuk development (log ke console)
 - Unit tests untuk utility functions: audit log helper, geofencing distance calculation
 - Input validation tests: NIK 16 digit, email format, password length, koordinat validity
 - CSV export escaping tests dan datetime formatting tests

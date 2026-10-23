@@ -106,13 +106,10 @@ export default function Register() {
         address: form.address.trim(),
       });
 
-      navigate('/login', {
+      navigate('/verify-email', {
         replace: true,
         state: {
-          ...(from ? { from } : {}),
-          registered: true,
-          registeredEmail: normalizedEmail,
-          registrationMessage: response.data?.message,
+          email: normalizedEmail,
         },
       });
     } catch (err) {
