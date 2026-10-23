@@ -290,7 +290,7 @@ export default function Landing() {
         Lewati ke konten utama
       </a>
       <header className="sticky top-0 z-50 bg-green-700">
-        <div className="content-wide flex h-16 items-center justify-between px-5 sm:px-8 lg:px-10">
+        <div className="content-wide flex h-16 items-center justify-between px-5 sm:px-8 lg:px-10 xl:px-16">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white">
               <ShieldCheck className="h-5 w-5 text-green-700" />
@@ -393,7 +393,7 @@ export default function Landing() {
           >
             <Sprout className="h-32 w-32 text-green-600" />
           </div>
-          <div className="content-wide relative grid items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-20">
+          <div className="content-wide relative grid items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:px-10 xl:px-16 lg:py-20">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-green-700 shadow-sm ring-1 ring-inset ring-green-100">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
@@ -471,7 +471,7 @@ export default function Landing() {
         </section>
 
         <section className="bg-white pt-4">
-          <div className="content-wide px-5 py-6 sm:px-8 lg:px-10">
+          <div className="content-wide px-5 py-6 sm:px-8 lg:px-10 xl:px-16">
             <div className="rounded-[2rem] bg-gradient-to-br from-green-800 via-green-800 to-green-700 px-6 py-8 shadow-lg shadow-green-900/10 sm:px-10">
               <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
                 {stats.map((stat) => (
@@ -486,7 +486,7 @@ export default function Landing() {
         </section>
 
         <section id="tentang" className="scroll-mt-20 bg-white">
-          <div className="content-wide grid gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-20">
+          <div className="content-wide grid gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:px-10 xl:px-16 lg:py-20">
             <div>
               <SectionLabel>Mengapa Zero Burning</SectionLabel>
               <h2 className="mt-4 max-w-xl text-balance text-3xl font-bold tracking-tight text-gray-900">
@@ -530,7 +530,7 @@ export default function Landing() {
         </section>
 
         <section id="cara-kerja" className="scroll-mt-20 bg-stone-50">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="max-w-2xl">
               <SectionLabel>Cara Kerja</SectionLabel>
               <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-gray-900">
@@ -585,7 +585,7 @@ export default function Landing() {
         </section>
 
         <section className="bg-white">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="max-w-2xl">
               <SectionLabel>Fitur Utama</SectionLabel>
               <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-gray-900">
@@ -611,7 +611,7 @@ export default function Landing() {
         </section>
 
         <section className="bg-white">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="max-w-2xl">
               <SectionLabel>Jaminan Sistem</SectionLabel>
               <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-gray-900">
@@ -639,7 +639,7 @@ export default function Landing() {
         </section>
 
         <section className="bg-stone-50">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="max-w-2xl">
               <SectionLabel>Testimoni</SectionLabel>
               <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-gray-900">
@@ -677,7 +677,7 @@ export default function Landing() {
         </section>
 
         <section id="manfaat" className="scroll-mt-20 bg-green-50/40">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="max-w-2xl">
               <SectionLabel>Manfaat</SectionLabel>
               <h2 className="mt-4 text-balance text-3xl font-bold tracking-tight text-gray-900">
@@ -709,7 +709,7 @@ export default function Landing() {
         </section>
 
         <section id="katalog" className="scroll-mt-20 bg-white">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-xl">
                 <SectionLabel>Katalog Insentif</SectionLabel>
@@ -752,7 +752,7 @@ export default function Landing() {
         </section>
 
         <section id="faq" className="scroll-mt-20 bg-stone-50">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="mx-auto max-w-3xl">
               <div className="text-center">
                 <SectionLabel>FAQ</SectionLabel>
@@ -800,7 +800,7 @@ export default function Landing() {
         </section>
 
         <section className="bg-white">
-          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+          <div className="content-wide px-5 py-16 sm:px-8 lg:px-10 xl:px-16 lg:py-20">
             <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-green-800 to-green-700 px-6 py-14 text-center text-white sm:px-10">
               <div
                 aria-hidden="true"
