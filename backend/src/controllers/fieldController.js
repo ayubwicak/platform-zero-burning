@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { recordAudit } = require('../utils/auditLog');
 
 function toNumber(value) {
   if (value === null || value === undefined) return null;
@@ -108,9 +109,20 @@ async function createField(req, res, next) {
       [farmerId, name, area, cropType, latitude, longitude]
     );
 
+    const field = result.rows[0];
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'create',
+      entityType: 'field',
+      entityId: field.id,
+      summary: `Petani membuat lahan baru "${name}"`,
+      metadata: { name, area, cropType, latitude, longitude },
+    });
+
     res.status(201).json({
       success: true,
-      data: { ...result.rows[0], photo_count: 0, verified_photo_count: 0 },
+      data: { ...field, photo_count: 0, verified_photo_count: 0 },
     });
   } catch (err) {
     next(err);
@@ -178,7 +190,18 @@ async function updateField(req, res, next) {
       [name, area, cropType, latitude, longitude, id, farmerId]
     );
 
-    res.json({ success: true, data: result.rows[0] });
+    const field = result.rows[0];
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'update',
+      entityType: 'field',
+      entityId: id,
+      summary: `Petani mengubah lahan "${name}"`,
+      metadata: { name, area, cropType, latitude, longitude },
+    });
+
+    res.json({ success: true, data: field });
   } catch (err) {
     next(err);
   }
@@ -220,6 +243,15 @@ async function deleteField(req, res, next) {
       'UPDATE fields SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
       [id]
     );
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'delete',
+      entityType: 'field',
+      entityId: id,
+      summary: `Petani menghapus lahan (soft delete)`,
+      metadata: { field_id: id },
+    });
 
     res.json({ success: true, message: 'Lahan berhasil dihapus' });
   } catch (err) {

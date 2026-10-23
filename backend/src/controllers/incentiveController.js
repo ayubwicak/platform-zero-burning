@@ -386,7 +386,18 @@ async function createClaim(req, res, next) {
       [field_id, farmerId, category_id]
     );
 
-    res.status(201).json({ success: true, data: result.rows[0] });
+    const claim = result.rows[0];
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'claim.created',
+      entityType: 'claim',
+      entityId: claim.id,
+      summary: `Petani mengajukan klaim insentif untuk lahan ID ${field_id}`,
+      metadata: { field_id, category_id, claim_id: claim.id },
+    });
+
+    res.status(201).json({ success: true, data: claim });
   } catch (err) {
     next(err);
   }
