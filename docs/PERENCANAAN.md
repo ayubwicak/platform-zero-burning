@@ -209,6 +209,9 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | GET | `/api/auth/me` | Terautentikasi | — | Profil pengguna + data petani (`nik`, `phone`, `address`) atau petugas (`nip`, `position`, `unit`) |
 | PATCH | `/api/auth/profile` | Terautentikasi | `nama`, `phone?`, `address?` (petani), `position?`, `unit?` (petugas) | Memperbarui nama dan profil role; email/NIK/NIP/role tidak dapat diubah dari endpoint ini |
 | PATCH | `/api/auth/password` | Terautentikasi | `current_password`, `new_password` | Verifikasi password lama; password baru minimal 6 karakter |
+| POST | `/api/auth/send-otp` | Publik | `email` | Kirim OTP 6 digit ke email yang belum terverifikasi; berlaku 15 menit |
+| POST | `/api/auth/verify-email` | Publik | `email`, `otp_code` | Verifikasi OTP dan set email_verified = true; max 5 percobaan |
+| POST | `/api/auth/resend-otp` | Publik | `email` | Buat OTP baru dan kirim ulang; reset attempts counter |
 | GET | `/api/dashboard` | Terautentikasi | — | Ringkasan role-aware: metrik program untuk admin/petugas, metrik personal untuk petani, serta aktivitas terbaru untuk admin/petugas |
 | GET | `/api/users` | Admin | — | Daftar pengguna beserta data profil dan status akun |
 | POST | `/api/users` | Admin | `nama`, `email`, `password`, `role`, `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun dengan role apa pun |
