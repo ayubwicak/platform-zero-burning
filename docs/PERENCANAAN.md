@@ -81,8 +81,8 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-12 | Pencatatan distribusi insentif | ✅ | API + halaman distribusi; antrean, bukti opsional, stok berkurang 1 |
 | FR-13 | Dashboard web admin | ✅ | Ringkasan `GET /api/dashboard` + halaman distribusi & verifikasi warga |
 | FR-14 | Notifikasi status | ☐ | Belum direncanakan detail |
-| FR-15 | Audit log aktivitas | ◐ | Audit log administratif (role, status akun, katalog, stok) tersedia; aktivitas lahan/foto/verifikasi/klaim belum dicatat |
-| FR-16 | Laporan/ekspor data | ☐ | Belum |
+| FR-15 | Audit log aktivitas | ✅ | Audit log mencakup perubahan role, status akun, katalog, stok, serta lahan/foto/verifikasi/klaim; endpoint `/api/audit-logs/export` untuk unduh CSV/JSON |
+| FR-16 | Laporan/ekspor data | ◐ | Audit log dapat diekspor (CSV/JSON); laporan progres program belum |
 | FR-17 | Manajemen pengguna & hak akses | ✅ | Khusus admin: daftar, tambah pengguna, ubah role, serta nonaktifkan/aktifkan akun |
 | FR-18 | Proteksi route & menu berdasarkan role | ✅ | Guard route, menu sidebar dinamis, profil navbar |
 | FR-19 | Halaman informasi publik (landing) | ✅ | Hero, masalah/solusi, cara kerja, fitur, manfaat, katalog, FAQ, footer |
@@ -111,7 +111,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | BR-17 | Hanya `admin` yang dapat menambah atau mengubah kategori katalog dan stok; stok tidak boleh negatif, dan perubahan nama/persyaratan tidak mengubah riwayat klaim yang sudah ada. |
 | BR-18 | Penonaktifan akun memakai soft status (`users.is_active = FALSE`). Akun nonaktif tidak dapat login dan token aktifnya langsung ditolak; data serta riwayat tetap tersimpan. Admin tidak dapat menonaktifkan akun sendiri. |
 | BR-19 | Petugas dan admin dapat melihat seluruh lahan aktif beserta nama/kontak pemilik untuk pemantauan. Hanya petani pemilik yang dapat menambah, mengubah, atau menghapus lahan. |
-| BR-20 | Perubahan role, status akun, kategori, dan stok dicatat di `audit_logs` beserta snapshot pelaku, ringkasan, dan metadata. Pengurangan stok akibat distribusi dicatat dalam transaksi yang sama. Audit log hanya dapat dibaca admin. |
+| BR-20 | Perubahan role, status akun, kategori, stok, lahan, foto, verifikasi, dan klaim dicatat di `audit_logs` beserta snapshot pelaku, ringkasan, dan metadata. Pengurangan stok akibat distribusi dicatat dalam transaksi yang sama. Audit log hanya dapat dibaca admin. Export audit log tersedia dalam format CSV dan JSON. |
 
 ## 7. Alur Bisnis Utama
 
@@ -214,7 +214,8 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | POST | `/api/users` | Admin | `nama`, `email`, `password`, `role`, `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun dengan role apa pun |
 | PATCH | `/api/users/:id/role` | Admin | `role`, `nik?`, `nip?`, `position?`, `unit?` | Ubah hak akses; profil dibuat bila belum ada |
 | PATCH | `/api/users/:id/status` | Admin | `is_active` (boolean) | Nonaktifkan/aktifkan akun; akun sendiri tidak dapat dinonaktifkan |
-| GET | `/api/audit-logs` | Admin | `limit?` (default 50, maks. 100), `offset?`, `action?`, `entity_type?`, `q?` | Audit log perubahan role/status/katalog/stok + ringkasan jumlah per kategori |
+| GET | `/api/audit-logs` | Admin | `limit?` (default 50, maks. 100), `offset?`, `action?`, `entity_type?`, `q?` | Audit log perubahan role/status/katalog/stok/lahan/foto/verifikasi/klaim + ringkasan jumlah per kategori |
+| GET | `/api/audit-logs/export` | Admin | `format` (`csv`/`json`), `action?`, `entity_type?`, `q?` | Ekspor audit log ke CSV atau JSON dengan filter |
 | GET | `/api/fields` | Petani, Petugas, Admin | — | Role-aware: petani melihat miliknya; petugas/admin melihat semua lahan aktif + pemilik, kontak, hitungan foto, dan status foto terbaru |
 | POST | `/api/fields` | Petani | `name`, `area`, `crop_type`, `latitude`, `longitude` | Tambah lahan + validasi input |
 | GET | `/api/fields/:id` | Terautentikasi | — | Detail lahan aktif; petani hanya miliknya |

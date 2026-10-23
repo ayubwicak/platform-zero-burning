@@ -10,7 +10,17 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
-- Halaman **Registrasi Petani** (`/register`): formulir nama, email, NIK 16 digit, telepon, alamat, password, dan konfirmasi password dengan validasi klien serta state loading/error.
+- Pencatatan audit log untuk aktivitas operasional: pembuatan/perubahan/penghapusan lahan, unggah foto, verifikasi komunitas dan resmi, serta pembuatan klaim insentif.
+- Endpoint `GET /api/audit-logs/export` untuk mengekspor audit log dalam format CSV atau JSON dengan filter.
+- Tombol **Unduh** pada halaman Audit Log dengan dropdown menu untuk memilih format (CSV/JSON).
+- Helper `convertToCSV()` untuk mengonversi data audit log ke format CSV dengan proper escaping.
+- Metadata lengkap pada setiap pencatatan audit: nama field, koordinat, status foto, kategori klaim, dll.
+
+### Changed
+
+- Halaman **Audit Log** perbarui subtitle untuk mencakup aktivitas operasional (lahan/foto/verifikasi/klaim) selain administratif (role/status/katalog/stok).
+- PERENCANAAN.md: FR-15 ditandai ✅ selesai, FR-16 ditandai ◐ sebagian (audit log export selesai, laporan progres belum).
+- BR-20 diperluas: mencakup pencatatan lahan, foto, verifikasi, dan klaim; export audit log tersedia dalam CSV dan JSON.
 - Registrasi mandiri petani melalui `POST /api/auth/register`: normalisasi email, validasi server, pembuatan profil `farmers`, dan penanganan email/NIK duplikat.
 - Status pendaftaran berhasil pada halaman login beserta email yang otomatis terisi.
 - Tautan “Daftar sebagai petani” pada halaman login, navigasi landing, hero, langkah cara kerja, CTA, dan footer.

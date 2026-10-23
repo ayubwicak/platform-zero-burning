@@ -29,7 +29,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Profil & keamanan akun | ✅ Selesai | `GET /api/auth/me`, ubah nama/kontak profil, ubah password; halaman `/profil` dan nama navbar ikut diperbarui | `authController.js`, `pages/Profil.jsx` |
 | Middleware auth & role | ✅ Selesai | `authenticateToken`, `authorizeRoles`; role dan status aktif dibaca ulang dari DB | `backend/src/middleware/authMiddleware.js` |
 | Manajemen pengguna | ✅ Selesai | Khusus admin: daftar, tambah pengguna, ubah role + profil, nonaktifkan/aktifkan akun | `backend/src/controllers/userController.js` |
-| Audit log admin | ✅ Selesai | Khusus admin: jejak perubahan role, status akun, kategori, dan stok; filter, pencarian, ringkasan, dan pagination API | `auditController.js`, `utils/auditLog.js`, `pages/AuditLog.jsx` |
+| Audit log admin | ✅ Selesai | Jejak perubahan role, status akun, kategori, stok, lahan, foto, verifikasi, klaim; filter, pencarian, ringkasan, pagination API, export CSV/JSON | `auditController.js`, `utils/auditLog.js`, `pages/AuditLog.jsx` |
 | Proteksi route & menu | ✅ Selesai | Guard login/admin, sidebar dinamis berdasarkan role | `frontend-web/src/components/RouteGuards.jsx`, `Sidebar.jsx` |
 | Pengelolaan lahan | ✅ Selesai | List/tambah/detail/ubah/hapus (soft delete) + integrasi web; hapus diblokir bila ada klaim `diajukan` | `fieldController.js`, `pages/Fields.jsx` |
 | Pemantauan lahan | ✅ Selesai | `GET /api/fields` role-aware; petugas/admin melihat semua lahan aktif beserta pemilik, kontak, dan progres foto | `fieldController.js`, `pages/DataLahan.jsx` |
