@@ -51,7 +51,8 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Halaman Klaim | ✅ Selesai | Terhubung API: pilih kategori/lahan, validasi verifikasi & stok, stepper, riwayat | `pages/Klaim.jsx` |
 | Halaman Katalog | ✅ Selesai | Kategori, stok, filter, pencarian, tautan klaim; mode admin untuk tambah/ubah kategori dan stok | `pages/Katalog.jsx` |
 | Halaman Distribusi | ✅ Selesai | Antrean klaim terverifikasi, catat distribusi + bukti, riwayat terbaru | `pages/Distribusi.jsx` |
-| Halaman Registrasi | ✅ Selesai | `/register` khusus petani: validasi NIK 16 digit, konfirmasi password, sukses diarahkan ke login dengan email terisi | `pages/Register.jsx` |
+| Halaman Registrasi | ✅ Selesai | `/register` khusus petani: validasi NIK 16 digit, konfirmasi password, sukses diarahkan ke verifikasi email | `pages/Register.jsx` |
+| Halaman Verifikasi Email | ✅ Selesai | `/verify-email` dengan form OTP 6 digit, resend countdown 60s, max 5 attempts, auto-redirect ke login | `pages/VerifyEmail.jsx` |
 | Halaman Login | ✅ Selesai | Terhubung `/api/auth/login`, simpan token, redirect; menampilkan status pendaftaran berhasil | `pages/Login.jsx` |
 | Halaman Profil | ✅ Selesai | Ringkasan akun, ubah nama/kontak sesuai role, ubah password; akses dari navbar & kartu sidebar | `pages/Profil.jsx` |
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter role/status, pencarian, tambah pengguna, ubah role, nonaktifkan/aktifkan akun | `pages/Pengguna.jsx` |

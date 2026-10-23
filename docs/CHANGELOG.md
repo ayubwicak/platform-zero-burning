@@ -10,7 +10,12 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
-- Tabel `email_verifications` untuk menyimpan OTP dengan expiry 15 menit dan max 5 attempts
+- Halaman VerifyEmail (`/verify-email`): form OTP 6 digit, tombol resend dengan countdown 60 detik
+- Verifikasi OTP dengan max 5 percobaan, error handling per percobaan
+- Masked email display pada halaman verifikasi
+- Success state dengan auto-redirect ke login setelah 2 detik
+- Update Register flow: redirect ke `/verify-email` setelah sukses register
+- Info box dengan tips cek folder spam/promotions
 - Kolom `email_verified` dan `verified_at` di tabel `users`
 - OTP service utility: generate OTP 6 digit, create/verify/resend OTP dengan ekspirasi
 - Endpoint `POST /api/auth/send-otp` - generate dan kirim OTP ke email user
