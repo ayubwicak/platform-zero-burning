@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Penyesuaian untuk database yang dibuat sebelum kolom status akun tersedia
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP;
 
 -- Tabel farmers (data petani)
 CREATE TABLE IF NOT EXISTS farmers (
@@ -125,6 +127,16 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabel email_verifications (kode OTP untuk verifikasi email)
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  otp_code VARCHAR(6) NOT NULL,
+  attempts INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '15 minutes'
+);
+
 -- Index untuk performa query
 CREATE INDEX IF NOT EXISTS idx_fields_farmer_id ON fields(farmer_id);
 CREATE INDEX IF NOT EXISTS idx_field_photos_field_id ON field_photos(field_id);
@@ -134,3 +146,5 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DE
 CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON audit_logs(actor_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_user_id ON email_verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_expires_at ON email_verifications(expires_at);

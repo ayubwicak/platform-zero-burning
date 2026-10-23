@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { createOTP, sendOTPEmail, verifyOTP, resendOTP } = require('../utils/otpService');
 
 const PROFILE_SELECT = `
   SELECT u.id, u.nama, u.email, u.role, u.created_at,
@@ -257,4 +258,116 @@ async function changePassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, getProfile, updateProfile, changePassword };
+async function sendOTPVerification(req, res, next) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email wajib diisi' });
+  }
+
+  try {
+    const user = await pool.query(
+      'SELECT id, nama FROM users WHERE LOWER(email) = $1 AND email_verified = FALSE',
+      [String(email || '').trim().toLowerCase()]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan atau email sudah terverifikasi' });
+    }
+
+    const userId = user.rows[0].id;
+    const otp = await createOTP(userId);
+
+    // Send OTP via email (mock)
+    await sendOTPEmail(email, otp);
+
+    res.json({
+      success: true,
+      message: 'Kode OTP telah dikirim ke email Anda. Berlaku 15 menit.',
+      email_masked: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function verifyEmailWithOTP(req, res, next) {
+  const { email, otp_code } = req.body;
+
+  if (!email || !otp_code) {
+    return res.status(400).json({ error: 'Email dan kode OTP wajib diisi' });
+  }
+
+  try {
+    const user = await pool.query(
+      'SELECT id, nama FROM users WHERE LOWER(email) = $1 AND email_verified = FALSE',
+      [String(email || '').trim().toLowerCase()]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan atau email sudah terverifikasi' });
+    }
+
+    const userId = user.rows[0].id;
+    const result = await verifyOTP(userId, String(otp_code).trim());
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      message: 'Email berhasil diverifikasi. Anda sekarang dapat melakukan login.',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function resendOTPVerification(req, res, next) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email wajib diisi' });
+  }
+
+  try {
+    const user = await pool.query(
+      'SELECT id, nama FROM users WHERE LOWER(email) = $1 AND email_verified = FALSE',
+      [String(email || '').trim().toLowerCase()]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User tidak ditemukan atau email sudah terverifikasi' });
+    }
+
+    const userId = user.rows[0].id;
+    const result = await resendOTP(userId);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Send OTP
+    await sendOTPEmail(email, result.otp);
+
+    res.json({
+      success: true,
+      message: 'Kode OTP baru telah dikirim ke email Anda. Berlaku 15 menit.',
+      email_masked: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  register,
+  login,
+  getProfile,
+  updateProfile,
+  changePassword,
+  sendOTPVerification,
+  verifyEmailWithOTP,
+  resendOTPVerification,
+};
