@@ -1,7 +1,9 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { recordAudit } = require('../utils/auditLog');
 
 const ROLES = ['petani', 'petugas', 'admin'];
+const ROLE_LABELS = { petani: 'Petani', petugas: 'Petugas', admin: 'Admin' };
 
 const USER_SELECT = `
   SELECT u.id, u.nama, u.email, u.role, u.is_active, u.created_at,
@@ -48,12 +50,13 @@ async function createUser(req, res, next) {
     return res.status(400).json({ error: 'NIP wajib diisi untuk role petugas' });
   }
 
+  const normalizedEmail = normalizeEmail(email);
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    const existing = await findByEmail(client, normalizeEmail(email));
+    const existing = await findByEmail(client, normalizedEmail);
     if (existing.rows.length > 0) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Email sudah terdaftar' });
@@ -64,7 +67,7 @@ async function createUser(req, res, next) {
       `INSERT INTO users (nama, email, password, role)
        VALUES ($1, $2, $3, $4)
        RETURNING id, nama, email, role, created_at`,
-      [nama, normalizeEmail(email), hashed, role]
+      [nama, normalizedEmail, hashed, role]
     );
     const userId = userRes.rows[0].id;
 
@@ -79,6 +82,15 @@ async function createUser(req, res, next) {
         [userId, nip, position || null, unit || null]
       );
     }
+
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'user.created',
+      entityType: 'user',
+      entityId: userId,
+      summary: `Membuat akun ${ROLE_LABELS[role]} untuk ${nama} (${normalizedEmail})`,
+      metadata: { nama, email: normalizedEmail, role },
+    });
 
     await client.query('COMMIT');
 
@@ -111,11 +123,15 @@ async function updateUserRole(req, res, next) {
   try {
     await client.query('BEGIN');
 
-    const userRes = await client.query('SELECT id, role FROM users WHERE id = $1 FOR UPDATE', [id]);
+    const userRes = await client.query(
+      'SELECT id, role, nama, email FROM users WHERE id = $1 FOR UPDATE',
+      [id]
+    );
     if (userRes.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     }
+    const target = userRes.rows[0];
 
     if (role === 'petani') {
       const profile = await client.query('SELECT id FROM farmers WHERE id_user = $1', [id]);
@@ -148,6 +164,22 @@ async function updateUserRole(req, res, next) {
       [role, id]
     );
 
+    if (target.role !== role) {
+      await recordAudit(client, {
+        actor: req.user,
+        action: 'user.role_changed',
+        entityType: 'user',
+        entityId: target.id,
+        summary: `Mengubah role ${target.nama}: ${ROLE_LABELS[target.role] || target.role} → ${ROLE_LABELS[role] || role}`,
+        metadata: {
+          target_name: target.nama,
+          target_email: target.email,
+          old_role: target.role,
+          new_role: role,
+        },
+      });
+    }
+
     await client.query('COMMIT');
 
     const updated = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
@@ -177,21 +209,55 @@ async function updateUserStatus(req, res, next) {
     return res.status(400).json({ error: 'Anda tidak dapat mengubah status akun sendiri' });
   }
 
+  const client = await pool.connect();
+
   try {
-    const target = await pool.query('SELECT id FROM users WHERE id = $1', [id]);
-    if (target.rows.length === 0) {
+    await client.query('BEGIN');
+
+    const targetResult = await client.query(
+      'SELECT id, nama, email, is_active FROM users WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (targetResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     }
 
-    await pool.query(
+    const target = targetResult.rows[0];
+    if (target.is_active === isActive) {
+      await client.query('ROLLBACK');
+      const current = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
+      return res.json({ success: true, data: current.rows[0] });
+    }
+
+    await client.query(
       'UPDATE users SET is_active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       [isActive, id]
     );
 
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'user.status_changed',
+      entityType: 'user',
+      entityId: target.id,
+      summary: `${isActive ? 'Mengaktifkan' : 'Menonaktifkan'} akun ${target.nama} (${target.email})`,
+      metadata: {
+        target_name: target.nama,
+        target_email: target.email,
+        old_active: target.is_active,
+        new_active: isActive,
+      },
+    });
+
+    await client.query('COMMIT');
+
     const updated = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
     res.json({ success: true, data: updated.rows[0] });
   } catch (err) {
+    await client.query('ROLLBACK');
     next(err);
+  } finally {
+    client.release();
   }
 }
 

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { recordAudit } = require('../utils/auditLog');
 
 const PHOTO_STATUSES = ['menunggu_verifikasi', 'terverifikasi', 'ditolak'];
 const COMMUNITY_STATUSES = ['setuju', 'tidak_setuju'];
@@ -39,6 +40,15 @@ async function communityVerify(req, res, next) {
       `SELECT COUNT(*) FROM community_verifications WHERE photo_id = $1 AND status = 'setuju'`,
       [photo_id]
     );
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'verify_community',
+      entityType: 'photo',
+      entityId: photo_id,
+      summary: `Petani memberikan verifikasi komunitas: ${status}`,
+      metadata: { photo_id, status, note },
+    });
 
     res.json({ success: true, setujuCount: parseInt(count.rows[0].count, 10) });
   } catch (err) {
@@ -82,6 +92,15 @@ async function officialVerify(req, res, next) {
       'UPDATE field_photos SET status = $1 WHERE id = $2 RETURNING *',
       [newStatus, photo_id]
     );
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'verify_official',
+      entityType: 'photo',
+      entityId: photo_id,
+      summary: `Petugas/Admin melakukan verifikasi resmi foto: ${status} → status foto: ${newStatus}`,
+      metadata: { photo_id, status, note, photo_status: newStatus },
+    });
 
     res.json({
       success: true,

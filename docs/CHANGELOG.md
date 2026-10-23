@@ -10,7 +10,21 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
-- Halaman **Registrasi Petani** (`/register`): formulir nama, email, NIK 16 digit, telepon, alamat, password, dan konfirmasi password dengan validasi klien serta state loading/error.
+- Jest configuration dengan timeout 15s, maxWorkers 1, dan forceExit
+- Unit tests untuk utility functions: audit log helper, geofencing distance calculation
+- Input validation tests: NIK 16 digit, email format, password length, koordinat validity
+- CSV export escaping tests dan datetime formatting tests
+- 9 unit tests passing (geofencing, validasi, format)
+- Endpoint `GET /api/audit-logs/export` untuk mengekspor audit log dalam format CSV atau JSON dengan filter.
+- Tombol **Unduh** pada halaman Audit Log dengan dropdown menu untuk memilih format (CSV/JSON).
+- Helper `convertToCSV()` untuk mengonversi data audit log ke format CSV dengan proper escaping.
+- Metadata lengkap pada setiap pencatatan audit: nama field, koordinat, status foto, kategori klaim, dll.
+
+### Changed
+
+- Halaman **Audit Log** perbarui subtitle untuk mencakup aktivitas operasional (lahan/foto/verifikasi/klaim) selain administratif (role/status/katalog/stok).
+- PERENCANAAN.md: FR-15 ditandai ✅ selesai, FR-16 ditandai ◐ sebagian (audit log export selesai, laporan progres belum).
+- BR-20 diperluas: mencakup pencatatan lahan, foto, verifikasi, dan klaim; export audit log tersedia dalam CSV dan JSON.
 - Registrasi mandiri petani melalui `POST /api/auth/register`: normalisasi email, validasi server, pembuatan profil `farmers`, dan penanganan email/NIK duplikat.
 - Status pendaftaran berhasil pada halaman login beserta email yang otomatis terisi.
 - Tautan “Daftar sebagai petani” pada halaman login, navigasi landing, hero, langkah cara kerja, CTA, dan footer.
@@ -30,6 +44,14 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Endpoint admin `POST /api/incentives/categories` dan `PATCH /api/incentives/categories/:id` untuk menambah kategori serta mengubah nama, persyaratan, dan stok.
 - **Status akun pengguna**: endpoint `PATCH /api/users/:id/status` dan aksi nonaktifkan/aktifkan pada halaman Pengguna; akun nonaktif tidak dapat login dan token aktifnya langsung ditolak.
 - Filter status akun, badge `Nonaktif`, modal konfirmasi status, dan ringkasan jumlah akun nonaktif.
+- Halaman **Data Lahan** (`/data-lahan`) untuk petugas/admin: daftar read-only seluruh lahan aktif, nama/kontak pemilik, tanaman, luas, koordinat, serta hitungan foto terverifikasi/menunggu/ditolak dan status foto terbaru.
+- Pencarian, filter status foto, statistik lahan/luas, dan state loading/error/empty pada halaman Data Lahan.
+- Endpoint `GET /api/fields` kini role-aware: petani melihat lahan miliknya, sedangkan petugas/admin melihat seluruh lahan aktif beserta data pemilik dan ringkasan foto.
+- Halaman **Audit Log** (`/audit-log`) khusus admin: ringkasan aktivitas, riwayat perubahan, pencarian, filter akun/katalog/stok, serta state loading/error/empty.
+- Endpoint `GET /api/audit-logs` untuk membaca audit log dengan filter `action`/`entity_type`/`q`, pagination `limit`/`offset`, dan ringkasan jumlah per kategori.
+- Tabel `audit_logs` beserta index untuk mencatat pelaku, aksi, entitas, ringkasan, metadata, dan waktu kejadian.
+- Pencatatan otomatis pembuatan akun, perubahan role, perubahan status akun, pembuatan/perubahan kategori, serta pengurangan stok akibat distribusi.
+- Menu sidebar **Audit Log** khusus admin dengan proteksi route dan pembatasan endpoint.
 - Menu sidebar dan aksi cepat dashboard untuk Distribusi (petugas/admin) serta Verifikasi Warga (petani).
 
 ### Changed
@@ -53,8 +75,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Halaman Katalog menampilkan aksi dan ringkasan khusus admin tanpa mengubah tampilan petani/petugas.
 - Nama pada navbar ikut diperbarui setelah profil disimpan; avatar/name navbar dan kartu profil sidebar kini menuju `/profil`.
 - Manajemen pengguna kini menampilkan status aktif/nonaktif dan mencegah admin menonaktifkan akun sendiri.
+- Menu **Data Lahan** ditambahkan untuk petugas/admin; mutasi lahan tetap khusus petani pemilik.
 - Lahan nonaktif tidak lagi muncul pada antrean verifikasi komunitas/resmi dan tidak dapat dipakai untuk unggah foto atau klaim baru.
 - Validasi input lahan dipusatkan agar tambah dan ubah lahan memakai aturan yang sama.
+- Perubahan status akun, role, kategori, dan stok kini disimpan bersama audit log dalam transaksi yang sama; kegagalan menulis audit log membatalkan perubahan data.
+- Perubahan role/status/katalog/stok tetap dilakukan dari halaman Pengguna atau Katalog; hasilnya langsung terlihat pada Audit Log tanpa pencatatan manual.
 
 ### Fixed
 
@@ -66,12 +91,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Docs
 
-- Memperbarui status implementasi, perencanaan (versi 1.9.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, pengelolaan katalog admin, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
+- Memperbarui status implementasi, perencanaan (versi 1.11.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, data lahan petugas/admin, pengelolaan katalog admin, audit log administratif, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
 
 ### Rencana
 
-- Daftar lahan untuk petugas/admin.
-- Verifikasi email/WhatsApp pada registrasi, audit log perubahan role dan stok/kategori, serta kebijakan hapus permanen/retensi akun.
+- Verifikasi email/WhatsApp pada registrasi, perluasan audit log ke aktivitas operasional, serta kebijakan hapus permanen/retensi akun dan audit log.
 - Unit/integration test backend (ESLint sudah aktif).
 - Pembangunan aplikasi mobile Flutter petani/petugas.
 - Persiapan deployment produksi (object storage, HTTPS, ganti password admin).

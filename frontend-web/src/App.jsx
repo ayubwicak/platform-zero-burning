@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profil from './pages/Profil';
 import Fields from './pages/Fields';
+import DataLahan from './pages/DataLahan';
 import Upload from './pages/Upload';
 import Verifikasi from './pages/Verifikasi';
 import VerifikasiKomunitas from './pages/VerifikasiKomunitas';
@@ -15,6 +16,7 @@ import Distribusi from './pages/Distribusi';
 import Klaim from './pages/Klaim';
 import Katalog from './pages/Katalog';
 import Pengguna from './pages/Pengguna';
+import AuditLog from './pages/AuditLog';
 
 function App() {
   return (
@@ -36,11 +38,13 @@ function App() {
                 <Route path="/klaim" element={<Klaim />} />
               </Route>
               <Route element={<RequireRoles roles={['petugas', 'admin']} />}>
+                <Route path="/data-lahan" element={<DataLahan />} />
                 <Route path="/verifikasi" element={<Verifikasi />} />
                 <Route path="/distribusi" element={<Distribusi />} />
               </Route>
               <Route element={<RequireAdmin />}>
                 <Route path="/pengguna" element={<Pengguna />} />
+                <Route path="/audit-log" element={<AuditLog />} />
               </Route>
             </Route>
           </Route>

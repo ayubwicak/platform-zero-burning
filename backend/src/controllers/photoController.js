@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const pool = require('../config/db');
+const { recordAudit } = require('../utils/auditLog');
 
 function removeFile(filePath) {
   if (!filePath) return;
@@ -49,10 +50,21 @@ async function uploadPhoto(req, res, next) {
       [field_id, photoUrl, takenAt, latitude, longitude, timestamp || null, photoHash]
     );
 
+    const photo = result.rows[0];
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'upload',
+      entityType: 'photo',
+      entityId: photo.id,
+      summary: `Petani mengunggah foto untuk lahan (field_id: ${field_id})`,
+      metadata: { field_id, photo_url: photoUrl, photo_hash: photoHash },
+    });
+
     res.status(201).json({
       success: true,
       data: {
-        ...result.rows[0],
+        ...photo,
         geofencing_valid: true,
         distance: req.geofencingDistance,
       },

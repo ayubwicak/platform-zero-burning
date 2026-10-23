@@ -111,8 +111,26 @@ CREATE TABLE IF NOT EXISTS incentive_distributions (
   receipt_proof TEXT
 );
 
+-- Tabel audit_logs (jejak perubahan administratif)
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id SERIAL PRIMARY KEY,
+  actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  actor_name VARCHAR(100) NOT NULL,
+  actor_role VARCHAR(20) NOT NULL,
+  action VARCHAR(50) NOT NULL,
+  entity_type VARCHAR(30) NOT NULL,
+  entity_id INTEGER,
+  summary TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index untuk performa query
 CREATE INDEX IF NOT EXISTS idx_fields_farmer_id ON fields(farmer_id);
 CREATE INDEX IF NOT EXISTS idx_field_photos_field_id ON field_photos(field_id);
 CREATE INDEX IF NOT EXISTS idx_community_verifications_photo_id ON community_verifications(photo_id);
 CREATE INDEX IF NOT EXISTS idx_incentive_claims_farmer_id ON incentive_claims(farmer_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_id ON audit_logs(actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);

@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { recordAudit } = require('../utils/auditLog');
 
 const MAX_STOCK = 2147483647;
 
@@ -16,16 +17,37 @@ function parseQuantity(value) {
     : NaN;
 }
 
-async function categoryNameExists(name, excludeId = null) {
+async function categoryNameExists(name, excludeId = null, db = pool) {
   const result = excludeId
-    ? await pool.query(
+    ? await db.query(
         'SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1) AND id <> $2',
         [name, excludeId]
       )
-    : await pool.query('SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1)', [
+    : await db.query('SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1)', [
         name,
       ]);
   return result.rows.length > 0;
+}
+
+function buildCategoryUpdateSummary(before, after) {
+  const changes = [];
+  if (before.name !== after.name) {
+    changes.push(`nama ${before.name} → ${after.name}`);
+  }
+
+  const beforeQuantity = Number(before.quantity) || 0;
+  const afterQuantity = Number(after.quantity) || 0;
+  if (beforeQuantity !== afterQuantity) {
+    changes.push(`stok ${beforeQuantity} → ${afterQuantity}`);
+  }
+
+  if ((before.requirements || '') !== (after.requirements || '')) {
+    changes.push('persyaratan');
+  }
+
+  return changes.length > 0
+    ? `Memperbarui ${changes.join(', ')} — ${after.name}`
+    : `Memperbarui kategori ${after.name}`;
 }
 
 async function listCategories(req, res, next) {
@@ -56,20 +78,44 @@ async function createCategory(req, res, next) {
     return res.status(400).json({ error: 'Persyaratan maksimal 500 karakter' });
   }
 
+  const client = await pool.connect();
+
   try {
-    if (await categoryNameExists(name)) {
+    await client.query('BEGIN');
+
+    if (await categoryNameExists(name, null, client)) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Nama kategori sudah digunakan' });
     }
 
-    const result = await pool.query(
+    const result = await client.query(
       `INSERT INTO incentive_categories (name, quantity, requirements)
        VALUES ($1, $2, $3)
        RETURNING *`,
       [name, quantity, requirements || null]
     );
-    res.status(201).json({ success: true, data: result.rows[0] });
+    const created = result.rows[0];
+
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'category.created',
+      entityType: 'category',
+      entityId: created.id,
+      summary: `Menambahkan kategori ${created.name} dengan stok ${created.quantity}`,
+      metadata: {
+        name: created.name,
+        quantity: created.quantity,
+        requirements: created.requirements,
+      },
+    });
+
+    await client.query('COMMIT');
+    res.status(201).json({ success: true, data: created });
   } catch (err) {
+    await client.query('ROLLBACK');
     next(err);
+  } finally {
+    client.release();
   }
 }
 
@@ -117,16 +163,31 @@ async function updateCategory(req, res, next) {
     return res.status(400).json({ error: 'Tidak ada perubahan yang dikirim' });
   }
 
+  const client = await pool.connect();
+
   try {
+    await client.query('BEGIN');
+
+    const current = await client.query(
+      'SELECT * FROM incentive_categories WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+    if (current.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Kategori insentif tidak ditemukan' });
+    }
+    const before = current.rows[0];
+
     if (Object.prototype.hasOwnProperty.call(body, 'name')) {
       const name = cleanText(body.name);
-      if (await categoryNameExists(name, id)) {
+      if (await categoryNameExists(name, id, client)) {
+        await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Nama kategori sudah digunakan' });
       }
     }
 
     values.push(id);
-    const result = await pool.query(
+    const result = await client.query(
       `UPDATE incentive_categories
        SET ${updates.join(', ')}
        WHERE id = $${values.length}
@@ -135,12 +196,46 @@ async function updateCategory(req, res, next) {
     );
 
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Kategori insentif tidak ditemukan' });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    const after = result.rows[0];
+    const changedFields = [];
+    if (before.name !== after.name) changedFields.push('name');
+    if (Number(before.quantity) !== Number(after.quantity)) changedFields.push('quantity');
+    if ((before.requirements || '') !== (after.requirements || '')) {
+      changedFields.push('requirements');
+    }
+
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'category.updated',
+      entityType: 'category',
+      entityId: after.id,
+      summary: buildCategoryUpdateSummary(before, after),
+      metadata: {
+        changed_fields: changedFields,
+        before: {
+          name: before.name,
+          quantity: before.quantity,
+          requirements: before.requirements,
+        },
+        after: {
+          name: after.name,
+          quantity: after.quantity,
+          requirements: after.requirements,
+        },
+      },
+    });
+
+    await client.query('COMMIT');
+    res.json({ success: true, data: after });
   } catch (err) {
+    await client.query('ROLLBACK');
     next(err);
+  } finally {
+    client.release();
   }
 }
 
@@ -291,7 +386,18 @@ async function createClaim(req, res, next) {
       [field_id, farmerId, category_id]
     );
 
-    res.status(201).json({ success: true, data: result.rows[0] });
+    const claim = result.rows[0];
+
+    await recordAudit(pool, {
+      actor: req.user,
+      action: 'claim.created',
+      entityType: 'claim',
+      entityId: claim.id,
+      summary: `Petani mengajukan klaim insentif untuk lahan ID ${field_id}`,
+      metadata: { field_id, category_id, claim_id: claim.id },
+    });
+
+    res.status(201).json({ success: true, data: claim });
   } catch (err) {
     next(err);
   }
@@ -328,7 +434,7 @@ async function recordDistribution(req, res, next) {
       `UPDATE incentive_categories
        SET quantity = quantity - 1
        WHERE id = $1 AND quantity > 0
-       RETURNING quantity`,
+       RETURNING id, name, quantity`,
       [categoryId]
     );
     if (stock.rows.length === 0) {
@@ -346,6 +452,26 @@ async function recordDistribution(req, res, next) {
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [claim_id, officerId, categoryId, receipt_proof || null]
     );
+
+    const stockAfter = Number(stock.rows[0].quantity);
+    const stockBefore = stockAfter + 1;
+
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'stock.distributed',
+      entityType: 'category',
+      entityId: categoryId,
+      summary: `Mendistribusikan ${stock.rows[0].name}: stok ${stockBefore} → ${stockAfter}`,
+      metadata: {
+        category_id: categoryId,
+        category_name: stock.rows[0].name,
+        stock_before: stockBefore,
+        stock_after: stockAfter,
+        claim_id: Number(claim_id),
+        distribution_id: result.rows[0].id,
+        receipt_proof: Boolean(receipt_proof),
+      },
+    });
 
     await client.query('COMMIT');
 
