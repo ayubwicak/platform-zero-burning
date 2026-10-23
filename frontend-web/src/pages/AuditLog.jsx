@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
+  Download,
   History,
   Loader2,
   Package,
@@ -107,6 +108,7 @@ export default function AuditLog() {
   const [summary, setSummary] = useState({ total: 0, account: 0, catalog: 0, stock: 0 });
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('semua');
@@ -127,6 +129,38 @@ export default function AuditLog() {
       setLoading(false);
     }
   }, []);
+
+  const handleExport = useCallback(async (format) => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (query) params.append('q', query);
+      if (filter !== 'semua') {
+        const entityType = filter === 'akun' ? 'user' : filter === 'katalog' ? 'category' : 'stock';
+        params.append('entity_type', entityType);
+      }
+
+      const response = await api.get(`/audit-logs/export?${params}`, {
+        responseType: format === 'csv' ? 'blob' : 'json',
+      });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `audit-log-${timestamp}.${format}`;
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Gagal mengunduh audit log.');
+    } finally {
+      setExporting(false);
+    }
+  }, [query, filter]);
 
   useEffect(() => {
     load();
@@ -172,9 +206,32 @@ export default function AuditLog() {
         title="Audit Log"
         subtitle="Jejak perubahan role, status akun, katalog, dan stok yang dilakukan administrator."
         action={
-          <button onClick={load} className="btn-secondary whitespace-nowrap" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Segarkan
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={load} className="btn-secondary whitespace-nowrap" disabled={loading || exporting}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Segarkan
+            </button>
+            <div className="relative group">
+              <button className="btn-secondary whitespace-nowrap" disabled={exporting || logs.length === 0}>
+                <Download className="w-4 h-4" /> Unduh
+              </button>
+              <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <button
+                  onClick={() => handleExport('csv')}
+                  disabled={exporting}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg border-b border-gray-100"
+                >
+                  CSV
+                </button>
+                <button
+                  onClick={() => handleExport('json')}
+                  disabled={exporting}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg"
+                >
+                  JSON
+                </button>
+              </div>
+            </div>
+          </div>
         }
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
