@@ -86,10 +86,26 @@ async function register(req, res, next) {
         [userId, nik, phone || null, address || null]
       );
 
+      // Auto-verify email di development mode
+      if (process.env.NODE_ENV === 'development') {
+        await client.query(
+          'UPDATE users SET email_verified = TRUE WHERE id = $1',
+          [userId]
+        );
+      } else {
+        // Production: kirim OTP untuk verifikasi
+        const otp = await createOTP(userId);
+        await sendOTPEmail(email, otp);
+      }
+
       await client.query('COMMIT');
+      
+      const isDevMode = process.env.NODE_ENV === 'development';
       res.status(201).json({
         success: true,
-        message: 'Akun petani berhasil dibuat. Silakan masuk.',
+        message: isDevMode 
+          ? 'Akun petani berhasil dibuat dan terverifikasi. Silakan masuk.'
+          : 'Akun petani berhasil dibuat. Silakan verifikasi email dengan kode OTP yang telah dikirim.',
       });
     } catch (err) {
       await client.query('ROLLBACK');
