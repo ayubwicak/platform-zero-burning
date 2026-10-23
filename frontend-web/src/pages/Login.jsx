@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -64,7 +65,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="h-screen overflow-hidden flex bg-gray-50">
       {/* Panel branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between">
         <div className="absolute -top-24 -left-16 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
@@ -118,16 +119,27 @@ export default function Login() {
       {/* Form login */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
-          {/* Brand mobile */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-md shadow-green-200">
-              <ShieldCheck className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <p className="text-lg font-extrabold text-gray-900 leading-none">Zero Burning</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-green-700 mt-1">
-                Portal Insentif
-              </p>
+          {/* Header dengan link back dan brand */}
+          <div className="flex items-center justify-between mb-8">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 group"
+            >
+              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+              Kembali
+            </Link>
+            
+            {/* Brand mobile */}
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-md shadow-green-200">
+                <ShieldCheck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-gray-900 leading-none">Zero Burning</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-green-700 mt-0.5">
+                  Portal Insentif
+                </p>
+              </div>
             </div>
           </div>
 

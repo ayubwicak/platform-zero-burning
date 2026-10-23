@@ -126,7 +126,7 @@ export default function Register() {
     form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="h-screen overflow-hidden flex bg-gray-50">
       {/* Panel branding */}
       <aside className="hidden lg:flex lg:w-[44%] relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between">
         <div className="absolute -top-24 -left-16 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
@@ -207,11 +207,8 @@ export default function Register() {
               Kembali ke beranda
             </Link>
 
-            <div className="mt-5 mb-6">
-              <div className="icon-tile w-11 h-11 bg-green-50 text-green-700">
-                <UserPlus className="w-5 h-5" />
-              </div>
-              <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-gray-900">
+            <div className="mt-2 mb-6">
+              <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
                 Daftar sebagai petani
               </h1>
               <p className="mt-1 text-sm leading-relaxed text-gray-500">
@@ -294,17 +291,8 @@ export default function Register() {
                       placeholder="16 digit sesuai KTP"
                       value={form.nik}
                       onChange={handleNikChange}
-                      aria-describedby="nik-hint"
                     />
                   </div>
-                  <p
-                    id="nik-hint"
-                    className={`mt-1 text-[11px] ${
-                      form.nik.length === 16 ? 'text-green-600' : 'text-gray-500'
-                    }`}
-                  >
-                    {form.nik.length}/16 digit
-                  </p>
                 </div>
               </div>
 
@@ -457,10 +445,6 @@ export default function Register() {
                 >
                   Masuk di sini
                 </Link>
-              </p>
-              <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11px] leading-relaxed text-gray-500">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-green-500" />
-                Data akun dan profil petani disimpan dengan aman.
               </p>
             </div>
           </div>
