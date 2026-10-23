@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   Mail,
@@ -26,10 +26,20 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
+  const [logoutReason, setLogoutReason] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for logout reason from interceptor
+    const reason = sessionStorage.getItem('zb_logout_reason');
+    if (reason) {
+      setLogoutReason(reason);
+      sessionStorage.removeItem('zb_logout_reason');
+    }
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to={location.state?.from || '/dashboard'} replace />;
@@ -130,6 +140,19 @@ export default function Login() {
                 Masuk untuk mengelola lahan dan insentif.
               </p>
             </div>
+
+            {logoutReason && (
+              <div
+                role="alert"
+                className="mb-5 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-xs text-amber-800"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                <div>
+                  <p className="font-semibold">Sesi berakhir</p>
+                  <p className="mt-0.5 leading-relaxed">{logoutReason}</p>
+                </div>
+              </div>
+            )}
 
             {location.state?.registered && (
               <div
