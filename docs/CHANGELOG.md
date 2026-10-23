@@ -10,7 +10,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
-- Pencatatan audit log untuk aktivitas operasional: pembuatan/perubahan/penghapusan lahan, unggah foto, verifikasi komunitas dan resmi, serta pembuatan klaim insentif.
+- Jest configuration dengan timeout 15s, maxWorkers 1, dan forceExit
+- Unit tests untuk utility functions: audit log helper, geofencing distance calculation
+- Input validation tests: NIK 16 digit, email format, password length, koordinat validity
+- CSV export escaping tests dan datetime formatting tests
+- 9 unit tests passing (geofencing, validasi, format)
 - Endpoint `GET /api/audit-logs/export` untuk mengekspor audit log dalam format CSV atau JSON dengan filter.
 - Tombol **Unduh** pada halaman Audit Log dengan dropdown menu untuk memilih format (CSV/JSON).
 - Helper `convertToCSV()` untuk mengonversi data audit log ke format CSV dengan proper escaping.

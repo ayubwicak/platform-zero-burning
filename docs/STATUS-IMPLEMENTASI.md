@@ -57,7 +57,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter role/status, pencarian, tambah pengguna, ubah role, nonaktifkan/aktifkan akun | `pages/Pengguna.jsx` |
 | Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, audit log, lahan, data lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
 | Mobile Flutter | ◐ Skeleton | Belum dijalankan/diuji | `frontend-mobile/` |
-| CI (lint + test) | ◐ Sebagian | Workflow ada; ESLint backend sudah berjalan, test otomatis belum | `.github/workflows/ci.yml` |
+| CI (lint + test) | ◐ Sebagian | Workflow ada; ESLint backend lulus; 9 unit tests untuk utility functions dan validation tersedia (passing); integration test belum | `.github/workflows/ci.yml`, `backend/jest.config.js`, `backend/__tests__/` |
 
 Catatan metrik dashboard: jumlah lahan terverifikasi mengikuti status foto terbaru lahan (konsisten dengan syarat klaim), sedangkan “Insentif Tersalurkan” adalah jumlah paket distribusi karena skema belum menyimpan nilai uang.
 
