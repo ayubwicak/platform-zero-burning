@@ -9,6 +9,7 @@ const photoRoutes = require('./routes/photoRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
 const incentiveRoutes = require('./routes/incentiveRoutes');
 const userRoutes = require('./routes/userRoutes');
+const auditRoutes = require('./routes/auditRoutes');
 
 const { errorHandler } = require('./middleware/errorMiddleware');
 const path = require('path');
@@ -30,6 +31,7 @@ app.use('/api/photos', photoRoutes);
 app.use('/api/verifications', verificationRoutes);
 app.use('/api/incentives', incentiveRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/audit-logs', auditRoutes);
 
 // Serve uploaded photos
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
