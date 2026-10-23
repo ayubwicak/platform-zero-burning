@@ -486,7 +486,7 @@ export default function Landing() {
         </section>
 
         <section id="tentang" className="scroll-mt-20 bg-white">
-          <div className="grid w-full gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-20">
+          <div className="content-wide grid gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-20">
             <div>
               <SectionLabel>Mengapa Zero Burning</SectionLabel>
               <h2 className="mt-4 max-w-xl text-balance text-3xl font-bold tracking-tight text-gray-900">
