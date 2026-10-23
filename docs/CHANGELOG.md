@@ -33,6 +33,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Halaman **Data Lahan** (`/data-lahan`) untuk petugas/admin: daftar read-only seluruh lahan aktif, nama/kontak pemilik, tanaman, luas, koordinat, serta hitungan foto terverifikasi/menunggu/ditolak dan status foto terbaru.
 - Pencarian, filter status foto, statistik lahan/luas, dan state loading/error/empty pada halaman Data Lahan.
 - Endpoint `GET /api/fields` kini role-aware: petani melihat lahan miliknya, sedangkan petugas/admin melihat seluruh lahan aktif beserta data pemilik dan ringkasan foto.
+- Halaman **Audit Log** (`/audit-log`) khusus admin: ringkasan aktivitas, riwayat perubahan, pencarian, filter akun/katalog/stok, serta state loading/error/empty.
+- Endpoint `GET /api/audit-logs` untuk membaca audit log dengan filter `action`/`entity_type`/`q`, pagination `limit`/`offset`, dan ringkasan jumlah per kategori.
+- Tabel `audit_logs` beserta index untuk mencatat pelaku, aksi, entitas, ringkasan, metadata, dan waktu kejadian.
+- Pencatatan otomatis pembuatan akun, perubahan role, perubahan status akun, pembuatan/perubahan kategori, serta pengurangan stok akibat distribusi.
+- Menu sidebar **Audit Log** khusus admin dengan proteksi route dan pembatasan endpoint.
 - Menu sidebar dan aksi cepat dashboard untuk Distribusi (petugas/admin) serta Verifikasi Warga (petani).
 
 ### Changed
@@ -59,6 +64,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Menu **Data Lahan** ditambahkan untuk petugas/admin; mutasi lahan tetap khusus petani pemilik.
 - Lahan nonaktif tidak lagi muncul pada antrean verifikasi komunitas/resmi dan tidak dapat dipakai untuk unggah foto atau klaim baru.
 - Validasi input lahan dipusatkan agar tambah dan ubah lahan memakai aturan yang sama.
+- Perubahan status akun, role, kategori, dan stok kini disimpan bersama audit log dalam transaksi yang sama; kegagalan menulis audit log membatalkan perubahan data.
+- Perubahan role/status/katalog/stok tetap dilakukan dari halaman Pengguna atau Katalog; hasilnya langsung terlihat pada Audit Log tanpa pencatatan manual.
 
 ### Fixed
 
@@ -70,11 +77,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Docs
 
-- Memperbarui status implementasi, perencanaan (versi 1.10.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, data lahan petugas/admin, pengelolaan katalog admin, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
+- Memperbarui status implementasi, perencanaan (versi 1.11.0), README, README backend, dan changelog untuk registrasi petani mandiri, status akun, data lahan petugas/admin, pengelolaan katalog admin, audit log administratif, halaman distribusi, verifikasi warga, profil, serta ubah/hapus lahan.
 
 ### Rencana
 
-- Verifikasi email/WhatsApp pada registrasi, audit log perubahan role dan stok/kategori, serta kebijakan hapus permanen/retensi akun.
+- Verifikasi email/WhatsApp pada registrasi, perluasan audit log ke aktivitas operasional, serta kebijakan hapus permanen/retensi akun dan audit log.
 - Unit/integration test backend (ESLint sudah aktif).
 - Pembangunan aplikasi mobile Flutter petani/petugas.
 - Persiapan deployment produksi (object storage, HTTPS, ganti password admin).

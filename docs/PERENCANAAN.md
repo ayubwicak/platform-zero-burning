@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 |---|---|
 | Nama sistem | Platform Insentif Zero Burning |
-| Versi dokumen | 1.10.0 |
+| Versi dokumen | 1.11.0 |
 | Status | Aktif — Fase 3 selesai; lanjut pengujian & fitur pendukung |
 | Terakhir diperbarui | 22 Oktober 2026 |
 | Pemilik | Tim Pengembang |
@@ -81,7 +81,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-12 | Pencatatan distribusi insentif | ✅ | API + halaman distribusi; antrean, bukti opsional, stok berkurang 1 |
 | FR-13 | Dashboard web admin | ✅ | Ringkasan `GET /api/dashboard` + halaman distribusi & verifikasi warga |
 | FR-14 | Notifikasi status | ☐ | Belum direncanakan detail |
-| FR-15 | Audit log aktivitas | ☐ | Belum |
+| FR-15 | Audit log aktivitas | ◐ | Audit log administratif (role, status akun, katalog, stok) tersedia; aktivitas lahan/foto/verifikasi/klaim belum dicatat |
 | FR-16 | Laporan/ekspor data | ☐ | Belum |
 | FR-17 | Manajemen pengguna & hak akses | ✅ | Khusus admin: daftar, tambah pengguna, ubah role, serta nonaktifkan/aktifkan akun |
 | FR-18 | Proteksi route & menu berdasarkan role | ✅ | Guard route, menu sidebar dinamis, profil navbar |
@@ -111,6 +111,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | BR-17 | Hanya `admin` yang dapat menambah atau mengubah kategori katalog dan stok; stok tidak boleh negatif, dan perubahan nama/persyaratan tidak mengubah riwayat klaim yang sudah ada. |
 | BR-18 | Penonaktifan akun memakai soft status (`users.is_active = FALSE`). Akun nonaktif tidak dapat login dan token aktifnya langsung ditolak; data serta riwayat tetap tersimpan. Admin tidak dapat menonaktifkan akun sendiri. |
 | BR-19 | Petugas dan admin dapat melihat seluruh lahan aktif beserta nama/kontak pemilik untuk pemantauan. Hanya petani pemilik yang dapat menambah, mengubah, atau menghapus lahan. |
+| BR-20 | Perubahan role, status akun, kategori, dan stok dicatat di `audit_logs` beserta snapshot pelaku, ringkasan, dan metadata. Pengurangan stok akibat distribusi dicatat dalam transaksi yang sama. Audit log hanya dapat dibaca admin. |
 
 ## 7. Alur Bisnis Utama
 
@@ -192,6 +193,7 @@ Database: `zero_burning` (PostgreSQL 18). Skema ada di `database/schema.sql`, se
 | `incentive_categories` | Katalog insentif | `name`, `quantity`, `requirements` |
 | `incentive_claims` | Klaim petani | `field_id`, `farmer_id`, `category_id`, `status` |
 | `incentive_distributions` | Distribusi | `claim_id`, `officer_id`, `category_id`, `receipt_proof` |
+| `audit_logs` | Jejak perubahan administratif | `actor_id`, `actor_name`, `actor_role`, `action`, `entity_type`, `entity_id`, `summary`, `metadata`, `created_at` |
 
 **Catatan penting:** koordinat disimpan sebagai `DECIMAL` biasa (bukan PostGIS). Perhitungan jarak memakai formula Haversine di `geofencingMiddleware.js`.
 
@@ -212,6 +214,7 @@ Base URL: `http://localhost:3000`. Endpoint terproteksi memerlukan header `Autho
 | POST | `/api/users` | Admin | `nama`, `email`, `password`, `role`, `nik`/`nip`, `phone`, `address`/`position`, `unit` | Membuat akun dengan role apa pun |
 | PATCH | `/api/users/:id/role` | Admin | `role`, `nik?`, `nip?`, `position?`, `unit?` | Ubah hak akses; profil dibuat bila belum ada |
 | PATCH | `/api/users/:id/status` | Admin | `is_active` (boolean) | Nonaktifkan/aktifkan akun; akun sendiri tidak dapat dinonaktifkan |
+| GET | `/api/audit-logs` | Admin | `limit?` (default 50, maks. 100), `offset?`, `action?`, `entity_type?`, `q?` | Audit log perubahan role/status/katalog/stok + ringkasan jumlah per kategori |
 | GET | `/api/fields` | Petani, Petugas, Admin | — | Role-aware: petani melihat miliknya; petugas/admin melihat semua lahan aktif + pemilik, kontak, hitungan foto, dan status foto terbaru |
 | POST | `/api/fields` | Petani | `name`, `area`, `crop_type`, `latitude`, `longitude` | Tambah lahan + validasi input |
 | GET | `/api/fields/:id` | Terautentikasi | — | Detail lahan aktif; petani hanya miliknya |
@@ -266,6 +269,7 @@ Format respons sukses: `{ "success": true, "data": ... }`. Format error: `{ "err
 - `JWT_SECRET` hanya di `.env` dan tidak di-commit.
 - Middleware `authenticateToken` memverifikasi token dan melampirkan `farmerId`/`officerId`.
 - `authorizeRoles` membatasi endpoint distribusi & verifikasi resmi.
+- Perubahan role, status akun, katalog, dan stok dicatat ke `audit_logs`; endpoint audit log hanya dapat diakses admin.
 - Geofencing divalidasi di server, bukan hanya di klien.
 - Unggah berkas dibatasi tipe gambar dan ukuran 5 MB.
 - `.env`, `.pgdata`, `uploads/`, dan `node_modules/` diabaikan Git.
@@ -380,8 +384,9 @@ Sistem dinyatakan memenuhi rencana inti apabila:
 9. Halaman informasi publik dapat diakses tanpa login dan menjelaskan alur, fitur, manfaat, serta kebijakan pendaftaran akun.
 10. Admin dapat menambah/mengubah kategori katalog dan stok dengan validasi nama unik serta stok bilangan bulat `>= 0`; petani/petugas tidak dapat mengubah katalog.
 11. Petugas/admin dapat melihat seluruh lahan aktif melalui halaman Data Lahan tanpa dapat menambah, mengubah, atau menghapus lahan petani.
+12. Admin dapat melihat audit log perubahan role, status akun, katalog, dan stok; pengguna non-admin ditolak saat mengakses endpoint maupun halaman audit log.
 
-> Status 22 Oktober 2026: butir 1, 6, 8, 10, dan 11 terpenuhi untuk seluruh modul inti, termasuk registrasi petani mandiri, status akun, dashboard, distribusi, verifikasi warga, profil, pengelolaan lahan, pemantauan lahan oleh petugas/admin, dan pengelolaan katalog oleh admin. Akun petugas dan admin tetap dibuat oleh administrator sesuai kebijakan keamanan.
+> Status 22 Oktober 2026: butir 1, 6, 8, 10, 11, dan 12 terpenuhi untuk seluruh modul inti, termasuk registrasi petani mandiri, status akun, dashboard, distribusi, verifikasi warga, profil, pengelolaan lahan, pemantauan lahan oleh petugas/admin, pengelolaan katalog, dan audit log administratif. Akun petugas dan admin tetap dibuat oleh administrator sesuai kebijakan keamanan.
 
 ## 20. Referensi Dokumen
 

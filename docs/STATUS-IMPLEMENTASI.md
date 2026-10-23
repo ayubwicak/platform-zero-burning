@@ -12,10 +12,10 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 
 ## 1. Ringkasan
 
-- Backend API inti **berjalan** dan telah diuji manual (registrasi, login, lahan, unggah foto, verifikasi, insentif, serta pengelolaan katalog oleh admin).
+- Backend API inti **berjalan** dan telah diuji manual (registrasi, login, lahan, unggah foto, verifikasi, insentif, pengelolaan katalog oleh admin, serta audit log administratif).
 - Database PostgreSQL lokal **berjalan** di port 5433 dengan skema non-PostGIS.
 - **Landing page publik** tersedia di `/` dengan informasi sistem, alur, fitur, manfaat, katalog, dan FAQ.
-- Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
+- Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), audit log (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
 - Aplikasi mobile Flutter masih **skeleton**.
 - Lint backend sudah berjalan; test otomatis belum tersedia sehingga CI belum efektif.
 
@@ -24,11 +24,12 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Modul | Status | Keterangan | Lokasi utama |
 |---|---|---|---|
 | Setup monorepo | ✅ Selesai | `concurrently`, script DB & build | `package.json` |
-| Database & skema | ✅ Selesai | 10 tabel, seed 3 kategori | `database/` |
+| Database & skema | ✅ Selesai | 11 tabel, seed 3 kategori | `database/` |
 | Autentikasi (register/login) | ✅ Selesai | JWT 24 jam, bcrypt, profil otomatis; registrasi publik khusus petani, role petugas/admin ditolak; akun nonaktif tidak dapat login | `backend/src/controllers/authController.js` |
 | Profil & keamanan akun | ✅ Selesai | `GET /api/auth/me`, ubah nama/kontak profil, ubah password; halaman `/profil` dan nama navbar ikut diperbarui | `authController.js`, `pages/Profil.jsx` |
 | Middleware auth & role | ✅ Selesai | `authenticateToken`, `authorizeRoles`; role dan status aktif dibaca ulang dari DB | `backend/src/middleware/authMiddleware.js` |
 | Manajemen pengguna | ✅ Selesai | Khusus admin: daftar, tambah pengguna, ubah role + profil, nonaktifkan/aktifkan akun | `backend/src/controllers/userController.js` |
+| Audit log admin | ✅ Selesai | Khusus admin: jejak perubahan role, status akun, kategori, dan stok; filter, pencarian, ringkasan, dan pagination API | `auditController.js`, `utils/auditLog.js`, `pages/AuditLog.jsx` |
 | Proteksi route & menu | ✅ Selesai | Guard login/admin, sidebar dinamis berdasarkan role | `frontend-web/src/components/RouteGuards.jsx`, `Sidebar.jsx` |
 | Pengelolaan lahan | ✅ Selesai | List/tambah/detail/ubah/hapus (soft delete) + integrasi web; hapus diblokir bila ada klaim `diajukan` | `fieldController.js`, `pages/Fields.jsx` |
 | Pemantauan lahan | ✅ Selesai | `GET /api/fields` role-aware; petugas/admin melihat semua lahan aktif beserta pemilik, kontak, dan progres foto | `fieldController.js`, `pages/DataLahan.jsx` |
@@ -54,7 +55,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Halaman Login | ✅ Selesai | Terhubung `/api/auth/login`, simpan token, redirect; menampilkan status pendaftaran berhasil | `pages/Login.jsx` |
 | Halaman Profil | ✅ Selesai | Ringkasan akun, ubah nama/kontak sesuai role, ubah password; akses dari navbar & kartu sidebar | `pages/Profil.jsx` |
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter role/status, pencarian, tambah pengguna, ubah role, nonaktifkan/aktifkan akun | `pages/Pengguna.jsx` |
-| Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, lahan, data lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
+| Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, audit log, lahan, data lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
 | Mobile Flutter | ◐ Skeleton | Belum dijalankan/diuji | `frontend-mobile/` |
 | CI (lint + test) | ◐ Sebagian | Workflow ada; ESLint backend sudah berjalan, test otomatis belum | `.github/workflows/ci.yml` |
 
@@ -81,18 +82,19 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 ## 4. Batasan & Isu Diketahui
 
 - Registrasi mandiri belum memverifikasi kepemilikan email/WhatsApp dan belum mencocokkan NIK ke Dukcapil; validasi saat ini hanya format 16 digit dan keunikan NIK.
-- Perubahan stok dan kategori belum memiliki audit log khusus; riwayat lengkap hanya terlihat dari data distribusi.
+- Audit log mencakup perubahan role/status akun serta katalog/stok; aktivitas operasional seperti tambah/ubah lahan, unggah foto, verifikasi, dan klaim belum dicatat.
+- Audit log belum memiliki kebijakan retensi atau fitur ekspor.
 - Penonaktifan akun bersifat soft status; belum ada endpoint hapus permanen atau kebijakan retensi data akun.
 - Jarak geofencing hanya dikembalikan di respons, tidak disimpan di database.
-- Belum ada pagination, rate limiting, Helmet, dan validasi input menyeluruh.
+- Pagination baru diterapkan pada audit log; endpoint lain belum memiliki pagination, rate limiting, Helmet, dan validasi input menyeluruh.
 - Belum ada unit/integration test; `npm test` baru lulus karena `--passWithNoTests`.
 - Frontend-mobile belum dijalankan.
 - Akun admin seed masih memakai password awal; wajib diganti sebelum produksi.
 
 ## 5. Langkah Berikutnya (Prioritas)
 
-1. Tambahkan verifikasi email/WhatsApp pada registrasi, audit log perubahan role/stok, serta kebijakan hapus permanen/retensi akun.
-2. Tambahkan unit/integration test backend (registrasi, geofencing, klaim, verifikasi, distribusi, katalog, dashboard, akses role).
+1. Tambahkan verifikasi email/WhatsApp pada registrasi, perluas audit log ke aktivitas operasional, serta tetapkan kebijakan hapus permanen/retensi akun.
+2. Tambahkan unit/integration test backend (registrasi, geofencing, klaim, verifikasi, distribusi, katalog, dashboard, audit log, akses role).
 3. Bangun aplikasi Flutter petani/petugas.
 4. Siapkan deployment (object storage, HTTPS, environment produksi, ganti password admin).
 
@@ -128,3 +130,4 @@ npm run dev
 | 22 Okt 2026 | Pengelolaan katalog admin: tambah kategori, ubah nama/persyaratan, dan perbarui stok melalui `/katalog`; API `POST/PATCH /api/incentives/categories` dengan proteksi role admin dan validasi nama/stok |
 | 22 Okt 2026 | Status akun pengguna: admin dapat menonaktifkan/mengaktifkan akun melalui `/pengguna`; login dan token akun nonaktif langsung ditolak, dengan proteksi akun sendiri |
 | 22 Okt 2026 | Data Lahan untuk petugas/admin: `/data-lahan` read-only dengan pemilik/kontak, koordinat, filter status, pencarian, dan progres foto; `GET /api/fields` menjadi role-aware tanpa membuka mutasi lahan |
+| 22 Okt 2026 | Audit log admin: pencatatan perubahan role/status akun, kategori, dan stok (termasuk distribusi); endpoint `GET /api/audit-logs` dengan filter/pagination dan halaman `/audit-log` read-only |

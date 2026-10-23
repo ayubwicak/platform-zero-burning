@@ -84,6 +84,7 @@ npm start
 | POST | /api/users | Admin |
 | PATCH | /api/users/:id/role | Admin |
 | PATCH | /api/users/:id/status | Admin |
+| GET | /api/audit-logs | Admin |
 
 `POST /api/auth/register` hanya menerima role `petani`; akun `petugas` dan `admin` dibuat oleh admin melalui `/api/users`.
 
@@ -93,7 +94,9 @@ Admin dapat menonaktifkan atau mengaktifkan akun melalui `PATCH /api/users/:id/s
 
 Admin dapat menambah kategori lewat `POST /api/incentives/categories` dan mengubah nama, persyaratan, atau stok lewat `PATCH /api/incentives/categories/:id`. Nama kategori harus unik tanpa membedakan huruf besar/kecil dan stok wajib bilangan bulat `>= 0`.
 
-Pencatatan distribusi berjalan dalam satu transaksi: status klaim menjadi `disetujui` dan stok kategori berkurang 1. `category_id` mengikuti klaim, bukan dikirim ulang oleh klien.
+Perubahan role, status akun, kategori, dan stok dicatat otomatis ke tabel `audit_logs` dengan snapshot pelaku. Pencatatan dilakukan dalam transaksi yang sama dengan perubahan data. `GET /api/audit-logs` hanya untuk admin dan mendukung `limit` (maks. 100), `offset`, `action`, `entity_type`, serta `q`; respons menyertakan total dan ringkasan jumlah akun/katalog/stok.
+
+Pencatatan distribusi berjalan dalam satu transaksi: status klaim menjadi `disetujui`, stok kategori berkurang 1, dan audit log `stock.distributed` dibuat. `category_id` mengikuti klaim, bukan dikirim ulang oleh klien.
 
 Detail kontrak API: [`docs/PERENCANAAN.md`](../docs/PERENCANAAN.md) §10.
 

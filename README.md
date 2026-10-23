@@ -82,6 +82,7 @@ Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
 - ✅ Halaman Profil & Keamanan tersedia: ubah nama/kontak sesuai role dan ubah password; akses dari navbar atau kartu profil di sidebar.
 - ✅ Dashboard sudah terhubung API: ringkasan program/personal dan aktivitas terbaru dari database.
 - ✅ Pengelolaan katalog khusus admin: tambah kategori, ubah nama/persyaratan, dan perbarui stok dari halaman `/katalog`.
+- ✅ Audit log khusus admin: perubahan role/status akun, kategori, dan stok tercatat otomatis dan dapat ditelusuri dari halaman `/audit-log`.
 - ◐ Aplikasi mobile Flutter masih skeleton.
 - ☐ Pengujian otomatis & deployment produksi belum.
 
@@ -99,7 +100,7 @@ Login sebagai **admin**, lalu buka menu **Pengguna**:
 |---|---|
 | `petani` | Lahan, unggah foto, verifikasi komunitas, klaim insentif |
 | `petugas` | Verifikasi resmi, distribusi insentif, pemantauan data lahan |
-| `admin` | Semua akses + manajemen pengguna + pengelolaan katalog + pemantauan data lahan |
+| `admin` | Semua akses + manajemen pengguna + pengelolaan katalog + pemantauan data lahan + audit log |
 
 Detail: [`docs/STATUS-IMPLEMENTASI.md`](docs/STATUS-IMPLEMENTASI.md).
 
@@ -121,6 +122,16 @@ Login sebagai **admin**, lalu buka menu **Katalog**:
 - Nama kategori harus unik (tanpa membedakan huruf besar/kecil); stok harus bilangan bulat `>= 0`.
 - Stok berkurang otomatis saat petugas mencatat distribusi. Perubahan katalog hanya dapat dilakukan admin; petani dan petugas tetap dapat melihat katalog.
 - Endpoint: `POST /api/incentives/categories` dan `PATCH /api/incentives/categories/:id`.
+
+## Audit Log (Admin)
+
+Login sebagai **admin**, lalu buka menu **Audit Log**:
+
+- Melihat jejak perubahan **role**, **status akun**, **katalog**, dan **stok** beserta nama pelaku, waktu, dan ringkasan perubahan.
+- Pencarian serta filter **Akun & Role**, **Katalog**, dan **Stok** membantu menelusuri aktivitas.
+- Pencatatan berjalan otomatis di backend. Perubahan role/status/katalog/stok dan distribusi disimpan dalam transaksi yang sama dengan audit log.
+- Halaman dan endpoint `GET /api/audit-logs` hanya dapat diakses admin; petani/petugas ditolak.
+- Audit log bersifat **read-only**; aktivitas operasional lain seperti tambah lahan, unggah foto, verifikasi, dan klaim belum dicatat.
 
 ## Aturan Kontribusi (Ringkas)
 
