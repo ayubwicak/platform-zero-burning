@@ -10,7 +10,24 @@ async function authenticateToken(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtErr) {
+      if (jwtErr.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          error: 'Token sudah kedaluwarsa. Silakan login kembali.',
+          code: 'TOKEN_EXPIRED'
+        });
+      }
+      if (jwtErr.name === 'JsonWebTokenError') {
+        return res.status(401).json({ 
+          error: 'Token tidak valid.',
+          code: 'TOKEN_INVALID'
+        });
+      }
+      throw jwtErr;
+    }
 
     const result = await pool.query(
       `SELECT u.id, u.nama, u.email, u.role, u.is_active,
@@ -37,7 +54,8 @@ async function authenticateToken(req, res, next) {
 
     next();
   } catch (err) {
-    return res.status(403).json({ error: 'Token tidak valid atau kedaluwarsa' });
+    console.error('Auth error:', err.message);
+    return res.status(500).json({ error: 'Terjadi kesalahan saat verifikasi token' });
   }
 }
 
