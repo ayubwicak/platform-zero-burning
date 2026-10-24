@@ -20,10 +20,10 @@ function parseQuantity(value) {
 async function categoryNameExists(name, excludeId = null, db = pool) {
   const result = excludeId
     ? await db.query(
-        'SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1) AND id <> $2',
+        'SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER(?) AND id <> ?',
         [name, excludeId]
       )
-    : await db.query('SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER($1)', [
+    : await db.query('SELECT id FROM incentive_categories WHERE LOWER(name) = LOWER(?)', [
         name,
       ]);
   return result.rows.length > 0;
@@ -90,11 +90,14 @@ async function createCategory(req, res, next) {
 
     const result = await client.query(
       `INSERT INTO incentive_categories (name, quantity, requirements)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
+       VALUES (?, ?, ?)`,
       [name, quantity, requirements || null]
     );
-    const created = result.rows[0];
+    const insertedCategory = await client.query(
+      'SELECT * FROM incentive_categories WHERE id = ?',
+      [result.rows[0].id]
+    );
+    const created = insertedCategory.rows[0];
 
     await recordAudit(client, {
       actor: req.user,
@@ -138,7 +141,7 @@ async function updateCategory(req, res, next) {
       return res.status(400).json({ error: 'Nama kategori maksimal 100 karakter' });
     }
     values.push(name);
-    updates.push(`name = $${values.length}`);
+    updates.push(`name = ?`);
   }
 
   if (Object.prototype.hasOwnProperty.call(body, 'quantity')) {
@@ -147,7 +150,7 @@ async function updateCategory(req, res, next) {
       return res.status(400).json({ error: 'Stok harus berupa bilangan bulat 0 atau lebih' });
     }
     values.push(quantity);
-    updates.push(`quantity = $${values.length}`);
+    updates.push(`quantity = ?`);
   }
 
   if (Object.prototype.hasOwnProperty.call(body, 'requirements')) {
@@ -156,7 +159,7 @@ async function updateCategory(req, res, next) {
       return res.status(400).json({ error: 'Persyaratan maksimal 500 karakter' });
     }
     values.push(requirements || null);
-    updates.push(`requirements = $${values.length}`);
+    updates.push(`requirements = ?`);
   }
 
   if (updates.length === 0) {
@@ -169,7 +172,7 @@ async function updateCategory(req, res, next) {
     await client.query('BEGIN');
 
     const current = await client.query(
-      'SELECT * FROM incentive_categories WHERE id = $1 FOR UPDATE',
+      'SELECT * FROM incentive_categories WHERE id = ?',
       [id]
     );
     if (current.rows.length === 0) {
@@ -187,20 +190,25 @@ async function updateCategory(req, res, next) {
     }
 
     values.push(id);
-    const result = await client.query(
+    await client.query(
       `UPDATE incentive_categories
        SET ${updates.join(', ')}
-       WHERE id = $${values.length}
-       RETURNING *`,
+       WHERE id = ?`,
       values
     );
 
-    if (result.rows.length === 0) {
+    // Fetch updated row
+    const updatedResult = await client.query(
+      'SELECT * FROM incentive_categories WHERE id = ?',
+      [id]
+    );
+
+    if (updatedResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Kategori insentif tidak ditemukan' });
     }
 
-    const after = result.rows[0];
+    const after = updatedResult.rows[0];
     const changedFields = [];
     if (before.name !== after.name) changedFields.push('name');
     if (Number(before.quantity) !== Number(after.quantity)) changedFields.push('quantity');
@@ -253,7 +261,7 @@ async function listClaims(req, res, next) {
        JOIN fields f ON c.field_id = f.id
        JOIN incentive_categories ic ON c.category_id = ic.id
        LEFT JOIN incentive_distributions d ON d.claim_id = c.id
-       WHERE c.farmer_id = $1
+       WHERE c.farmer_id = ?
        ORDER BY c.claim_date DESC
        LIMIT 50`,
       [farmerId]
@@ -272,25 +280,17 @@ async function listPendingClaims(req, res, next) {
                 f.id AS field_id, f.name AS field_name, f.area AS field_area,
                 f.latitude, f.longitude,
                 u.nama AS farmer_name, fa.phone AS farmer_phone, fa.address AS farmer_address,
-                ic.id AS category_id, ic.name AS category_name, ic.quantity AS stock,
-                p.photo_url AS verified_photo_url, p.taken_at AS verified_photo_at
+                ic.id AS category_id, ic.name AS category_name, ic.quantity AS stock
          FROM incentive_claims c
          JOIN fields f ON f.id = c.field_id
          JOIN farmers fa ON fa.id = c.farmer_id
          JOIN users u ON u.id = fa.id_user
          JOIN incentive_categories ic ON ic.id = c.category_id
-         LEFT JOIN LATERAL (
-           SELECT fp.photo_url, fp.taken_at
-           FROM field_photos fp
-           WHERE fp.field_id = c.field_id AND fp.status = 'terverifikasi'
-           ORDER BY fp.created_at DESC, fp.id DESC
-           LIMIT 1
-         ) p ON TRUE
          WHERE c.status = 'diajukan'
          ORDER BY c.claim_date ASC
          LIMIT 100`
       ),
-      pool.query(`SELECT COUNT(*)::int AS total FROM incentive_claims WHERE status = 'diajukan'`),
+      pool.query(`SELECT COUNT(*) AS total FROM incentive_claims WHERE status = 'diajukan'`),
     ]);
 
     res.json({
@@ -307,8 +307,9 @@ async function listDistributions(req, res, next) {
   try {
     const [historyResult, countResult] = await Promise.all([
       pool.query(
-        `SELECT d.id, d.claim_id, d.distribution_date, d.receipt_proof,
-                ic.name AS category_name,
+        `SELECT d.id, d.distribution_date, d.receipt_proof,
+                c.id AS claim_id, c.claim_date,
+                ic.name AS category_name, ic.quantity AS category_quantity,
                 f.name AS field_name,
                 u.nama AS farmer_name,
                 COALESCE(uo.nama, 'Admin') AS officer_name
@@ -323,7 +324,7 @@ async function listDistributions(req, res, next) {
          ORDER BY d.distribution_date DESC, d.id DESC
          LIMIT 20`
       ),
-      pool.query('SELECT COUNT(*)::int AS total FROM incentive_distributions'),
+      pool.query('SELECT COUNT(*) AS total FROM incentive_distributions'),
     ]);
 
     res.json({
@@ -349,7 +350,7 @@ async function createClaim(req, res, next) {
 
   try {
     const category = await pool.query(
-      'SELECT id, quantity FROM incentive_categories WHERE id = $1',
+      'SELECT id, quantity FROM incentive_categories WHERE id = ?',
       [category_id]
     );
     if (category.rows.length === 0) {
@@ -360,20 +361,21 @@ async function createClaim(req, res, next) {
     }
 
     const fieldCheck = await pool.query(
-      `SELECT fp.status FROM field_photos fp
+      `SELECT 1 FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE f.id = $1 AND f.farmer_id = $2 AND f.is_active = TRUE
-       ORDER BY fp.created_at DESC LIMIT 1`,
+       WHERE f.id = ? AND f.id_farmer = ? AND f.status = 'active'
+         AND fp.verification_status = 'terverifikasi'
+       LIMIT 1`,
       [field_id, farmerId]
     );
 
-    if (fieldCheck.rows.length === 0 || fieldCheck.rows[0].status !== 'terverifikasi') {
+    if (fieldCheck.rows.length === 0) {
       return res.status(400).json({ error: 'Lahan belum terverifikasi zero burning' });
     }
 
     const duplicate = await pool.query(
       `SELECT id FROM incentive_claims
-       WHERE field_id = $1 AND category_id = $2 AND farmer_id = $3 AND status = 'diajukan'`,
+       WHERE field_id = ? AND category_id = ? AND farmer_id = ? AND status = 'diajukan'`,
       [field_id, category_id, farmerId]
     );
     if (duplicate.rows.length > 0) {
@@ -382,11 +384,15 @@ async function createClaim(req, res, next) {
 
     const result = await pool.query(
       `INSERT INTO incentive_claims (field_id, farmer_id, category_id)
-       VALUES ($1, $2, $3) RETURNING *`,
+       VALUES (?, ?, ?)`,
       [field_id, farmerId, category_id]
     );
 
-    const claim = result.rows[0];
+    const insertedClaim = await pool.query(
+      'SELECT * FROM incentive_claims WHERE id = ?',
+      [result.rows[0].id]
+    );
+    const claim = insertedClaim.rows[0];
 
     await recordAudit(pool, {
       actor: req.user,
@@ -417,7 +423,7 @@ async function recordDistribution(req, res, next) {
     await client.query('BEGIN');
 
     const claim = await client.query(
-      'SELECT id, status, category_id FROM incentive_claims WHERE id = $1 FOR UPDATE',
+      'SELECT id, status, category_id, farmer_id FROM incentive_claims WHERE id = ?',
       [claim_id]
     );
     if (claim.rows.length === 0) {
@@ -432,39 +438,42 @@ async function recordDistribution(req, res, next) {
     const categoryId = claim.rows[0].category_id;
     const stock = await client.query(
       `UPDATE incentive_categories
-       SET quantity = quantity - 1
-       WHERE id = $1 AND quantity > 0
-       RETURNING id, name, quantity`,
+       SET quantity = quantity - 1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND quantity > 0`,
       [categoryId]
     );
-    if (stock.rows.length === 0) {
+    if (stock.rowCount === 0) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Stok insentif habis' });
     }
 
+    const categoryAfter = await client.query(
+      'SELECT name, quantity FROM incentive_categories WHERE id = ?',
+      [categoryId]
+    );
+    const stockAfter = Number(categoryAfter.rows[0].quantity);
+    const stockBefore = stockAfter + 1;
+
     await client.query(
-      `UPDATE incentive_claims SET status = 'disetujui' WHERE id = $1`,
+      `UPDATE incentive_claims SET status = 'disetujui' WHERE id = ?`,
       [claim_id]
     );
 
     const result = await client.query(
-      `INSERT INTO incentive_distributions (claim_id, officer_id, category_id, receipt_proof)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [claim_id, officerId, categoryId, receipt_proof || null]
+      `INSERT INTO incentive_distributions (claim_id, officer_id, category_id, farmer_id, receipt_proof)
+       VALUES (?, ?, ?, ?, ?)`,
+      [claim_id, officerId, categoryId, claim.rows[0].farmer_id, receipt_proof || null]
     );
-
-    const stockAfter = Number(stock.rows[0].quantity);
-    const stockBefore = stockAfter + 1;
 
     await recordAudit(client, {
       actor: req.user,
       action: 'stock.distributed',
       entityType: 'category',
       entityId: categoryId,
-      summary: `Mendistribusikan ${stock.rows[0].name}: stok ${stockBefore} → ${stockAfter}`,
+      summary: `Mendistribusikan ${categoryAfter.rows[0].name}: stok ${stockBefore} → ${stockAfter}`,
       metadata: {
         category_id: categoryId,
-        category_name: stock.rows[0].name,
+        category_name: categoryAfter.rows[0].name,
         stock_before: stockBefore,
         stock_after: stockAfter,
         claim_id: Number(claim_id),
@@ -477,7 +486,7 @@ async function recordDistribution(req, res, next) {
 
     res.json({
       success: true,
-      data: { ...result.rows[0], remaining_stock: stock.rows[0].quantity },
+      data: { ...result.rows[0], remaining_stock: stockAfter },
     });
   } catch (err) {
     await client.query('ROLLBACK');

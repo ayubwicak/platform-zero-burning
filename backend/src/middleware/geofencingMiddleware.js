@@ -30,7 +30,7 @@ async function validateGeofencing(req, res, next) {
 
   try {
     const fieldResult = await pool.query(
-      'SELECT latitude, longitude FROM fields WHERE id = $1 AND farmer_id = $2 AND is_active = TRUE',
+      "SELECT latitude, longitude FROM fields WHERE id = ? AND id_farmer = ? AND status = 'active'",
       [fieldId, farmerId]
     );
 

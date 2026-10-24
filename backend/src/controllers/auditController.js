@@ -51,21 +51,19 @@ async function listAuditLogs(req, res, next) {
   const values = [];
 
   if (action) {
+    conditions.push(`action = ?`);
     values.push(action);
-    conditions.push(`action = $${values.length}`);
   }
 
   if (entityType) {
+    conditions.push(`entity_type = ?`);
     values.push(entityType);
-    conditions.push(`entity_type = $${values.length}`);
   }
 
   if (keyword) {
-    values.push(`%${keyword}%`);
-    const placeholder = `$${values.length}`;
-    conditions.push(
-      `(summary ILIKE ${placeholder} OR actor_name ILIKE ${placeholder} OR action ILIKE ${placeholder})`
-    );
+    const keywordPattern = `%${keyword}%`;
+    conditions.push(`(summary LIKE ? OR actor_name LIKE ? OR action LIKE ?)`);
+    values.push(keywordPattern, keywordPattern, keywordPattern);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -79,15 +77,15 @@ async function listAuditLogs(req, res, next) {
          FROM audit_logs
          ${where}
          ORDER BY created_at DESC, id DESC
-         LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+         LIMIT ? OFFSET ?`,
         listValues
       ),
-      pool.query(`SELECT COUNT(*)::int AS total FROM audit_logs ${where}`, values),
+      pool.query(`SELECT CAST(COUNT(*) AS INTEGER) AS total FROM audit_logs ${where}`, values),
       pool.query(
-        `SELECT COUNT(*)::int AS total,
-                COUNT(*) FILTER (WHERE action LIKE 'user.%')::int AS account,
-                COUNT(*) FILTER (WHERE action LIKE 'category.%')::int AS catalog,
-                COUNT(*) FILTER (WHERE action = 'stock.distributed')::int AS stock
+        `SELECT CAST(COUNT(*) AS INTEGER) AS total,
+                CAST(COALESCE(SUM(CASE WHEN action LIKE 'user.%' THEN 1 ELSE 0 END), 0) AS INTEGER) AS account,
+                CAST(COALESCE(SUM(CASE WHEN action LIKE 'category.%' THEN 1 ELSE 0 END), 0) AS INTEGER) AS catalog,
+                CAST(COALESCE(SUM(CASE WHEN action = 'stock.distributed' THEN 1 ELSE 0 END), 0) AS INTEGER) AS stock
          FROM audit_logs
          ${where}`,
         values
@@ -124,21 +122,19 @@ async function exportAuditLogs(req, res, next) {
   const values = [];
 
   if (action) {
+    conditions.push(`action = ?`);
     values.push(action);
-    conditions.push(`action = $${values.length}`);
   }
 
   if (entityType) {
+    conditions.push(`entity_type = ?`);
     values.push(entityType);
-    conditions.push(`entity_type = $${values.length}`);
   }
 
   if (keyword) {
-    values.push(`%${keyword}%`);
-    const placeholder = `$${values.length}`;
-    conditions.push(
-      `(summary ILIKE ${placeholder} OR actor_name ILIKE ${placeholder} OR action ILIKE ${placeholder})`
-    );
+    const keywordPattern = `%${keyword}%`;
+    conditions.push(`(summary LIKE ? OR actor_name LIKE ? OR action LIKE ?)`);
+    values.push(keywordPattern, keywordPattern, keywordPattern);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

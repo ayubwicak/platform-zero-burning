@@ -20,7 +20,7 @@ async function listFields(req, res, next) {
   const params = [];
   let scope = '';
   if (isFarmer) {
-    scope = 'AND f.farmer_id = $1';
+    scope = 'AND f.id_farmer = ?';
     params.push(farmerId);
   }
 
@@ -29,25 +29,22 @@ async function listFields(req, res, next) {
       `SELECT f.*,
               u.nama AS owner_name,
               fa.phone AS owner_phone,
-              latest.status AS latest_photo_status,
-              COUNT(fp.id)::int AS photo_count,
-              COUNT(fp.id) FILTER (WHERE fp.status = 'terverifikasi')::int AS verified_photo_count,
-              COUNT(fp.id) FILTER (WHERE fp.status = 'menunggu_verifikasi')::int AS pending_photo_count,
-              COUNT(fp.id) FILTER (WHERE fp.status = 'ditolak')::int AS rejected_photo_count,
+              (SELECT fp2.verification_status
+                 FROM field_photos fp2
+                WHERE fp2.field_id = f.id
+                ORDER BY fp2.created_at DESC, fp2.id DESC
+                LIMIT 1) AS latest_photo_status,
+              COUNT(fp.id) AS photo_count,
+              SUM(CASE WHEN fp.verification_status = 'terverifikasi' THEN 1 ELSE 0 END) AS verified_photo_count,
+              SUM(CASE WHEN fp.verification_status = 'menunggu_verifikasi' THEN 1 ELSE 0 END) AS pending_photo_count,
+              SUM(CASE WHEN fp.verification_status = 'ditolak' THEN 1 ELSE 0 END) AS rejected_photo_count,
               MAX(fp.created_at) AS last_photo_at
        FROM fields f
-       JOIN farmers fa ON fa.id = f.farmer_id
+       JOIN farmers fa ON fa.id = f.id_farmer
        JOIN users u ON u.id = fa.id_user
        LEFT JOIN field_photos fp ON fp.field_id = f.id
-       LEFT JOIN LATERAL (
-         SELECT fp2.status
-         FROM field_photos fp2
-         WHERE fp2.field_id = f.id
-         ORDER BY fp2.created_at DESC, fp2.id DESC
-         LIMIT 1
-       ) latest ON TRUE
-       WHERE f.is_active = TRUE ${scope}
-       GROUP BY f.id, u.nama, fa.phone, latest.status
+       WHERE f.status = 'active' ${scope}
+       GROUP BY f.id
        ORDER BY f.created_at DESC, f.id DESC`,
       params
     );
@@ -103,13 +100,24 @@ async function createField(req, res, next) {
 
   try {
     const result = await pool.query(
-      `INSERT INTO fields (farmer_id, name, area, crop_type, latitude, longitude)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [farmerId, name, area, cropType, latitude, longitude]
+      `INSERT INTO fields
+         (id_user, id_farmer, name, area, category, crop_type, latitude, longitude, address, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      [
+        req.user.id,
+        farmerId,
+        name,
+        area,
+        cropType,
+        cropType,
+        latitude,
+        longitude,
+        req.body.address || '',
+      ]
     );
 
-    const field = result.rows[0];
+    const inserted = await pool.query('SELECT * FROM fields WHERE id = ?', [result.rows[0].id]);
+    const field = inserted.rows[0];
 
     await recordAudit(pool, {
       actor: req.user,
@@ -137,7 +145,7 @@ async function getField(req, res, next) {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM fields WHERE id = $1 AND is_active = TRUE',
+      "SELECT * FROM fields WHERE id = ? AND status = 'active'",
       [id]
     );
     if (result.rows.length === 0) {
@@ -145,7 +153,7 @@ async function getField(req, res, next) {
     }
 
     const field = result.rows[0];
-    if (req.user.role === 'petani' && field.farmer_id !== req.user.farmerId) {
+    if (req.user.role === 'petani' && field.id_farmer !== req.user.farmerId) {
       return res.status(403).json({ error: 'Anda tidak memiliki akses ke lahan ini' });
     }
 
@@ -174,23 +182,23 @@ async function updateField(req, res, next) {
 
   try {
     const existing = await pool.query(
-      'SELECT id FROM fields WHERE id = $1 AND farmer_id = $2 AND is_active = TRUE',
+      "SELECT id FROM fields WHERE id = ? AND id_farmer = ? AND status = 'active'",
       [id, farmerId]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Lahan tidak ditemukan' });
     }
 
-    const result = await pool.query(
+    await pool.query(
       `UPDATE fields
-       SET name = $1, area = $2, crop_type = $3, latitude = $4, longitude = $5,
+       SET name = ?, area = ?, category = ?, crop_type = ?, latitude = ?, longitude = ?,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6 AND farmer_id = $7 AND is_active = TRUE
-       RETURNING *`,
-      [name, area, cropType, latitude, longitude, id, farmerId]
+       WHERE id = ? AND id_farmer = ? AND status = 'active'`,
+      [name, area, cropType, cropType, latitude, longitude, id, farmerId]
     );
 
-    const field = result.rows[0];
+    const updated = await pool.query('SELECT * FROM fields WHERE id = ?', [id]);
+    const field = updated.rows[0];
 
     await recordAudit(pool, {
       actor: req.user,
@@ -220,7 +228,7 @@ async function deleteField(req, res, next) {
 
   try {
     const existing = await pool.query(
-      'SELECT id FROM fields WHERE id = $1 AND farmer_id = $2 AND is_active = TRUE',
+      "SELECT id FROM fields WHERE id = ? AND id_farmer = ? AND status = 'active'",
       [id, farmerId]
     );
     if (existing.rows.length === 0) {
@@ -229,7 +237,7 @@ async function deleteField(req, res, next) {
 
     const pendingClaim = await pool.query(
       `SELECT id FROM incentive_claims
-       WHERE field_id = $1 AND status = 'diajukan'
+       WHERE field_id = ? AND status = 'diajukan'
        LIMIT 1`,
       [id]
     );
@@ -240,7 +248,7 @@ async function deleteField(req, res, next) {
     }
 
     await pool.query(
-      'UPDATE fields SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      "UPDATE fields SET status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       [id]
     );
 

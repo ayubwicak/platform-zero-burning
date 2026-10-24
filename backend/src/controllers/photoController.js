@@ -22,7 +22,7 @@ async function uploadPhoto(req, res, next) {
       return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
     }
 
-    const { field_id, latitude, longitude, timestamp } = req.body;
+    const { field_id, latitude, longitude } = req.body;
     const takenAt = req.body.taken_at ? new Date(req.body.taken_at) : new Date();
     if (Number.isNaN(takenAt.getTime())) {
       removeFile(file.path);
@@ -33,7 +33,7 @@ async function uploadPhoto(req, res, next) {
     const photoHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
     const duplicate = await pool.query(
-      'SELECT id FROM field_photos WHERE field_id = $1 AND photo_hash = $2 LIMIT 1',
+      'SELECT id FROM field_photos WHERE field_id = ? AND photo_hash = ? LIMIT 1',
       [field_id, photoHash]
     );
     if (duplicate.rows.length > 0) {
@@ -44,13 +44,25 @@ async function uploadPhoto(req, res, next) {
     const photoUrl = `/uploads/${file.filename}`;
     const result = await pool.query(
       `INSERT INTO field_photos
-         (field_id, photo_url, taken_at, latitude, longitude, timestamp, photo_hash, geofencing_valid)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
-       RETURNING *`,
-      [field_id, photoUrl, takenAt, latitude, longitude, timestamp || null, photoHash]
+         (field_id, photo_url, latitude, longitude, distance_from_center,
+          photo_hash, verification_status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'menunggu_verifikasi', ?)`,
+      [
+        field_id,
+        photoUrl,
+        latitude,
+        longitude,
+        req.geofencingDistance ?? 0,
+        photoHash,
+        takenAt.toISOString(),
+      ]
     );
 
-    const photo = result.rows[0];
+    const inserted = await pool.query(
+      'SELECT *, created_at AS taken_at FROM field_photos WHERE id = ?',
+      [result.rows[0].id]
+    );
+    const photo = inserted.rows[0];
 
     await recordAudit(pool, {
       actor: req.user,
@@ -65,6 +77,7 @@ async function uploadPhoto(req, res, next) {
       success: true,
       data: {
         ...photo,
+        status: photo.verification_status,
         geofencing_valid: true,
         distance: req.geofencingDistance,
       },
@@ -91,15 +104,16 @@ async function listMyPhotos(req, res, next) {
       return res.status(400).json({ error: 'field_id tidak valid' });
     }
     params.push(fieldId);
-    filter = ' AND f.id = $2';
+    filter = ' AND f.id = ?';
   }
 
   try {
     const result = await pool.query(
-      `SELECT fp.*, f.name AS field_name
+      `SELECT fp.*, fp.created_at AS taken_at, fp.verification_status AS status,
+              f.name AS field_name
        FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE f.farmer_id = $1${filter}
+       WHERE f.id_farmer = ?${filter}
        ORDER BY fp.created_at DESC
        LIMIT 30`,
       params

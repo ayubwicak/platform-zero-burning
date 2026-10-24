@@ -21,7 +21,7 @@ async function communityVerify(req, res, next) {
       `SELECT fp.id
        FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE fp.id = $1 AND f.farmer_id <> $2 AND f.is_active = TRUE`,
+       WHERE fp.id = ? AND f.id_farmer <> ? AND f.status = 'active'`,
       [photo_id, verifierId]
     );
     if (photo.rows.length === 0) {
@@ -30,14 +30,12 @@ async function communityVerify(req, res, next) {
 
     await pool.query(
       `INSERT INTO community_verifications (photo_id, verifier_id, status, note)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (photo_id, verifier_id) DO UPDATE
-         SET status = EXCLUDED.status, note = EXCLUDED.note, verified_at = CURRENT_TIMESTAMP`,
+       VALUES (?, ?, ?, ?)`,
       [photo_id, verifierId, status, note || null]
     );
 
     const count = await pool.query(
-      `SELECT COUNT(*) FROM community_verifications WHERE photo_id = $1 AND status = 'setuju'`,
+      `SELECT CAST(COUNT(*) AS INTEGER) as count FROM community_verifications WHERE photo_id = ? AND status = 'setuju'`,
       [photo_id]
     );
 
@@ -69,7 +67,7 @@ async function officialVerify(req, res, next) {
       `SELECT fp.id
        FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       WHERE fp.id = $1 AND f.is_active = TRUE`,
+       WHERE fp.id = ? AND f.status = 'active'`,
       [photo_id]
     );
     if (photo.rows.length === 0) {
@@ -78,19 +76,19 @@ async function officialVerify(req, res, next) {
 
     await pool.query(
       `INSERT INTO official_verifications (photo_id, officer_id, status, note)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (photo_id) DO UPDATE
-         SET officer_id = EXCLUDED.officer_id,
-             status = EXCLUDED.status,
-             note = EXCLUDED.note,
-             verified_at = CURRENT_TIMESTAMP`,
+       VALUES (?, ?, ?, ?)`,
       [photo_id, officerId, status, note || null]
     );
 
     const newStatus = status === 'lolos' ? 'terverifikasi' : 'ditolak';
-    const updated = await pool.query(
-      'UPDATE field_photos SET status = $1 WHERE id = $2 RETURNING *',
+    await pool.query(
+      'UPDATE field_photos SET verification_status = ? WHERE id = ?',
       [newStatus, photo_id]
+    );
+
+    const updated = await pool.query(
+      'SELECT * FROM field_photos WHERE id = ?',
+      [photo_id]
     );
 
     await recordAudit(pool, {
@@ -105,7 +103,7 @@ async function officialVerify(req, res, next) {
     res.json({
       success: true,
       message: 'Verifikasi resmi dicatat',
-      data: updated.rows[0],
+      data: { ...updated.rows[0], status: updated.rows[0].verification_status },
     });
   } catch (err) {
     next(err);
@@ -121,20 +119,20 @@ async function listCommunityPhotos(req, res, next) {
 
   try {
     const result = await pool.query(
-      `SELECT fp.id, fp.photo_url, fp.taken_at, fp.latitude, fp.longitude, fp.status,
+      `SELECT fp.id, fp.photo_url, fp.created_at AS taken_at, fp.latitude, fp.longitude,
+              fp.verification_status, fp.verification_status AS status,
               f.id AS field_id, f.name AS field_name,
               u.nama AS farmer_name,
-              COUNT(cv.id) FILTER (WHERE cv.status = 'setuju')::int AS setuju_count,
-              COUNT(cv.id) FILTER (WHERE cv.status = 'tidak_setuju')::int AS tidak_setuju_count,
-              MAX(cv.status) FILTER (WHERE cv.verifier_id = $1) AS my_status
+              CAST(SUM(CASE WHEN cv.status = 'setuju' THEN 1 ELSE 0 END) AS INTEGER) AS setuju_count,
+              CAST(SUM(CASE WHEN cv.status = 'tidak_setuju' THEN 1 ELSE 0 END) AS INTEGER) AS tidak_setuju_count
        FROM field_photos fp
        JOIN fields f ON f.id = fp.field_id
-       JOIN farmers fa ON fa.id = f.farmer_id
+       JOIN farmers fa ON fa.id = f.id_farmer
        JOIN users u ON u.id = fa.id_user
        LEFT JOIN community_verifications cv ON cv.photo_id = fp.id
-       WHERE f.farmer_id <> $1
-         AND f.is_active = TRUE
-         AND fp.status = 'menunggu_verifikasi'
+       WHERE f.id_farmer <> ?
+         AND f.status = 'active'
+         AND fp.verification_status = 'menunggu_verifikasi'
        GROUP BY fp.id, f.id, f.name, u.nama
        ORDER BY fp.created_at DESC
        LIMIT 50`,
@@ -149,22 +147,23 @@ async function listCommunityPhotos(req, res, next) {
 async function listPhotos(req, res, next) {
   const { status } = req.query;
   const params = [];
-  let filter = 'WHERE f.is_active = TRUE';
+  let filter = 'WHERE f.status = \'active\'';
 
   if (status && status !== 'semua') {
     if (!PHOTO_STATUSES.includes(status)) {
       return res.status(400).json({ error: 'Status verifikasi tidak valid' });
     }
     params.push(status);
-    filter += ' AND fp.status = $1';
+    filter += ' AND fp.verification_status = ?';
   }
 
   try {
     const result = await pool.query(
-      `SELECT fp.*, f.name AS field_name, f.farmer_id, u.nama AS farmer_name
+      `SELECT fp.*, fp.created_at AS taken_at, fp.verification_status AS status,
+              f.name AS field_name, f.id_farmer, u.nama AS farmer_name
        FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
-       JOIN farmers fa ON f.farmer_id = fa.id
+       JOIN farmers fa ON f.id_farmer = fa.id
        JOIN users u ON fa.id_user = u.id
        ${filter}
        ORDER BY fp.created_at DESC

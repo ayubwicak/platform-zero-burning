@@ -128,7 +128,7 @@ export default function Register() {
   return (
     <div className="h-screen overflow-hidden flex bg-gray-50">
       {/* Panel branding */}
-      <aside className="hidden lg:flex lg:w-[44%] relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between">
+      <aside className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between">
         <div className="absolute -top-24 -left-16 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-32 -right-10 w-96 h-96 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="absolute inset-0 bg-dots opacity-30" />
@@ -183,8 +183,8 @@ export default function Register() {
       </aside>
 
       {/* Form registrasi */}
-      <main className="flex-1 flex items-start lg:items-center justify-center p-5 sm:p-8">
-        <div className="w-full max-w-xl">
+      <main className="flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-12">
+        <div className="w-full max-w-md">
           {/* Brand mobile */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-7">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-md shadow-green-200">
@@ -211,9 +211,6 @@ export default function Register() {
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
                 Daftar sebagai petani
               </h1>
-              <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                Lengkapi data diri sesuai KTP. Setelah terdaftar, Anda dapat langsung masuk.
-              </p>
             </div>
 
             <div className="mb-5 flex items-start gap-2 rounded-xl border border-green-100 bg-green-50/70 px-3.5 py-2.5 text-xs leading-relaxed text-green-800">

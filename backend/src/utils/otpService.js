@@ -17,20 +17,27 @@ async function sendOTPEmail(email, otp) {
   return true;
 }
 
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
 /**
- * Buat dan simpan OTP untuk user
+ * Buat dan simpan OTP untuk email user
  */
-async function createOTP(userId, db = pool) {
+async function createOTP(email, db = pool) {
   try {
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 menit
+    const normalizedEmail = normalizeEmail(email);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
 
+    await db.query('DELETE FROM email_verifications WHERE LOWER(email) = ?', [normalizedEmail]);
     await db.query(
-      `INSERT INTO email_verifications (user_id, otp_code, expires_at)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (user_id) DO UPDATE
-         SET otp_code = $2, attempts = 0, created_at = CURRENT_TIMESTAMP, expires_at = $3`,
-      [userId, otp, expiresAt]
+      `INSERT INTO email_verifications (email, otp_code, expires_at)
+       VALUES (?, ?, ?)`,
+      [normalizedEmail, otp, expiresAt]
     );
 
     return otp;
@@ -43,12 +50,15 @@ async function createOTP(userId, db = pool) {
 /**
  * Verifikasi OTP dan tandai email sebagai verified
  */
-async function verifyOTP(userId, otpCode, db = pool) {
+async function verifyOTP(email, otpCode, db = pool) {
   try {
+    const normalizedEmail = normalizeEmail(email);
     const verification = await db.query(
-      `SELECT * FROM email_verifications 
-       WHERE user_id = $1 AND expires_at > CURRENT_TIMESTAMP`,
-      [userId]
+      `SELECT * FROM email_verifications
+       WHERE LOWER(email) = ? AND expires_at > CURRENT_TIMESTAMP
+       ORDER BY id DESC
+       LIMIT 1`,
+      [normalizedEmail]
     );
 
     if (verification.rows.length === 0) {
@@ -63,22 +73,23 @@ async function verifyOTP(userId, otpCode, db = pool) {
     }
 
     // Validasi OTP
-    if (record.otp_code !== otpCode) {
+    if (String(record.otp_code) !== String(otpCode)) {
       await db.query(
-        'UPDATE email_verifications SET attempts = attempts + 1 WHERE user_id = $1',
-        [userId]
+        'UPDATE email_verifications SET attempts = attempts + 1 WHERE id = ?',
+        [record.id]
       );
       return { success: false, error: 'Kode OTP salah' };
     }
 
     // Update user email_verified
     await db.query(
-      `UPDATE users SET email_verified = TRUE, verified_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [userId]
+      `UPDATE users SET email_verified = TRUE, verified_at = CURRENT_TIMESTAMP
+       WHERE LOWER(email) = ?`,
+      [normalizedEmail]
     );
 
     // Delete OTP record
-    await db.query('DELETE FROM email_verifications WHERE user_id = $1', [userId]);
+    await db.query('DELETE FROM email_verifications WHERE LOWER(email) = ?', [normalizedEmail]);
 
     return { success: true, message: 'Email berhasil diverifikasi' };
   } catch (err) {
@@ -90,14 +101,9 @@ async function verifyOTP(userId, otpCode, db = pool) {
 /**
  * Resend OTP
  */
-async function resendOTP(userId, db = pool) {
+async function resendOTP(email, db = pool) {
   try {
-    // Delete old record
-    await db.query('DELETE FROM email_verifications WHERE user_id = $1', [userId]);
-
-    // Create new OTP
-    const otp = await createOTP(userId, db);
-
+    const otp = await createOTP(email, db);
     return { success: true, otp };
   } catch (err) {
     console.error('resendOTP error:', err.message);

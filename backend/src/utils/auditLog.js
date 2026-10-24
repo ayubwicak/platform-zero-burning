@@ -13,15 +13,18 @@ async function recordAudit(
 
   await db.query(
     `INSERT INTO audit_logs
-       (actor_id, actor_name, actor_role, action, entity_type, entity_id, summary, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       (actor_id, actor_name, actor_role, action, entity, entity_type, entity_id,
+        description, summary, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
       actorId,
       actorName,
       actorRole,
       action,
       entityType,
+      entityType,
       entityId,
+      summary,
       summary,
       metadata ? JSON.stringify(metadata) : null,
     ]

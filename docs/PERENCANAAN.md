@@ -82,7 +82,7 @@ Legenda: ✅ selesai · ◐ sebagian · ☐ belum
 | FR-13 | Dashboard web admin | ✅ | Ringkasan `GET /api/dashboard` + halaman distribusi & verifikasi warga |
 | FR-14 | Notifikasi status | ☐ | Belum direncanakan detail |
 | FR-15 | Audit log aktivitas | ✅ | Audit log mencakup perubahan role, status akun, katalog, stok, serta lahan/foto/verifikasi/klaim; endpoint `/api/audit-logs/export` untuk unduh CSV/JSON |
-| FR-16 | Laporan/ekspor data | ◐ | Audit log dapat diekspor (CSV/JSON); laporan progres program belum |
+| FR-16 | Laporan/ekspor data | ✅ | Laporan program admin di `/laporan` dengan visualisasi metrik, status lahan, top petani, tren bulanan; export CSV/JSON untuk laporan dan audit log |
 | FR-17 | Manajemen pengguna & hak akses | ✅ | Khusus admin: daftar, tambah pengguna, ubah role, serta nonaktifkan/aktifkan akun |
 | FR-18 | Proteksi route & menu berdasarkan role | ✅ | Guard route, menu sidebar dinamis, profil navbar |
 | FR-19 | Halaman informasi publik (landing) | ✅ | Hero, masalah/solusi, cara kerja, fitur, manfaat, katalog, FAQ, footer |

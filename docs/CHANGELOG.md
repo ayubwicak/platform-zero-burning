@@ -10,6 +10,21 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Halaman **Laporan Program** (`/laporan`) untuk admin dengan visualisasi ringkasan metrik (lahan, foto, klaim, petani), status lahan, stok kategori, tabel top 10 petani, dan tren bulanan 12 bulan terakhir.
+- Fitur ekspor laporan program admin dalam format CSV dan JSON dengan timestamp.
+- Route `/laporan` di `frontend-web/src/App.jsx` dan navigasi sidebar dengan ikon dokumen.
+- Skrip migrasi SQLite di `database/`: `fix-columns.sql`, `migrate-safe.sql`, dan `migrate-sqlite.sql`.
+- Ignored pattern untuk file database `*.db`, `*.sqlite*`, dan file backup di `.gitignore`.
+
+### Changed
+
+- Adaptasi controller backend (`authController`, `fieldController`, `photoController`, `verificationController`, `incentiveController`, `dashboardController`, `reportController`, `userController`, `auditController`, `otpService`) untuk kompatibilitas penuh SQLite dan PostgreSQL.
+- Transaksi serialisasi dan locking pada adapter `SQLitePool` di `db-sqlite.js` untuk mencegah race condition.
+- PERENCANAAN.md: FR-16 (Laporan/ekspor data) kini ditandai ✅ selesai.
+- STATUS-IMPLEMENTASI.md: diperbarui status modul laporan program dan tanggal per 24 Oktober 2026.
+
+- Integration tests backend (44 test cases untuk auth, field, report endpoints)
+- Testing documentation dengan setup guide dan manual testing flow
 - Halaman VerifyEmail (`/verify-email`): form OTP 6 digit, tombol resend dengan countdown 60 detik
 - Verifikasi OTP dengan max 5 percobaan, error handling per percobaan
 - Masked email display pada halaman verifikasi
