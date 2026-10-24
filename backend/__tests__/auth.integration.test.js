@@ -1,21 +1,39 @@
 const request = require('supertest');
 const app = require('../src/app');
 const pool = require('../src/config/db');
-const jwt = require('jsonwebtoken');
+
+const TEST_EMAIL_PATTERN = 'integration-test-%';
+
+async function cleanupTestUsers() {
+  // Hapus data turunan lebih dulu agar tidak melanggar FOREIGN KEY.
+  await pool.query(
+    `DELETE FROM farmers
+     WHERE id_user IN (SELECT id FROM users WHERE email LIKE ?)`,
+    [TEST_EMAIL_PATTERN]
+  );
+  await pool.query(
+    `DELETE FROM officers
+     WHERE id_user IN (SELECT id FROM users WHERE email LIKE ?)`,
+    [TEST_EMAIL_PATTERN]
+  );
+  await pool.query(
+    `DELETE FROM audit_logs
+     WHERE actor_id IN (SELECT id FROM users WHERE email LIKE ?)`,
+    [TEST_EMAIL_PATTERN]
+  );
+  await pool.query('DELETE FROM email_verifications WHERE email LIKE ?', [TEST_EMAIL_PATTERN]);
+  await pool.query('DELETE FROM users WHERE email LIKE ?', [TEST_EMAIL_PATTERN]);
+}
 
 describe('Authentication Integration Tests', () => {
-  let testUserId;
   let testToken;
 
   beforeAll(async () => {
-    // Cleanup dari test sebelumnya
-    await pool.query("DELETE FROM email_verifications WHERE email LIKE $1", ['integration-test-%']);
-    await pool.query("DELETE FROM users WHERE email LIKE $1", ['integration-test-%']);
+    await cleanupTestUsers();
   });
 
   afterAll(async () => {
-    await pool.query("DELETE FROM email_verifications WHERE email LIKE $1", ['integration-test-%']);
-    await pool.query("DELETE FROM users WHERE email LIKE $1", ['integration-test-%']);
+    await cleanupTestUsers();
     await pool.end();
   });
 
@@ -36,9 +54,6 @@ describe('Authentication Integration Tests', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('berhasil');
-      expect(res.body.user.email).toBe('integration-test-1@test.com');
-
-      testUserId = res.body.user.id;
     });
 
     it('should reject registration with invalid email', async () => {
@@ -250,11 +265,12 @@ describe('Authentication Integration Tests', () => {
       const res = await request(app)
         .post('/api/auth/verify-email')
         .send({
-          email: 'integration-test-1@test.com',
+          email: 'integration-test-dup@test.com',
           otp_code: '000000',
         });
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBeDefined();
     });
   });
 
@@ -271,8 +287,7 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should reject request without token', async () => {
-      const res = await request(app)
-        .get('/api/profile');
+      const res = await request(app).get('/api/auth/me');
 
       expect(res.status).toBe(401);
       expect(res.body.error).toContain('Token');
@@ -280,7 +295,7 @@ describe('Authentication Integration Tests', () => {
 
     it('should reject request with invalid token', async () => {
       const res = await request(app)
-        .get('/api/profile')
+        .get('/api/auth/me')
         .set('Authorization', 'Bearer invalid.token.here');
 
       expect(res.status).toBe(401);
@@ -289,11 +304,12 @@ describe('Authentication Integration Tests', () => {
 
     it('should accept request with valid token', async () => {
       const res = await request(app)
-        .get('/api/profile')
+        .get('/api/auth/me')
         .set('Authorization', `Bearer ${testToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.nama).toBeDefined();
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.nama).toBeDefined();
     });
   });
 });

@@ -25,6 +25,8 @@ async function register(req, res, next) {
   const nama = cleanText(req.body.nama);
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = typeof req.body.password === 'string' ? req.body.password : '';
+  const confirmPassword =
+    typeof req.body.confirmPassword === 'string' ? req.body.confirmPassword : '';
   const role = cleanText(req.body.role) || 'petani';
   const nik = cleanText(req.body.nik);
   const phone = cleanText(req.body.phone);
@@ -49,6 +51,9 @@ async function register(req, res, next) {
   }
   if (password.length > 72) {
     return res.status(400).json({ error: 'Password maksimal 72 karakter' });
+  }
+  if (confirmPassword && confirmPassword !== password) {
+    return res.status(400).json({ error: 'Password dan konfirmasi password tidak cocok' });
   }
   if (!nik) {
     return res.status(400).json({ error: 'NIK wajib diisi' });
@@ -125,12 +130,15 @@ async function register(req, res, next) {
 }
 
 async function login(req, res, next) {
-  const { email, password } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email dan password wajib diisi' });
+  }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = ?', [
-      String(email || '').trim().toLowerCase(),
-    ]);
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = ?', [email]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Email atau password salah' });
     }

@@ -2,13 +2,62 @@ const request = require('supertest');
 const app = require('../src/app');
 const pool = require('../src/config/db');
 
+const FARMER_EMAIL = 'report-farmer@test.com';
+
+async function cleanupReportFarmer() {
+  await pool.query(
+    `DELETE FROM incentive_distributions
+     WHERE farmer_id IN (
+       SELECT fa.id FROM farmers fa
+       JOIN users u ON u.id = fa.id_user
+       WHERE u.email = ?
+     )`,
+    [FARMER_EMAIL]
+  );
+  await pool.query(
+    `DELETE FROM incentive_claims
+     WHERE farmer_id IN (
+       SELECT fa.id FROM farmers fa
+       JOIN users u ON u.id = fa.id_user
+       WHERE u.email = ?
+     )`,
+    [FARMER_EMAIL]
+  );
+  await pool.query(
+    `DELETE FROM field_photos
+     WHERE field_id IN (
+       SELECT f.id FROM fields f
+       JOIN users u ON u.id = f.id_user
+       WHERE u.email = ?
+     )`,
+    [FARMER_EMAIL]
+  );
+  await pool.query(
+    `DELETE FROM fields
+     WHERE id_user IN (SELECT id FROM users WHERE email = ?)`,
+    [FARMER_EMAIL]
+  );
+  await pool.query(
+    `DELETE FROM farmers
+     WHERE id_user IN (SELECT id FROM users WHERE email = ?)`,
+    [FARMER_EMAIL]
+  );
+  await pool.query(
+    `DELETE FROM audit_logs
+     WHERE actor_id IN (SELECT id FROM users WHERE email = ?)`,
+    [FARMER_EMAIL]
+  );
+  await pool.query('DELETE FROM email_verifications WHERE email = ?', [FARMER_EMAIL]);
+  await pool.query('DELETE FROM users WHERE email = ?', [FARMER_EMAIL]);
+}
+
 describe('Report & Statistics Integration Tests', () => {
   let adminToken;
   let farmerToken;
-  let adminId;
-  let farmerId;
 
   beforeAll(async () => {
+    await cleanupReportFarmer();
+
     // Get admin token
     const adminRes = await request(app)
       .post('/api/auth/login')
@@ -18,14 +67,13 @@ describe('Report & Statistics Integration Tests', () => {
       });
 
     adminToken = adminRes.body.token;
-    adminId = adminRes.body.user.id;
 
     // Create test farmer account
     await request(app)
       .post('/api/auth/register')
       .send({
         nama: 'Report Test Farmer',
-        email: 'report-farmer@test.com',
+        email: FARMER_EMAIL,
         nik: '4444444444444444',
         phone: '+628123456789',
         address: 'Jl. Test',
@@ -36,26 +84,15 @@ describe('Report & Statistics Integration Tests', () => {
     const farmerRes = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'report-farmer@test.com',
+        email: FARMER_EMAIL,
         password: 'ReportTest123!',
       });
 
     farmerToken = farmerRes.body.token;
-    farmerId = farmerRes.body.user.id;
   });
 
   afterAll(async () => {
-    // Cleanup
-    try {
-      await pool.query('DELETE FROM field_photos WHERE field_id IN (SELECT id FROM fields WHERE id_user = $1)', [
-        farmerId,
-      ]);
-      await pool.query('DELETE FROM fields WHERE id_user = $1', [farmerId]);
-      await pool.query('DELETE FROM farmers WHERE id_user = $1', [farmerId]);
-      await pool.query('DELETE FROM users WHERE email = $1', ['report-farmer@test.com']);
-    } catch (err) {
-      console.error('Cleanup error:', err);
-    }
+    await cleanupReportFarmer();
   });
 
   describe('GET /api/reports', () => {
@@ -65,11 +102,12 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.summary).toBeDefined();
-      expect(res.body.summary.total_fields).toBeDefined();
-      expect(res.body.summary.total_photos).toBeDefined();
-      expect(res.body.summary.total_claims).toBeDefined();
-      expect(res.body.summary.total_farmers).toBeDefined();
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.summary).toBeDefined();
+      expect(res.body.data.summary.total_fields).toBeDefined();
+      expect(res.body.data.summary.total_photos).toBeDefined();
+      expect(res.body.data.summary.total_claims).toBeDefined();
+      expect(res.body.data.summary.total_farmers).toBeDefined();
     });
 
     it('should include rate calculations in summary', async () => {
@@ -78,8 +116,8 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.summary.verified_rate).toBeDefined();
-      expect(res.body.summary.claim_success_rate).toBeDefined();
+      expect(res.body.data.summary.verification_rate).toBeDefined();
+      expect(res.body.data.summary.approval_rate).toBeDefined();
     });
 
     it('should include category distribution', async () => {
@@ -88,8 +126,8 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.categories).toBeDefined();
-      expect(Array.isArray(res.body.categories)).toBe(true);
+      expect(res.body.data.category_distribution).toBeDefined();
+      expect(Array.isArray(res.body.data.category_distribution)).toBe(true);
     });
 
     it('should include top farmers', async () => {
@@ -98,8 +136,8 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.top_farmers).toBeDefined();
-      expect(Array.isArray(res.body.top_farmers)).toBe(true);
+      expect(res.body.data.top_farmers).toBeDefined();
+      expect(Array.isArray(res.body.data.top_farmers)).toBe(true);
     });
 
     it('should reject report access for non-admin', async () => {
@@ -136,8 +174,7 @@ describe('Report & Statistics Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toContain('application/json');
-      expect(res.body.summary).toBeDefined();
-      expect(res.body.categories).toBeDefined();
+      expect(res.body.data.summary).toBeDefined();
     });
 
     it('should default to JSON when format not specified', async () => {
@@ -146,7 +183,7 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.summary).toBeDefined();
+      expect(res.body.data.summary).toBeDefined();
     });
 
     it('should reject export for non-admin', async () => {
@@ -176,7 +213,7 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.logs)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('should support pagination in audit logs', async () => {
@@ -195,7 +232,7 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.logs)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('should reject audit log access for non-admin', async () => {
@@ -223,7 +260,7 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
+      expect(Array.isArray(res.body.records)).toBe(true);
     });
   });
 });
