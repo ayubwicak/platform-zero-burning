@@ -16,8 +16,8 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 - Database PostgreSQL lokal **berjalan** di port 5433 dengan skema non-PostGIS.
 - **Landing page publik** tersedia di `/` dengan informasi sistem, alur, fitur, manfaat, katalog, dan FAQ.
 - Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), audit log (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
+- Lint backend dan test otomatis berjalan di CI Pipeline (53 test passing: unit + integration test).
 - Aplikasi mobile Flutter masih **skeleton**.
-- Lint backend sudah berjalan; test otomatis belum tersedia sehingga CI belum efektif.
 
 ## 2. Status per Modul
 
@@ -59,7 +59,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter role/status, pencarian, tambah pengguna, ubah role, nonaktifkan/aktifkan akun | `pages/Pengguna.jsx` |
 | Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, audit log, lahan, data lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
 | Mobile Flutter | ◐ Skeleton | Belum dijalankan/diuji | `frontend-mobile/` |
-| CI (lint + test) | ◐ Sebagian | Workflow ada; ESLint backend lulus; 9 unit tests untuk utility functions dan validation tersedia (passing); integration test belum | `.github/workflows/ci.yml`, `backend/jest.config.js`, `backend/__tests__/` |
+| CI (lint + test) | ✅ Selesai | Workflow GitHub Actions; ESLint backend lulus; 53 automated tests (unit + integration test auth/fields/reports) berjalan dengan database test SQLite terisolasi | `.github/workflows/ci.yml`, `backend/jest.config.js`, `backend/__tests__/` |
 
 Catatan metrik dashboard: jumlah lahan terverifikasi mengikuti status foto terbaru lahan (konsisten dengan syarat klaim), sedangkan “Insentif Tersalurkan” adalah jumlah paket distribusi karena skema belum menyimpan nilai uang.
 
@@ -76,7 +76,7 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 7. **Dashboard dan seluruh modul inti sudah ber-UI.** Ringkasan dashboard memakai API; halaman distribusi, verifikasi warga, profil, registrasi petani, ubah/hapus lahan, data lahan petugas/admin, serta pengelolaan katalog admin sudah tersedia. Akun petugas/admin dibuat admin melalui menu Pengguna.
 8. **Klaim memeriksa foto terbaru lahan.** Belum mempertimbangkan seluruh riwayat.
 9. **Ambang verifikasi komunitas belum otomatis.** Status akhir ditentukan petugas.
-10. **CI belum lengkap.** ESLint backend sudah berjalan; unit/integration test belum tersedia.
+10. **CI lengkap dan otomatis.** ESLint backend dan 53 test (unit & integrasi) berjalan otomatis di GitHub Actions dengan test DB terisolasi.
 11. **Admin awal via seed.** Registrasi publik menolak `admin`; akun `admin@zeroburning.id` disediakan untuk pengembangan dan wajib ganti password di produksi.
 12. **Role dibaca ulang dari database setiap request.** Perubahan hak akses langsung berlaku, dengan tambahan satu query per request.
 13. **Registrasi publik hanya petani.** Akun petugas dan admin dibuat admin melalui menu Pengguna agar hak verifikasi/distribusi tidak dapat diperoleh lewat pendaftaran bebas.
