@@ -211,9 +211,6 @@ export default function Register() {
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
                 Daftar sebagai petani
               </h1>
-              <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                Lengkapi data diri sesuai KTP. Setelah terdaftar, Anda dapat langsung masuk.
-              </p>
             </div>
 
             <div className="mb-5 flex items-start gap-2 rounded-xl border border-green-100 bg-green-50/70 px-3.5 py-2.5 text-xs leading-relaxed text-green-800">
