@@ -10,6 +10,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Integration tests backend (44 test cases untuk auth, field, report endpoints)
+- Testing documentation dengan setup guide dan manual testing flow
 - Halaman VerifyEmail (`/verify-email`): form OTP 6 digit, tombol resend dengan countdown 60 detik
 - Verifikasi OTP dengan max 5 percobaan, error handling per percobaan
 - Masked email display pada halaman verifikasi
