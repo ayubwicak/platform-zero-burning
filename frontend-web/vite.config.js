@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    allowedHosts: ['correlation-charter-electronic-folders.trycloudflare.com'],
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/api': 'http://localhost:3000',
       '/uploads': 'http://localhost:3000',
