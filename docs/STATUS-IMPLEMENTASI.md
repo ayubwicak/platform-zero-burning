@@ -2,8 +2,8 @@
 
 | Atribut | Nilai |
 |---|---|
-| Diperbarui | 22 Oktober 2026 |
-| Fase aktif | Fase 3 selesai; lanjut pengujian & fitur pendukung |
+| Diperbarui | 24 Oktober 2026 |
+| Fase aktif | Fase 3 selesai; pengujian & laporan program |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
 Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan yang memengaruhi status modul (wajib dalam PR yang sama).
@@ -30,6 +30,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Middleware auth & role | ✅ Selesai | `authenticateToken`, `authorizeRoles`; role dan status aktif dibaca ulang dari DB | `backend/src/middleware/authMiddleware.js` |
 | Manajemen pengguna | ✅ Selesai | Khusus admin: daftar, tambah pengguna, ubah role + profil, nonaktifkan/aktifkan akun | `backend/src/controllers/userController.js` |
 | Audit log admin | ✅ Selesai | Jejak perubahan role, status akun, kategori, stok, lahan, foto, verifikasi, klaim; filter, pencarian, ringkasan, pagination API, export CSV/JSON | `auditController.js`, `utils/auditLog.js`, `pages/AuditLog.jsx` |
+| Laporan program admin | ✅ Selesai | Halaman `/laporan` untuk admin: metrik ringkasan, status lahan, stok kategori, top 10 petani, tren bulanan 12 bulan, export CSV & JSON | `reportController.js`, `pages/Laporan.jsx` |
 | Proteksi route & menu | ✅ Selesai | Guard login/admin, sidebar dinamis berdasarkan role | `frontend-web/src/components/RouteGuards.jsx`, `Sidebar.jsx` |
 | Pengelolaan lahan | ✅ Selesai | List/tambah/detail/ubah/hapus (soft delete) + integrasi web; hapus diblokir bila ada klaim `diajukan` | `fieldController.js`, `pages/Fields.jsx` |
 | Pemantauan lahan | ✅ Selesai | `GET /api/fields` role-aware; petugas/admin melihat semua lahan aktif beserta pemilik, kontak, dan progres foto | `fieldController.js`, `pages/DataLahan.jsx` |
