@@ -9,19 +9,34 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-test-secret
+
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
 
       - name: Install backend dependencies
-        run: cd backend && npm install
+        run: npm ci
 
       - name: Run backend lint
-        run: cd backend && npm run lint
+        run: npm run lint
 
       - name: Run backend tests
-        run: cd backend && npm test
+        run: npm test -- --ci

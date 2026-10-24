@@ -10,6 +10,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Konfigurasi database test SQLite terisolasi (`globalSetup.js`, `globalTeardown.js`, `setupEnv.js`) pada Jest runner sehingga seluruh unit dan integration test (53 test) dapat berjalan deterministik di lingkungan CI/CD tanpa dependensi eksternal.
 - Halaman **Laporan Program** (`/laporan`) untuk admin dengan visualisasi ringkasan metrik (lahan, foto, klaim, petani), status lahan, stok kategori, tabel top 10 petani, dan tren bulanan 12 bulan terakhir.
 - Fitur ekspor laporan program admin dalam format CSV dan JSON dengan timestamp.
 - Route `/laporan` di `frontend-web/src/App.jsx` dan navigasi sidebar dengan ikon dokumen.
@@ -18,6 +19,9 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Changed
 
+- Pembaruan workflow CI `.github/workflows/ci.yml`: upgrade `actions/checkout@v7` dan `actions/setup-node@v7` dengan Node.js 22 untuk menghapus peringatan deprecation Node 20 runner.
+- Perbaikan assertion dan endpoint contract pada test integrasi (`auth.integration.test.js`, `field.integration.test.js`, `report.integration.test.js`).
+- Konfigurasi `allowedHosts: ['.trycloudflare.com']` di `frontend-web/vite.config.js` untuk mendukung akses tunnel Cloudflare.
 - Adaptasi controller backend (`authController`, `fieldController`, `photoController`, `verificationController`, `incentiveController`, `dashboardController`, `reportController`, `userController`, `auditController`, `otpService`) untuk kompatibilitas penuh SQLite dan PostgreSQL.
 - Transaksi serialisasi dan locking pada adapter `SQLitePool` di `db-sqlite.js` untuk mencegah race condition.
 - PERENCANAAN.md: FR-16 (Laporan/ekspor data) kini ditandai ✅ selesai.

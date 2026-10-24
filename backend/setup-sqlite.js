@@ -2,8 +2,10 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const bcryptjs = require('bcryptjs');
 
-// Create/open database di src/ directory
-const dbPath = path.join(__dirname, 'src', 'zero_burning.db');
+// Create/open database di src/ directory (bisa dioverride lewat DB_PATH untuk test/CI)
+const dbPath = process.env.DB_PATH
+  ? path.resolve(process.env.DB_PATH)
+  : path.join(__dirname, 'src', 'zero_burning.db');
 const db = new Database(dbPath);
 
 console.log('Setting up SQLite database at:', dbPath);
