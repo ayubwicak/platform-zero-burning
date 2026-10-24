@@ -65,9 +65,9 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Panel branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between lg:sticky lg:top-0 lg:h-screen lg:self-start">
         <div className="absolute -top-24 -left-16 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-32 -right-10 w-96 h-96 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="absolute inset-0 bg-dots opacity-30" />
@@ -117,7 +117,7 @@ export default function Login() {
       </div>
 
       {/* Form login */}
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-md">
           {/* Header dengan link back dan brand */}
           <div className="flex items-center justify-between mb-8">

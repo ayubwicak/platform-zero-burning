@@ -130,7 +130,7 @@ export default function Verifikasi() {
           </button>
         }
       >
-        <div className="grid grid-cols-3 gap-3 max-w-lg">
+        <div className="grid grid-cols-1 gap-3 max-w-lg sm:grid-cols-3">
           {[
             { label: 'Menunggu', value: counts.menunggu, cls: 'bg-amber-100 text-amber-600', icon: Clock },
             { label: 'Terverifikasi', value: counts.terverifikasi, cls: 'bg-green-100 text-green-600', icon: CheckCircle2 },

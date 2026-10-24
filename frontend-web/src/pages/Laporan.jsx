@@ -58,7 +58,7 @@ export default function Laporan() {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="p-6 flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <div className="w-12 h-12 rounded-full border-4 border-green-200 border-t-green-600 animate-spin mx-auto mb-3"></div>
           <p className="text-gray-600">Memuat laporan...</p>
@@ -84,17 +84,17 @@ export default function Laporan() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="w-8 h-8 text-green-600" />
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 md:text-3xl">
+            <FileText className="h-7 w-7 shrink-0 text-green-600 sm:h-8 sm:w-8" />
             Laporan Program
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Diperbarui: {new Date(report.generated_at).toLocaleString('id-ID')}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleExport('csv')}
             disabled={exporting}

@@ -34,7 +34,7 @@ export default function Navbar({ onToggle }) {
     <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-white border-b border-gray-200 shadow-sm">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         {/* Kiri atas: icon + nama sistem */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onToggle}
             className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -43,12 +43,12 @@ export default function Navbar({ onToggle }) {
             <Menu className="w-6 h-6" />
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-md shadow-green-200">
-              <ShieldCheck className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-md shadow-green-200 sm:h-11 sm:w-11">
+              <ShieldCheck className="h-5 w-5 text-white sm:h-6 sm:w-6" />
             </div>
             <div className="leading-tight">
-              <p className="text-base lg:text-lg font-extrabold text-gray-900 tracking-tight">
+              <p className="text-sm font-extrabold text-gray-900 tracking-tight sm:text-base lg:text-lg">
                 Zero Burning
               </p>
               <p className="text-[10px] lg:text-[11px] font-semibold text-green-700 uppercase tracking-widest">
