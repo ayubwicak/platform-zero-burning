@@ -19,12 +19,15 @@ function normalizeEmail(email) {
 }
 
 function findByEmail(client, email) {
-  return client.query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
+  return client.query('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [email]);
 }
 
 async function listUsers(req, res, next) {
   try {
-    const result = await pool.query(`${USER_SELECT} ORDER BY u.created_at DESC, u.id DESC`);
+    const result = await pool.query(
+      `${USER_SELECT}
+       ORDER BY u.created_at DESC, u.id DESC`
+    );
     res.json({ success: true, data: result.rows });
   } catch (err) {
     next(err);
@@ -64,21 +67,20 @@ async function createUser(req, res, next) {
 
     const hashed = await bcrypt.hash(password, 10);
     const userRes = await client.query(
-      `INSERT INTO users (nama, email, password, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, nama, email, role, created_at`,
-      [nama, normalizedEmail, hashed, role]
+      `INSERT INTO users (nama, email, nik, phone, address, password, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [nama, normalizedEmail, nik || '', phone || '', address || '', hashed, role]
     );
     const userId = userRes.rows[0].id;
 
     if (role === 'petani') {
       await client.query(
-        'INSERT INTO farmers (id_user, nik, phone, address) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO farmers (id_user, nik, phone, address) VALUES (?, ?, ?, ?)',
         [userId, nik, phone || null, address || null]
       );
     } else if (role === 'petugas') {
       await client.query(
-        'INSERT INTO officers (id_user, nip, position, unit) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO officers (id_user, nip, position, unit) VALUES (?, ?, ?, ?)',
         [userId, nip, position || null, unit || null]
       );
     }
@@ -94,11 +96,11 @@ async function createUser(req, res, next) {
 
     await client.query('COMMIT');
 
-    const created = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [userId]);
+    const created = await pool.query(`SELECT u.id, u.nama, u.email, u.role, u.is_active, u.created_at FROM users u WHERE u.id = ?`, [userId]);
     res.status(201).json({ success: true, data: created.rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23505') {
+    if (err.code === '23505' || String(err.code || '').startsWith('SQLITE_CONSTRAINT')) {
       return res.status(400).json({ error: 'Email, NIK, atau NIP sudah digunakan' });
     }
     next(err);
@@ -124,7 +126,7 @@ async function updateUserRole(req, res, next) {
     await client.query('BEGIN');
 
     const userRes = await client.query(
-      'SELECT id, role, nama, email FROM users WHERE id = $1 FOR UPDATE',
+      'SELECT id, role, nama, email FROM users WHERE id = ?',
       [id]
     );
     if (userRes.rows.length === 0) {
@@ -134,33 +136,33 @@ async function updateUserRole(req, res, next) {
     const target = userRes.rows[0];
 
     if (role === 'petani') {
-      const profile = await client.query('SELECT id FROM farmers WHERE id_user = $1', [id]);
+      const profile = await client.query('SELECT id FROM farmers WHERE id_user = ?', [id]);
       if (profile.rows.length === 0) {
         if (!nik) {
           await client.query('ROLLBACK');
           return res.status(400).json({ error: 'NIK wajib diisi untuk role petani' });
         }
         await client.query(
-          'INSERT INTO farmers (id_user, nik, phone, address) VALUES ($1, $2, $3, $4)',
+          'INSERT INTO farmers (id_user, nik, phone, address) VALUES (?, ?, ?, ?)',
           [id, nik, phone || null, address || null]
         );
       }
     } else if (role === 'petugas') {
-      const profile = await client.query('SELECT id FROM officers WHERE id_user = $1', [id]);
+      const profile = await client.query('SELECT id FROM officers WHERE id_user = ?', [id]);
       if (profile.rows.length === 0) {
         if (!nip) {
           await client.query('ROLLBACK');
           return res.status(400).json({ error: 'NIP wajib diisi untuk role petugas' });
         }
         await client.query(
-          'INSERT INTO officers (id_user, nip, position, unit) VALUES ($1, $2, $3, $4)',
+          'INSERT INTO officers (id_user, nip, position, unit) VALUES (?, ?, ?, ?)',
           [id, nip, position || null, unit || null]
         );
       }
     }
 
     await client.query(
-      'UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [role, id]
     );
 
@@ -182,11 +184,11 @@ async function updateUserRole(req, res, next) {
 
     await client.query('COMMIT');
 
-    const updated = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
+    const updated = await pool.query(`SELECT u.id, u.nama, u.email, u.role, u.is_active, u.created_at FROM users u WHERE u.id = ?`, [id]);
     res.json({ success: true, data: updated.rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');
-    if (err.code === '23505') {
+    if (err.code === '23505' || String(err.code || '').startsWith('SQLITE_CONSTRAINT')) {
       return res.status(400).json({ error: 'NIK atau NIP sudah digunakan' });
     }
     next(err);
@@ -215,7 +217,7 @@ async function updateUserStatus(req, res, next) {
     await client.query('BEGIN');
 
     const targetResult = await client.query(
-      'SELECT id, nama, email, is_active FROM users WHERE id = $1 FOR UPDATE',
+      'SELECT id, nama, email, is_active FROM users WHERE id = ?',
       [id]
     );
     if (targetResult.rows.length === 0) {
@@ -224,15 +226,15 @@ async function updateUserStatus(req, res, next) {
     }
 
     const target = targetResult.rows[0];
-    if (target.is_active === isActive) {
+    if (Boolean(target.is_active) === isActive) {
       await client.query('ROLLBACK');
-      const current = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
+      const current = await pool.query(`SELECT u.id, u.nama, u.email, u.role, u.is_active, u.created_at FROM users u WHERE u.id = ?`, [id]);
       return res.json({ success: true, data: current.rows[0] });
     }
 
     await client.query(
-      'UPDATE users SET is_active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-      [isActive, id]
+      'UPDATE users SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [isActive ? 1 : 0, id]
     );
 
     await recordAudit(client, {
@@ -251,7 +253,7 @@ async function updateUserStatus(req, res, next) {
 
     await client.query('COMMIT');
 
-    const updated = await pool.query(`${USER_SELECT} WHERE u.id = $1`, [id]);
+    const updated = await pool.query(`SELECT u.id, u.nama, u.email, u.role, u.is_active, u.created_at FROM users u WHERE u.id = ?`, [id]);
     res.json({ success: true, data: updated.rows[0] });
   } catch (err) {
     await client.query('ROLLBACK');

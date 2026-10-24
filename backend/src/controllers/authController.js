@@ -5,8 +5,8 @@ const { createOTP, sendOTPEmail, verifyOTP, resendOTP } = require('../utils/otpS
 
 const PROFILE_SELECT = `
   SELECT u.id, u.nama, u.email, u.role, u.created_at,
-         f.id AS farmer_id,
-         o.id AS officer_id
+         f.id AS farmer_id, f.nik, f.phone, f.address,
+         o.id AS officer_id, o.nip, o.position, o.unit
   FROM users u
   LEFT JOIN farmers f ON f.id_user = u.id
   LEFT JOIN officers o ON o.id_user = u.id
@@ -17,7 +17,7 @@ function cleanText(value) {
 }
 
 async function getProfileData(userId) {
-  const result = await pool.query(`${PROFILE_SELECT} WHERE u.id = $1`, [userId]);
+  const result = await pool.query(`${PROFILE_SELECT} WHERE u.id = ?`, [userId]);
   return result.rows[0] || null;
 }
 
@@ -64,7 +64,7 @@ async function register(req, res, next) {
   }
 
   try {
-    const existing = await pool.query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
+    const existing = await pool.query('SELECT id FROM users WHERE LOWER(email) = ?', [email]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Email sudah terdaftar' });
     }
@@ -76,25 +76,26 @@ async function register(req, res, next) {
       await client.query('BEGIN');
 
       const userRes = await client.query(
-        'INSERT INTO users (nama, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id',
-        [nama, email, hashed, role]
+        `INSERT INTO users (nama, email, nik, phone, address, password, role)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [nama, email, nik, phone || '', address || '', hashed, role]
       );
       const userId = userRes.rows[0].id;
 
       await client.query(
-        'INSERT INTO farmers (id_user, nik, phone, address) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO farmers (id_user, nik, phone, address) VALUES (?, ?, ?, ?)',
         [userId, nik, phone || null, address || null]
       );
 
       // Auto-verify email di development mode
       if (process.env.NODE_ENV === 'development') {
         await client.query(
-          'UPDATE users SET email_verified = TRUE WHERE id = $1',
+          'UPDATE users SET email_verified = TRUE WHERE id = ?',
           [userId]
         );
       } else {
         // Production: kirim OTP untuk verifikasi
-        const otp = await createOTP(userId);
+        const otp = await createOTP(email);
         await sendOTPEmail(email, otp);
       }
 
@@ -109,7 +110,7 @@ async function register(req, res, next) {
       });
     } catch (err) {
       await client.query('ROLLBACK');
-      if (err.code === '23505') {
+      if (err.code === '23505' || String(err.code || '').startsWith('SQLITE_CONSTRAINT')) {
         const message =
           err.constraint === 'farmers_nik_key' ? 'NIK sudah terdaftar' : 'Email sudah terdaftar';
         return res.status(400).json({ error: message });
@@ -127,7 +128,7 @@ async function login(req, res, next) {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1', [
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = ?', [
       String(email || '').trim().toLowerCase(),
     ]);
     if (result.rows.length === 0) {
@@ -205,22 +206,22 @@ async function updateProfile(req, res, next) {
     await client.query('BEGIN');
 
     const userRes = await client.query(
-      'UPDATE users SET nama = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id',
+      'UPDATE users SET nama = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [nama, req.user.id]
     );
-    if (userRes.rows.length === 0) {
+    if (userRes.rowCount === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     }
 
     if (req.user.role === 'petani') {
       await client.query(
-        'UPDATE farmers SET phone = $1, address = $2 WHERE id_user = $3',
+        'UPDATE farmers SET phone = ?, address = ? WHERE id_user = ?',
         [phone || null, address || null, req.user.id]
       );
     } else if (req.user.role === 'petugas') {
       await client.query(
-        'UPDATE officers SET position = $1, unit = $2 WHERE id_user = $3',
+        'UPDATE officers SET position = ?, unit = ? WHERE id_user = ?',
         [position || null, unit || null, req.user.id]
       );
     }
@@ -252,7 +253,7 @@ async function changePassword(req, res, next) {
   }
 
   try {
-    const result = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Pengguna tidak ditemukan' });
     }
@@ -264,7 +265,7 @@ async function changePassword(req, res, next) {
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await pool.query(
-      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [hashed, req.user.id]
     );
 
@@ -283,7 +284,7 @@ async function sendOTPVerification(req, res, next) {
 
   try {
     const user = await pool.query(
-      'SELECT id, nama FROM users WHERE LOWER(email) = $1 AND email_verified = FALSE',
+      'SELECT id, nama FROM users WHERE LOWER(email) = ? AND email_verified = FALSE',
       [String(email || '').trim().toLowerCase()]
     );
 
@@ -291,8 +292,7 @@ async function sendOTPVerification(req, res, next) {
       return res.status(404).json({ error: 'User tidak ditemukan atau email sudah terverifikasi' });
     }
 
-    const userId = user.rows[0].id;
-    const otp = await createOTP(userId);
+    const otp = await createOTP(email);
 
     // Send OTP via email (mock)
     await sendOTPEmail(email, otp);
@@ -300,7 +300,7 @@ async function sendOTPVerification(req, res, next) {
     res.json({
       success: true,
       message: 'Kode OTP telah dikirim ke email Anda. Berlaku 15 menit.',
-      email_masked: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+      email_masked: email.replace(/(.{2})(.*)(@.*)/, '?***?'),
     });
   } catch (err) {
     next(err);
@@ -316,7 +316,7 @@ async function verifyEmailWithOTP(req, res, next) {
 
   try {
     const user = await pool.query(
-      'SELECT id, nama FROM users WHERE LOWER(email) = $1 AND email_verified = FALSE',
+      'SELECT id, nama FROM users WHERE LOWER(email) = ? AND email_verified = FALSE',
       [String(email || '').trim().toLowerCase()]
     );
 
@@ -324,8 +324,7 @@ async function verifyEmailWithOTP(req, res, next) {
       return res.status(404).json({ error: 'User tidak ditemukan atau email sudah terverifikasi' });
     }
 
-    const userId = user.rows[0].id;
-    const result = await verifyOTP(userId, String(otp_code).trim());
+    const result = await verifyOTP(email, String(otp_code).trim());
 
     if (!result.success) {
       return res.status(400).json({ error: result.error });
@@ -349,7 +348,7 @@ async function resendOTPVerification(req, res, next) {
 
   try {
     const user = await pool.query(
-      'SELECT id, nama FROM users WHERE LOWER(email) = $1 AND email_verified = FALSE',
+      'SELECT id, nama FROM users WHERE LOWER(email) = ? AND email_verified = FALSE',
       [String(email || '').trim().toLowerCase()]
     );
 
@@ -357,8 +356,7 @@ async function resendOTPVerification(req, res, next) {
       return res.status(404).json({ error: 'User tidak ditemukan atau email sudah terverifikasi' });
     }
 
-    const userId = user.rows[0].id;
-    const result = await resendOTP(userId);
+    const result = await resendOTP(email);
 
     if (!result.success) {
       return res.status(400).json({ error: result.error });
@@ -370,7 +368,7 @@ async function resendOTPVerification(req, res, next) {
     res.json({
       success: true,
       message: 'Kode OTP baru telah dikirim ke email Anda. Berlaku 15 menit.',
-      email_masked: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+      email_masked: email.replace(/(.{2})(.*)(@.*)/, '?***?'),
     });
   } catch (err) {
     next(err);

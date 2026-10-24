@@ -4,6 +4,25 @@ function toCount(value) {
   return Number(value) || 0;
 }
 
+const SUMMARY_SQL = `
+  SELECT
+    (SELECT COUNT(*) FROM fields WHERE status = 'active') AS total_fields,
+    (SELECT COUNT(*) FROM fields f
+      WHERE f.status = 'active'
+        AND EXISTS (
+          SELECT 1 FROM field_photos fp
+          WHERE fp.field_id = f.id AND fp.verification_status = 'terverifikasi'
+        )) AS verified_fields,
+    (SELECT COUNT(*) FROM field_photos) AS total_photos,
+    (SELECT COUNT(*) FROM field_photos WHERE verification_status = 'terverifikasi') AS verified_photos,
+    (SELECT COUNT(*) FROM incentive_claims) AS total_claims,
+    (SELECT COUNT(*) FROM incentive_claims WHERE status = 'disetujui') AS approved_claims,
+    (SELECT COUNT(*) FROM incentive_distributions) AS total_distributions,
+    (SELECT COUNT(*) FROM farmers) AS total_farmers,
+    (SELECT COUNT(*) FROM users WHERE role = 'petani') AS total_petani_users,
+    (SELECT COUNT(*) FROM users WHERE role = 'petugas') AS total_petugas_users
+`;
+
 async function getReport(req, res, next) {
   // Admin only
   if (req.user.role !== 'admin') {
@@ -19,33 +38,27 @@ async function getReport(req, res, next) {
       monthlyTrendResult,
     ] = await Promise.all([
       // Summary
+      pool.query(SUMMARY_SQL),
+      // Fields by latest photo status
       pool.query(`
         SELECT
-          (SELECT COUNT(*) FROM fields WHERE is_active = TRUE)::int AS total_fields,
-          (SELECT COUNT(*) FROM fields WHERE is_active = TRUE AND (SELECT COUNT(*) FROM field_photos WHERE field_id = fields.id AND status = 'terverifikasi') > 0)::int AS verified_fields,
-          (SELECT COUNT(*) FROM field_photos)::int AS total_photos,
-          (SELECT COUNT(*) FROM field_photos WHERE status = 'terverifikasi')::int AS verified_photos,
-          (SELECT COUNT(*) FROM incentive_claims)::int AS total_claims,
-          (SELECT COUNT(*) FROM incentive_claims WHERE status = 'disetujui')::int AS approved_claims,
-          (SELECT COUNT(*) FROM incentive_distributions)::int AS total_distributions,
-          (SELECT COUNT(*) FROM farmers)::int AS total_farmers,
-          (SELECT COUNT(*) FROM users WHERE role = 'petani')::int AS total_petani_users,
-          (SELECT COUNT(*) FROM users WHERE role = 'petugas')::int AS total_petugas_users
-      `),
-      // Fields by status
-      pool.query(`
-        WITH field_status AS (
-          SELECT DISTINCT ON (field_id) field_id, status
-          FROM field_photos
-          ORDER BY field_id, created_at DESC, id DESC
-        )
-        SELECT
-          COALESCE(fs.status, 'belum_ada_foto') AS status,
-          COUNT(*)::int AS count
+          COALESCE((
+            SELECT fp.verification_status
+            FROM field_photos fp
+            WHERE fp.field_id = f.id
+            ORDER BY fp.created_at DESC, fp.id DESC
+            LIMIT 1
+          ), 'belum_ada_foto') AS status,
+          COUNT(*) AS count
         FROM fields f
-        LEFT JOIN field_status fs ON fs.field_id = f.id
-        WHERE f.is_active = TRUE
-        GROUP BY COALESCE(fs.status, 'belum_ada_foto')
+        WHERE f.status = 'active'
+        GROUP BY COALESCE((
+          SELECT fp.verification_status
+          FROM field_photos fp
+          WHERE fp.field_id = f.id
+          ORDER BY fp.created_at DESC, fp.id DESC
+          LIMIT 1
+        ), 'belum_ada_foto')
       `),
       // Top farmers by approved claims
       pool.query(`
@@ -53,8 +66,8 @@ async function getReport(req, res, next) {
           fa.id,
           u.nama,
           u.email,
-          COUNT(CASE WHEN c.status = 'disetujui' THEN 1 END)::int AS approved_claims,
-          COUNT(c.id)::int AS total_claims
+          SUM(CASE WHEN c.status = 'disetujui' THEN 1 ELSE 0 END) AS approved_claims,
+          COUNT(c.id) AS total_claims
         FROM farmers fa
         JOIN users u ON u.id = fa.id_user
         LEFT JOIN incentive_claims c ON c.farmer_id = fa.id
@@ -66,8 +79,8 @@ async function getReport(req, res, next) {
       pool.query(`
         SELECT
           ic.name AS category,
-          COUNT(*)::int AS total_distributed,
-          ic.quantity - COALESCE(SUM(1), 0)::int AS remaining_stock
+          COUNT(d.id) AS total_distributed,
+          ic.quantity - COUNT(d.id) AS remaining_stock
         FROM incentive_categories ic
         LEFT JOIN incentive_distributions d ON d.category_id = ic.id
         GROUP BY ic.id, ic.name, ic.quantity
@@ -75,23 +88,23 @@ async function getReport(req, res, next) {
       // Monthly trend (last 12 months)
       pool.query(`
         SELECT
-          DATE_TRUNC('month', COALESCE(c.claim_date, d.distribution_date, f.created_at))::date AS month,
+          strftime('%Y-%m', c.claim_date) AS month,
           'claims' AS type,
-          COUNT(c.id)::int AS count
+          COUNT(c.id) AS count
         FROM incentive_claims c
-        WHERE c.claim_date >= NOW() - INTERVAL '12 months'
-        GROUP BY DATE_TRUNC('month', c.claim_date)
-        
+        WHERE c.claim_date >= date('now', '-12 months')
+        GROUP BY strftime('%Y-%m', c.claim_date)
+
         UNION ALL
-        
+
         SELECT
-          DATE_TRUNC('month', d.distribution_date)::date AS month,
+          strftime('%Y-%m', d.distribution_date) AS month,
           'distributions' AS type,
-          COUNT(d.id)::int AS count
+          COUNT(d.id) AS count
         FROM incentive_distributions d
-        WHERE d.distribution_date >= NOW() - INTERVAL '12 months'
-        GROUP BY DATE_TRUNC('month', d.distribution_date)
-        
+        WHERE d.distribution_date >= date('now', '-12 months')
+        GROUP BY strftime('%Y-%m', d.distribution_date)
+
         ORDER BY month DESC
       `),
     ]);
@@ -144,17 +157,7 @@ async function exportReport(req, res, next) {
   const { format = 'json' } = req.query;
 
   try {
-    const result = await pool.query(`
-      SELECT
-        (SELECT COUNT(*) FROM fields WHERE is_active = TRUE)::int AS total_fields,
-        (SELECT COUNT(*) FROM fields WHERE is_active = TRUE AND (SELECT COUNT(*) FROM field_photos WHERE field_id = fields.id AND status = 'terverifikasi') > 0)::int AS verified_fields,
-        (SELECT COUNT(*) FROM field_photos)::int AS total_photos,
-        (SELECT COUNT(*) FROM field_photos WHERE status = 'terverifikasi')::int AS verified_photos,
-        (SELECT COUNT(*) FROM incentive_claims)::int AS total_claims,
-        (SELECT COUNT(*) FROM incentive_claims WHERE status = 'disetujui')::int AS approved_claims,
-        (SELECT COUNT(*) FROM incentive_distributions)::int AS total_distributions,
-        (SELECT COUNT(*) FROM farmers)::int AS total_farmers
-    `);
+    const result = await pool.query(SUMMARY_SQL);
 
     const data = result.rows[0] || {};
     const timestamp = new Date().toISOString().split('T')[0];

@@ -37,3 +37,10 @@ Thumbs.db
 flutter_build/
 .pgdata/
 uploads/
+
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.backup
