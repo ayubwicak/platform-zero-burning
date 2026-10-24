@@ -37,6 +37,14 @@ db.exec(`
     FOREIGN KEY (id_user) REFERENCES users(id)
   );
 
+  CREATE TABLE IF NOT EXISTS officers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_user INTEGER UNIQUE NOT NULL,
+    officer_type TEXT DEFAULT 'verifikator',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES users(id)
+  );
+
   CREATE TABLE IF NOT EXISTS fields (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     id_user INTEGER NOT NULL,

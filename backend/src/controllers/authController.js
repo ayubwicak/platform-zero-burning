@@ -5,8 +5,8 @@ const { createOTP, sendOTPEmail, verifyOTP, resendOTP } = require('../utils/otpS
 
 const PROFILE_SELECT = `
   SELECT u.id, u.nama, u.email, u.role, u.created_at,
-         f.id AS farmer_id, f.nik, f.phone, f.address,
-         o.id AS officer_id, o.nip, o.position, o.unit
+         f.id AS farmer_id,
+         o.id AS officer_id
   FROM users u
   LEFT JOIN farmers f ON f.id_user = u.id
   LEFT JOIN officers o ON o.id_user = u.id
