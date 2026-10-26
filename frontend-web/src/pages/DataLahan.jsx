@@ -184,7 +184,7 @@ export default function DataLahan() {
           </button>
         }
       >
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 3xl:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((stat) => (
             <div key={stat.label} className="card p-3.5 flex items-center gap-3">
               <div className={`icon-tile w-9 h-9 shrink-0 ${stat.bg} ${stat.color}`}>
@@ -257,7 +257,7 @@ export default function DataLahan() {
       )}
 
       {loading ? (
-        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5" aria-hidden="true">
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5 gap-5" aria-hidden="true">
           {[1, 2, 3].map((item) => (
             <div key={item} className="card overflow-hidden animate-pulse">
               <div className="h-1.5 bg-gray-100" />
@@ -307,7 +307,7 @@ export default function DataLahan() {
           </button>
         </div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5 gap-5">
           {filtered.map((field) => {
             const statusKey = fieldStatus(field);
             const meta = statusMeta[statusKey];

@@ -115,7 +115,7 @@ export default function Laporan() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-4 gap-4">
         <Card
           icon={Leaf}
           title="Total Lahan"
@@ -147,7 +147,7 @@ export default function Laporan() {
       </div>
 
       {/* Detail Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-2 gap-6">
         {/* Fields by Status */}
         <div className="card p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Status Lahan</h2>

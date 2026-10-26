@@ -128,7 +128,7 @@ export default function Register() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Panel branding */}
-      <aside className="hidden lg:flex lg:w-1/2 overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-12 flex-col justify-between lg:sticky lg:top-0 lg:h-screen lg:self-start">
+      <aside className="hidden lg:flex lg:w-1/2 overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-8 lg:p-12 flex-col justify-between lg:sticky lg:top-0 lg:max-h-screen lg:self-start overflow-y-auto">
         <div className="absolute -top-24 -left-16 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
         <div className="absolute -bottom-32 -right-10 w-96 h-96 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="absolute inset-0 bg-dots opacity-30" />

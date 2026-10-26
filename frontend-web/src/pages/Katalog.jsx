@@ -430,7 +430,7 @@ export default function Katalog() {
           <p className="mt-3 text-sm">Memuat katalog...</p>
         </div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5 gap-5">
           {filtered.map((item, index) => {
             const visual = visualFor(item.name);
             const Icon = visual.icon;

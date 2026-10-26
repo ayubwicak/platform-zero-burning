@@ -300,7 +300,7 @@ export default function Fields() {
           <p className="mt-3 text-sm">Memuat lahan...</p>
         </div>
       ) : (
-        <div className="mt-7 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="mt-7 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5 gap-5">
           {fields.map((field, index) => {
             const accent = accents[index % accents.length];
             const status = fieldStatus(field);
