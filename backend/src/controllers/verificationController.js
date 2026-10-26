@@ -28,11 +28,24 @@ async function communityVerify(req, res, next) {
       return res.status(404).json({ error: 'Foto tidak ditemukan atau merupakan foto lahan Anda sendiri' });
     }
 
-    await pool.query(
-      `INSERT INTO community_verifications (photo_id, verifier_id, status, note)
-       VALUES (?, ?, ?, ?)`,
-      [photo_id, verifierId, status, note || null]
+    const existing = await pool.query(
+      `SELECT id FROM community_verifications WHERE photo_id = ? AND verifier_id = ?`,
+      [photo_id, verifierId]
     );
+
+    if (existing.rows.length > 0) {
+      await pool.query(
+        `UPDATE community_verifications SET status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE photo_id = ? AND verifier_id = ?`,
+        [status, note || null, photo_id, verifierId]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO community_verifications (photo_id, verifier_id, status, note)
+         VALUES (?, ?, ?, ?)`,
+        [photo_id, verifierId, status, note || null]
+      );
+    }
 
     const count = await pool.query(
       `SELECT CAST(COUNT(*) AS INTEGER) as count FROM community_verifications WHERE photo_id = ? AND status = 'setuju'`,
@@ -74,11 +87,24 @@ async function officialVerify(req, res, next) {
       return res.status(404).json({ error: 'Foto tidak ditemukan' });
     }
 
-    await pool.query(
-      `INSERT INTO official_verifications (photo_id, officer_id, status, note)
-       VALUES (?, ?, ?, ?)`,
-      [photo_id, officerId, status, note || null]
+    const existing = await pool.query(
+      `SELECT id FROM official_verifications WHERE photo_id = ?`,
+      [photo_id]
     );
+
+    if (existing.rows.length > 0) {
+      await pool.query(
+        `UPDATE official_verifications SET officer_id = ?, status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE photo_id = ?`,
+        [officerId, status, note || null, photo_id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO official_verifications (photo_id, officer_id, status, note)
+         VALUES (?, ?, ?, ?)`,
+        [photo_id, officerId, status, note || null]
+      );
+    }
 
     const newStatus = status === 'lolos' ? 'terverifikasi' : 'ditolak';
     await pool.query(

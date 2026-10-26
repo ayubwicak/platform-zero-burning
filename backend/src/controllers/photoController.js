@@ -30,6 +30,18 @@ async function uploadPhoto(req, res, next) {
     }
 
     const fileBuffer = fs.readFileSync(file.path);
+    // Verifikasi magic bytes gambar (JPEG, PNG, WebP)
+    const isJpeg = fileBuffer.length >= 3 && fileBuffer[0] === 0xFF && fileBuffer[1] === 0xD8 && fileBuffer[2] === 0xFF;
+    const isPng = fileBuffer.length >= 8 && fileBuffer[0] === 0x89 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x4E && fileBuffer[3] === 0x47;
+    const isRiffWebp = fileBuffer.length >= 12 &&
+      fileBuffer.toString('ascii', 0, 4) === 'RIFF' &&
+      fileBuffer.toString('ascii', 8, 12) === 'WEBP';
+
+    if (!isJpeg && !isPng && !isRiffWebp) {
+      removeFile(file.path);
+      return res.status(400).json({ error: 'File bukan gambar valid (JPEG, PNG, atau WebP)' });
+    }
+
     const photoHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
     const duplicate = await pool.query(
