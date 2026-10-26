@@ -11,6 +11,7 @@
     "react-router-dom": "^6.20.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.6.1",
     "eslint": "^8.57.1",
@@ -23,7 +24,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install"
   },
   "type": "module"
 }

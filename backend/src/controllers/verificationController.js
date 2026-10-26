@@ -17,51 +17,64 @@ async function communityVerify(req, res, next) {
   }
 
   try {
-    const photo = await pool.query(
-      `SELECT fp.id
-       FROM field_photos fp
-       JOIN fields f ON fp.field_id = f.id
-       WHERE fp.id = ? AND f.id_farmer <> ? AND f.status = 'active'`,
-      [photo_id, verifierId]
-    );
-    if (photo.rows.length === 0) {
-      return res.status(404).json({ error: 'Foto tidak ditemukan atau merupakan foto lahan Anda sendiri' });
-    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    const existing = await pool.query(
-      `SELECT id FROM community_verifications WHERE photo_id = ? AND verifier_id = ?`,
-      [photo_id, verifierId]
-    );
-
-    if (existing.rows.length > 0) {
-      await pool.query(
-        `UPDATE community_verifications SET status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE photo_id = ? AND verifier_id = ?`,
-        [status, note || null, photo_id, verifierId]
+      const photo = await client.query(
+        `SELECT fp.id
+         FROM field_photos fp
+         JOIN fields f ON fp.field_id = f.id
+         WHERE fp.id = ? AND f.id_farmer <> ? AND f.status = 'active'`,
+        [photo_id, verifierId]
       );
-    } else {
-      await pool.query(
-        `INSERT INTO community_verifications (photo_id, verifier_id, status, note)
-         VALUES (?, ?, ?, ?)`,
-        [photo_id, verifierId, status, note || null]
+      if (photo.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Foto tidak ditemukan atau merupakan foto lahan Anda sendiri' });
+      }
+
+      const existing = await client.query(
+        `SELECT id FROM community_verifications WHERE photo_id = ? AND verifier_id = ?`,
+        [photo_id, verifierId]
       );
+
+      if (existing.rows.length > 0) {
+        await client.query(
+          `UPDATE community_verifications SET status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE photo_id = ? AND verifier_id = ?`,
+          [status, note || null, photo_id, verifierId]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO community_verifications (photo_id, verifier_id, status, note)
+           VALUES (?, ?, ?, ?)`,
+          [photo_id, verifierId, status, note || null]
+        );
+      }
+
+      const count = await client.query(
+        `SELECT CAST(COUNT(*) AS INTEGER) as count FROM community_verifications WHERE photo_id = ? AND status = 'setuju'`,
+        [photo_id]
+      );
+
+      await recordAudit(client, {
+        actor: req.user,
+        action: 'verify_community',
+        entityType: 'photo',
+        entityId: photo_id,
+        summary: `Petani memberikan verifikasi komunitas: ${status}`,
+        metadata: { photo_id, status, note },
+      });
+
+      await client.query('COMMIT');
+
+      res.json({ success: true, setujuCount: parseInt(count.rows[0].count, 10) });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-
-    const count = await pool.query(
-      `SELECT CAST(COUNT(*) AS INTEGER) as count FROM community_verifications WHERE photo_id = ? AND status = 'setuju'`,
-      [photo_id]
-    );
-
-    await recordAudit(pool, {
-      actor: req.user,
-      action: 'verify_community',
-      entityType: 'photo',
-      entityId: photo_id,
-      summary: `Petani memberikan verifikasi komunitas: ${status}`,
-      metadata: { photo_id, status, note },
-    });
-
-    res.json({ success: true, setujuCount: parseInt(count.rows[0].count, 10) });
   } catch (err) {
     next(err);
   }
@@ -76,61 +89,74 @@ async function officialVerify(req, res, next) {
   }
 
   try {
-    const photo = await pool.query(
-      `SELECT fp.id
-       FROM field_photos fp
-       JOIN fields f ON fp.field_id = f.id
-       WHERE fp.id = ? AND f.status = 'active'`,
-      [photo_id]
-    );
-    if (photo.rows.length === 0) {
-      return res.status(404).json({ error: 'Foto tidak ditemukan' });
-    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    const existing = await pool.query(
-      `SELECT id FROM official_verifications WHERE photo_id = ?`,
-      [photo_id]
-    );
-
-    if (existing.rows.length > 0) {
-      await pool.query(
-        `UPDATE official_verifications SET officer_id = ?, status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE photo_id = ?`,
-        [officerId, status, note || null, photo_id]
+      const photo = await client.query(
+        `SELECT fp.id
+         FROM field_photos fp
+         JOIN fields f ON fp.field_id = f.id
+         WHERE fp.id = ? AND f.status = 'active'`,
+        [photo_id]
       );
-    } else {
-      await pool.query(
-        `INSERT INTO official_verifications (photo_id, officer_id, status, note)
-         VALUES (?, ?, ?, ?)`,
-        [photo_id, officerId, status, note || null]
+      if (photo.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Foto tidak ditemukan' });
+      }
+
+      const existing = await client.query(
+        `SELECT id FROM official_verifications WHERE photo_id = ?`,
+        [photo_id]
       );
+
+      if (existing.rows.length > 0) {
+        await client.query(
+          `UPDATE official_verifications SET officer_id = ?, status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE photo_id = ?`,
+          [officerId, status, note || null, photo_id]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO official_verifications (photo_id, officer_id, status, note)
+           VALUES (?, ?, ?, ?)`,
+          [photo_id, officerId, status, note || null]
+        );
+      }
+
+      const newStatus = status === 'lolos' ? 'terverifikasi' : 'ditolak';
+      await client.query(
+        'UPDATE field_photos SET verification_status = ? WHERE id = ?',
+        [newStatus, photo_id]
+      );
+
+      const updated = await client.query(
+        'SELECT * FROM field_photos WHERE id = ?',
+        [photo_id]
+      );
+
+      await recordAudit(client, {
+        actor: req.user,
+        action: 'verify_official',
+        entityType: 'photo',
+        entityId: photo_id,
+        summary: `Petugas/Admin melakukan verifikasi resmi foto: ${status} → status foto: ${newStatus}`,
+        metadata: { photo_id, status, note, photo_status: newStatus },
+      });
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: 'Verifikasi resmi dicatat',
+        data: { ...updated.rows[0], status: updated.rows[0].verification_status },
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
-
-    const newStatus = status === 'lolos' ? 'terverifikasi' : 'ditolak';
-    await pool.query(
-      'UPDATE field_photos SET verification_status = ? WHERE id = ?',
-      [newStatus, photo_id]
-    );
-
-    const updated = await pool.query(
-      'SELECT * FROM field_photos WHERE id = ?',
-      [photo_id]
-    );
-
-    await recordAudit(pool, {
-      actor: req.user,
-      action: 'verify_official',
-      entityType: 'photo',
-      entityId: photo_id,
-      summary: `Petugas/Admin melakukan verifikasi resmi foto: ${status} → status foto: ${newStatus}`,
-      metadata: { photo_id, status, note, photo_status: newStatus },
-    });
-
-    res.json({
-      success: true,
-      message: 'Verifikasi resmi dicatat',
-      data: { ...updated.rows[0], status: updated.rows[0].verification_status },
-    });
   } catch (err) {
     next(err);
   }

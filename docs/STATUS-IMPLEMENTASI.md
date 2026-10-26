@@ -13,7 +13,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 ## 1. Ringkasan
 
 - Backend API inti **berjalan** dan telah diuji manual dan otomatis (registrasi, login, OTP, lahan, unggah foto dengan validasi magic bytes, verifikasi komunitas/resmi dengan UPSERT, insentif dengan validasi foto 30 hari, pengelolaan katalog oleh admin, serta audit log administratif). Keamanan diperkuat dengan Helmet, rate limiting pada `/api/auth`, serta proteksi kebocoran error internal.
-- Database PostgreSQL lokal **berjalan** di port 5433 dengan skema non-PostGIS; adapter SQLite terisolasi siap untuk pengujian otomatis.
+- Database SQLite lokal **berjalan** sebagai file `backend/zero_burning.db`; adapter SQLite untuk runtime produksi dan pengujian terisolasi.
 - **Landing page publik** tersedia di `/` dengan informasi sistem, alur, fitur, manfaat, katalog, dan FAQ.
 - Dashboard web **selesai dari sisi UI/UX dan terhubung API**, dengan dukungan tampilan responsif hingga resolusi ultra-wide (3xl/4xl). Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), audit log (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, Distribusi, dan Laporan** sudah terhubung ke API.
 - Lint backend, unit/integration test backend (53 test passing), serta lint dan build frontend berjalan otomatis di CI Pipeline.
@@ -69,7 +69,7 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 
 1. **PostGIS → `latitude`/`longitude` + Haversine.** PostGIS tidak tersedia; radius dihitung di JavaScript.
 2. **MinIO/S3 → folder lokal `uploads/`.** Foto disajikan Express melalui `/uploads`.
-3. **PostgreSQL sistem → cluster lokal `.pgdata` port 5433.** Password superuser sistem tidak diketahui.
+3. **SQLite sistem → file lokal `backend/zero_burning.db`.** Password superuser tidak diperlukan.
 4. **Tailwind v4 → v3.4.17.** Kompatibilitas konfigurasi.
 5. **`app.js` → `app.js` + `server.js`.** Entry point listen dipisahkan.
 6. **Profil petugas/petani dilampirkan di `authenticateToken`.** Menghilangkan middleware terpisah dan bug `farmerId`.

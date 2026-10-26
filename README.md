@@ -6,10 +6,10 @@ Sistem pencegahan karhutla berbasis insentif bagi petani dengan verifikasi fotog
 
 ```
 platform-zero-burning/
-├── backend/              # API Node.js + Express + PostgreSQL
+├── backend/              # API Node.js + Express + SQLite
 ├── frontend-web/         # Dashboard Web petani/petugas/admin (React + Vite + Tailwind)
 ├── frontend-mobile/      # Skeleton aplikasi Flutter (petani & petugas)
-├── database/             # Skema & seed SQL (PostgreSQL, tanpa PostGIS)
+├── database/             # Skema & seed SQL (SQLite)
 ├── docs/                 # Pedoman sistem (perencanaan, aturan, status)
 ├── .github/              # Workflow CI
 └── package.json          # Script monorepo
@@ -29,7 +29,7 @@ platform-zero-burning/
 
 ## Cara Menjalankan
 
-Prasyarat: Node.js ≥ 18 dan PostgreSQL 18.
+Prasyarat: Node.js ≥ 18.
 
 ```bash
 # 1. Instal dependensi backend & frontend web
@@ -37,15 +37,12 @@ npm run install:all
 
 # 2. Siapkan environment
 cp backend/.env.example backend/.env
-# sesuaikan DATABASE_URL dan JWT_SECRET bila perlu
+# sesuaikan JWT_SECRET bila perlu (DB_PATH opsional, default backend/zero_burning.db)
 
-# 3. Jalankan database lokal (cluster .pgdata, port 5433)
-npm run db:start
-
-# 4. Buat database + skema + seed (sekali saja)
+# 3. Buat database + skema + seed (sekali saja)
 npm run db:setup
 
-# 5. Jalankan backend + frontend web
+# 4. Jalankan backend + frontend web
 npm run dev
 ```
 
@@ -57,19 +54,17 @@ npm run dev
 | Dashboard Web | http://localhost:5173/dashboard |
 | API Backend | http://localhost:3000 |
 | Health Check | http://localhost:3000/health |
-| PostgreSQL | `localhost:5433` (database `zero_burning`) |
+| Database SQLite | `backend/zero_burning.db` |
 
 Perintah lain:
 
 | Perintah | Fungsi |
 |---|---|
-| `npm run db:start` | Menyalakan PostgreSQL lokal |
-| `npm run db:stop` | Menghentikan PostgreSQL lokal |
-| `npm run db:setup` | Membuat DB + skema + seed |
+| `npm run db:setup` | Membuat database SQLite + skema + seed |
 | `npm run build:web` | Build dashboard web ke `frontend-web/dist` |
 | `npm start` | Menjalankan backend (produksi) |
 
-Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
+Database SQLite dibuat otomatis pada first run melalui `backend/setup-sqlite.js`. Tidak perlu menginstal PostgreSQL.
 
 **Akun admin awal (development):** `admin@zeroburning.id` / `admin123`. Ganti password sebelum produksi. **Petani dapat mendaftar mandiri** melalui `/register`; akun **petugas dan admin** hanya dapat dibuat melalui menu **Pengguna** setelah login sebagai admin. Setelah login, klik nama/avatar di navbar atau kartu profil sidebar untuk membuka **Profil & Keamanan**.
 
