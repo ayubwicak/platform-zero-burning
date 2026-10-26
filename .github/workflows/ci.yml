@@ -7,7 +7,7 @@ on:
     branches: [ develop ]
 
 jobs:
-  lint-and-test:
+  backend-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -40,3 +40,34 @@ jobs:
 
       - name: Run backend tests
         run: npm test -- --ci
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: frontend-web
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend-web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend lint
+        run: npm run lint
+
+      - name: Run frontend build
+        run: npm run build
+
