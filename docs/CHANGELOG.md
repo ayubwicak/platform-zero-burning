@@ -10,6 +10,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Komponen `BackToHome` pada halaman Login dan Register dengan target sentuh minimal 40px, data-testid, dan navigasi langsung ke beranda.
+- Pengujian E2E Playwright untuk alur navigasi `BackToHome` dan validasi pemuatan serta vertical centering halaman auth pada resolusi desktop (1920x920, 1440x900, 1366x768).
 - Proteksi keamanan backend dengan HTTP security headers via `helmet` dan rate limiting pada endpoint `/api/auth` (100 permintaan / 15 menit) via `express-rate-limit`.
 - Validasi magic bytes (JPEG, PNG, WebP) pada `photoController.js` dan pengecekan ketat ekstensi/MIME pada `uploadMiddleware.js` untuk mencegah file spoofing.
 - Validasi kedaluwarsa foto progres (maksimal 30 hari) dan keharusan status terverifikasi pada pengajuan klaim insentif (`incentiveController.js`).

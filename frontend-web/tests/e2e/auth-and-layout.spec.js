@@ -10,7 +10,9 @@ test.describe('Landing Page', () => {
 
   test('should navigate to login page from landing', async ({ page }) => {
     await page.goto('/');
-    await page.click('text=Masuk');
+    // The navbar login link is hidden on mobile, so use the hero login link
+    // which is visible across all Playwright projects.
+    await page.getByRole('link', { name: 'Masuk ke sistem', exact: true }).click();
     await expect(page).toHaveURL('/login');
   });
 });
@@ -28,6 +30,83 @@ test.describe('Auth Pages', () => {
     await expect(page.locator('input[name="nik"]')).toBeVisible();
     await expect(page.locator('input[name="confirmPassword"]')).toBeVisible();
   });
+
+  for (const path of ['/login', '/register']) {
+    test(`${path} back-to-home link should navigate to landing page`, async ({ page }) => {
+      await page.goto(path);
+
+      const backToHome = page.getByTestId('back-to-home');
+      await expect(backToHome).toBeVisible();
+      await expect(backToHome).toHaveAttribute('aria-label', 'Kembali ke beranda');
+
+      const box = await backToHome.boundingBox();
+      expect(box.height).toBeGreaterThanOrEqual(40);
+
+      await backToHome.click();
+      await expect(page).toHaveURL('/');
+    });
+  }
+
+  test('back-to-home link stays clickable on a short mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 667 });
+
+    for (const path of ['/login', '/register']) {
+      await page.goto(path);
+
+      const backToHome = page.getByTestId('back-to-home');
+      await expect(backToHome).toBeVisible();
+
+      const box = await backToHome.boundingBox();
+      expect(box.height).toBeGreaterThanOrEqual(40);
+
+      await backToHome.click();
+      await expect(page).toHaveURL('/');
+    }
+  });
+});
+
+test.describe('Auth Desktop Fit', () => {
+  const desktopViewports = [
+    { width: 1920, height: 920 },
+    { width: 1440, height: 900 },
+    { width: 1366, height: 768 },
+  ];
+
+  for (const path of ['/login', '/register']) {
+    test(`${path} should fit and stay vertically centered`, async ({ page }) => {
+      for (const viewport of desktopViewports) {
+        await page.setViewportSize(viewport);
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+
+        const metrics = await page.evaluate(() => {
+          const panel = document.querySelector('.auth-panel');
+          const backToHome = document.querySelector('[data-testid="back-to-home"]');
+          const note = document.querySelector('.auth-panel-note');
+          const backRect = backToHome.getBoundingClientRect();
+          const noteRect = note.getBoundingClientRect();
+
+          return {
+            pageOverflow: document.documentElement.scrollHeight - window.innerHeight,
+            panelOverflow: panel.scrollHeight - panel.clientHeight,
+            backPosition: getComputedStyle(backToHome).position,
+            topGap: backRect.top,
+            bottomGap: window.innerHeight - noteRect.bottom,
+          };
+        });
+
+        expect(metrics.pageOverflow).toBeLessThanOrEqual(0);
+        expect(metrics.panelOverflow).toBeLessThanOrEqual(0);
+        expect(metrics.backPosition).toBe('static');
+        expect(Math.abs(metrics.topGap - metrics.bottomGap)).toBeLessThanOrEqual(2);
+
+        const note = page.locator('.auth-panel-note');
+        await expect(note).toBeVisible();
+        const noteBox = await note.boundingBox();
+        expect(noteBox.y + noteBox.height).toBeLessThanOrEqual(viewport.height);
+      }
+    });
+  }
 });
 
 test.describe('Responsive Layout', () => {
