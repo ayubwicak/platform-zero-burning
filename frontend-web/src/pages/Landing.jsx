@@ -121,6 +121,7 @@ export default function Landing() {
             {!isAuthenticated && (
               <Link
                 to="/login"
+                data-testid="nav-login"
                 className="hidden text-muted-foreground transition-colors hover:text-foreground sm:inline"
               >
                 Masuk
@@ -162,6 +163,8 @@ export default function Landing() {
             {!isAuthenticated && (
               <Link
                 to="/login"
+                data-testid="nav-login-mobile"
+                aria-label="Masuk ke akun"
                 onClick={() => setMenuOpen(false)}
                 className="mt-3 flex w-full items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
               >
