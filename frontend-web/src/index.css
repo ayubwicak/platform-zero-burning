@@ -131,6 +131,105 @@
   }
 }
 
+/* Auth pages are locked to the viewport so the page never scrolls. */
+.auth-shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background-color: #f9fafb;
+}
+
+@media (max-height: 700px) {
+  .auth-shell .auth-register-panel .auth-subtitle {
+    display: none;
+  }
+  .auth-shell .auth-card {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .auth-shell .auth-heading {
+    margin-bottom: 0.5rem;
+  }
+  .auth-shell .auth-form-grid {
+    row-gap: 0.5rem;
+  }
+  .auth-shell .auth-footer {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+}
+
+@media (max-height: 660px) {
+  .auth-shell .auth-hide-short {
+    display: none;
+  }
+}
+
+@media (max-height: 600px) {
+  .auth-shell .auth-register-panel .auth-mobile-header {
+    display: none;
+  }
+  .auth-shell .auth-title {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  .auth-shell .auth-card {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  .auth-shell .auth-form-grid {
+    row-gap: 0.3125rem;
+  }
+  .auth-shell .auth-footer {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+}
+
+@media (max-height: 500px) {
+  .auth-shell .auth-brand-panel {
+    display: none;
+  }
+  .auth-shell .auth-mobile-header {
+    display: none;
+  }
+  .auth-shell .auth-subtitle {
+    display: none;
+  }
+}
+
+@media (max-height: 500px) and (min-width: 520px) {
+  .auth-shell .auth-register-panel {
+    max-width: 48rem;
+  }
+  .auth-shell .auth-form-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 380px) {
+  .auth-shell .auth-footer {
+    display: none;
+  }
+  .auth-shell .auth-card {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    animation: none;
+    transform: none;
+  }
+  .auth-shell .auth-error {
+    position: fixed;
+    top: 0.5rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 60;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  }
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;

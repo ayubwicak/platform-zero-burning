@@ -3,7 +3,6 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowLeft,
-  CheckCircle2,
   CreditCard,
   Eye,
   EyeOff,
@@ -96,7 +95,7 @@ export default function Register() {
 
     try {
       const normalizedEmail = form.email.trim().toLowerCase();
-      const response = await api.post('/auth/register', {
+      await api.post('/auth/register', {
         nama: form.nama.trim(),
         email: normalizedEmail,
         password: form.password,
@@ -126,16 +125,16 @@ export default function Register() {
     form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+    <div className="auth-shell">
       {/* Desktop branding panel */}
-      <aside className="hidden lg:flex lg:w-[40%] overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 text-white p-8 lg:p-12 flex-col justify-between">
-        <div className="absolute -top-24 -left-16 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-32 -right-10 w-96 h-96 rounded-full bg-emerald-300/20 blur-3xl" />
-        <div className="absolute inset-0 bg-dots opacity-30" />
+      <aside className="auth-brand-panel relative hidden h-full w-[42%] shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 p-8 text-white lg:flex xl:w-[40%] xl:p-12">
+        <div className="pointer-events-none absolute -top-24 -left-16 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-10 h-96 w-96 rounded-full bg-emerald-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-dots opacity-30" />
 
-        <Link to="/" className="relative flex items-center gap-3 z-10 w-fit">
-          <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
-            <ShieldCheck className="w-6 h-6" />
+        <Link to="/" className="relative z-10 flex w-fit items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/15 backdrop-blur-sm">
+            <ShieldCheck className="h-6 w-6" />
           </div>
           <div>
             <p className="text-lg font-extrabold tracking-tight">Zero Burning</p>
@@ -145,17 +144,17 @@ export default function Register() {
           </div>
         </Link>
 
-        <div className="relative z-10 max-w-md">
+        <div className="relative z-10 my-auto max-w-md py-8">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
             Registrasi Petani
           </span>
-          <h1 className="mt-5 text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight">
+          <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight lg:text-5xl">
             Mulai langkah pertama
             <br />
             menuju insentif.
           </h1>
-          <p className="mt-4 text-green-50/90 text-sm lg:text-base leading-relaxed">
+          <p className="mt-4 text-sm leading-relaxed text-green-50/90 lg:text-base">
             Buat akun petani untuk mendaftarkan lahan, mengunggah bukti praktik
             tanpa membakar, dan mengajukan insentif secara transparan.
           </p>
@@ -163,8 +162,8 @@ export default function Register() {
           <ul className="mt-8 space-y-4">
             {benefits.map((benefit) => (
               <li key={benefit.title} className="flex items-start gap-3 text-sm text-green-50/95">
-                <span className="icon-tile w-9 h-9 bg-white/15 border border-white/20 backdrop-blur-sm shrink-0">
-                  <benefit.icon className="w-4 h-4" />
+                <span className="icon-tile h-9 w-9 shrink-0 border border-white/20 bg-white/15 backdrop-blur-sm">
+                  <benefit.icon className="h-4 w-4" />
                 </span>
                 <div>
                   <p className="font-semibold text-white">{benefit.title}</p>
@@ -177,75 +176,88 @@ export default function Register() {
           </ul>
         </div>
 
-        <p className="relative text-xs leading-relaxed text-green-200/70 z-10">
+        <p className="relative z-10 text-xs leading-relaxed text-green-200/70">
           Pendaftaran ini khusus petani. Akun petugas dan admin dibuat oleh administrator.
         </p>
       </aside>
 
-      {/* Form panel - visible on all screens */}
-      <main className="flex-1 min-h-[60vh] lg:min-h-screen relative overflow-hidden bg-gray-50 px-6 py-10 lg:px-12 lg:py-0 flex items-center justify-center">
-        {/* Decorative background */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-green-100/30 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-emerald-100/30 blur-3xl" />
+      {/* Form panel - fixed to the viewport on all screens */}
+      <main className="relative flex h-full min-w-0 flex-1 items-center justify-center overflow-hidden bg-gray-50 px-4 py-2 sm:px-6 sm:py-4 lg:px-10">
+        <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-green-100/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-emerald-100/30 blur-3xl" />
 
-        <div className="relative z-10 w-full max-w-md lg:max-w-lg xl:max-w-xl">
+        <div className="auth-register-panel relative z-10 flex h-full w-full max-w-md flex-col justify-center lg:max-w-xl">
           {/* Mobile brand header + back link */}
-          <div className="lg:hidden flex items-center justify-between mb-6">
+          <div className="auth-mobile-header mb-2 flex shrink-0 items-center justify-between lg:hidden">
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-md shadow-green-200">
-                <ShieldCheck className="w-5 h-5 text-white" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-md shadow-green-200">
+                <ShieldCheck className="h-4 w-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-extrabold text-gray-900 leading-none">Zero Burning</p>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-green-700 mt-0.5">
+                <p className="text-sm font-extrabold leading-none text-gray-900">Zero Burning</p>
+                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-widest text-green-700">
                   Portal Insentif
                 </p>
               </div>
             </Link>
             <Link
               to="/"
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 group"
+              className="group inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
             >
-              <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               Kembali
             </Link>
           </div>
 
-          <div className="card p-8 sm:p-10 animate-fade-up">
+          <div className="auth-card card w-full p-4 animate-fade-up sm:p-6 lg:p-8">
             {/* Desktop back link */}
-            <div className="hidden lg:flex justify-start mb-8">
+            <div className="mb-4 hidden items-center justify-between lg:flex">
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-green-700"
+                className="group inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-green-700"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Kembali ke beranda
               </Link>
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-md shadow-green-200">
+                  <ShieldCheck className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-extrabold leading-none text-gray-900">Zero Burning</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-widest text-green-700">
+                    Portal Insentif
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-2 mb-6">
-              <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-gray-900">
+            <div className="auth-heading mb-4">
+              <h1 className="auth-title text-2xl font-extrabold tracking-tight text-gray-900 lg:text-[28px] lg:leading-9">
                 Daftar sebagai petani
               </h1>
+              <p className="auth-subtitle mt-1 text-xs text-gray-500 sm:text-sm">
+                Khusus petani. Akun petugas &amp; admin dibuat administrator.
+              </p>
             </div>
 
-            <div className="mb-5 flex items-start gap-2 rounded-xl border border-green-100 bg-green-50/70 px-3.5 py-2.5 text-xs leading-relaxed text-green-800">
-              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                <span className="font-semibold">Khusus petani.</span> Akun petugas dan admin
-                tidak dapat dibuat dari halaman ini.
-              </span>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              <div>
-                <label htmlFor="nama" className="block text-sm font-semibold text-gray-700 mb-1.5">
+            <form
+              onSubmit={handleSubmit}
+              className="auth-form-grid grid grid-cols-2 gap-x-3 gap-y-2.5 sm:gap-x-4 sm:gap-y-3"
+              noValidate
+            >
+              <div className="col-span-2 sm:col-span-1">
+                <label
+                  htmlFor="nama"
+                  className="mb-1 block text-sm font-semibold text-gray-700"
+                >
                   Nama lengkap
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
                     id="nama"
+                    name="nama"
                     type="text"
                     required
                     maxLength={100}
@@ -258,68 +270,69 @@ export default function Register() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-semibold text-gray-700 mb-1.5"
-                  >
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      id="email"
-                      type="email"
-                      required
-                      maxLength={150}
-                      autoComplete="email"
-                      className="input-field pl-10"
-                      placeholder="email@contoh.com"
-                      value={form.email}
-                      onChange={updateField('email')}
-                    />
-                  </div>
+              <div className="col-span-2 sm:col-span-1">
+                <label
+                  htmlFor="email"
+                  className="mb-1 block text-sm font-semibold text-gray-700"
+                >
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    maxLength={150}
+                    autoComplete="email"
+                    className="input-field pl-10"
+                    placeholder="email@contoh.com"
+                    value={form.email}
+                    onChange={updateField('email')}
+                  />
                 </div>
+              </div>
 
-                <div>
-                  <label
-                    htmlFor="nik"
-                    className="block text-sm font-semibold text-gray-700 mb-1.5"
-                  >
-                    NIK
-                  </label>
-                  <div className="relative">
-                    <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      id="nik"
-                      type="text"
-                      inputMode="numeric"
-                      required
-                      maxLength={16}
-                      pattern="[0-9]{16}"
-                      title="NIK terdiri dari 16 digit angka"
-                      autoComplete="off"
-                      className="input-field pl-10"
-                      placeholder="16 digit sesuai KTP"
-                      value={form.nik}
-                      onChange={handleNikChange}
-                    />
-                  </div>
+              <div>
+                <label
+                  htmlFor="nik"
+                  className="mb-1 block text-sm font-semibold text-gray-700"
+                >
+                  NIK
+                </label>
+                <div className="relative">
+                  <CreditCard className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="nik"
+                    name="nik"
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    maxLength={16}
+                    pattern="[0-9]{16}"
+                    title="NIK terdiri dari 16 digit angka"
+                    autoComplete="off"
+                    className="input-field pl-10"
+                    placeholder="16 digit"
+                    value={form.nik}
+                    onChange={handleNikChange}
+                  />
                 </div>
               </div>
 
               <div>
                 <label
                   htmlFor="phone"
-                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                  className="mb-1 block whitespace-nowrap text-sm font-semibold text-gray-700"
                 >
-                  Nomor telepon <span className="font-normal text-gray-500">(opsional)</span>
+                  Telepon <span className="text-[10px] font-normal text-gray-500 sm:text-xs">(opsional)</span>
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
                     id="phone"
+                    name="phone"
                     type="tel"
                     maxLength={20}
                     autoComplete="tel"
@@ -331,21 +344,22 @@ export default function Register() {
                 </div>
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <label
                   htmlFor="address"
-                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                  className="mb-1 block text-sm font-semibold text-gray-700"
                 >
-                  Alamat <span className="font-normal text-gray-500">(opsional)</span>
+                  Alamat <span className="text-[10px] font-normal text-gray-500 sm:text-xs">(opsional)</span>
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+                  <MapPin className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
                   <textarea
                     id="address"
+                    name="address"
                     rows={2}
                     maxLength={500}
                     autoComplete="street-address"
-                    className="input-field pl-10 resize-none"
+                    className="input-field resize-none pl-10"
                     placeholder="Alamat domisili atau lokasi lahan"
                     value={form.address}
                     onChange={updateField('address')}
@@ -353,102 +367,108 @@ export default function Register() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-semibold text-gray-700 mb-1.5"
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-1 block text-sm font-semibold text-gray-700"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    maxLength={72}
+                    autoComplete="new-password"
+                    className="input-field pl-10 pr-10"
+                    placeholder="••••••"
+                    value={form.password}
+                    onChange={updateField('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                   >
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      minLength={6}
-                      maxLength={72}
-                      autoComplete="new-password"
-                      className="input-field pl-10 pr-11"
-                      placeholder="Minimal 6 karakter"
-                      value={form.password}
-                      onChange={updateField('password')}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
+              </div>
 
-                <div>
-                  <label
-                    htmlFor="confirm-password"
-                    className="block text-sm font-semibold text-gray-700 mb-1.5"
+              <div>
+                <label
+                  htmlFor="confirm-password"
+                  className="mb-1 block text-sm font-semibold text-gray-700"
+                >
+                  Ulangi password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type={showConfirm ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    maxLength={72}
+                    autoComplete="new-password"
+                    className="input-field pl-10 pr-10"
+                    placeholder="••••••"
+                    value={form.confirmPassword}
+                    onChange={updateField('confirmPassword')}
+                    aria-invalid={passwordMismatch}
+                    aria-describedby={passwordMismatch ? 'confirm-password-error' : undefined}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((prev) => !prev)}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+                    aria-label={
+                      showConfirm
+                        ? 'Sembunyikan konfirmasi password'
+                        : 'Tampilkan konfirmasi password'
+                    }
                   >
-                    Konfirmasi password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      id="confirm-password"
-                      type={showConfirm ? 'text' : 'password'}
-                      required
-                      minLength={6}
-                      maxLength={72}
-                      autoComplete="new-password"
-                      className="input-field pl-10 pr-11"
-                      placeholder="Ulangi password"
-                      value={form.confirmPassword}
-                      onChange={updateField('confirmPassword')}
-                      aria-invalid={passwordMismatch}
-                      aria-describedby={passwordMismatch ? 'confirm-password-error' : undefined}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((prev) => !prev)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-                      aria-label={
-                        showConfirm ? 'Sembunyikan konfirmasi password' : 'Tampilkan konfirmasi password'
-                      }
-                    >
-                      {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                    {passwordMismatch && (
-                      <p id="confirm-password-error" className="mt-1 text-[11px] text-rose-600">
-                        Password belum sama.
-                      </p>
-                    )}
-                  </div>
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
+                {passwordMismatch && !error && (
+                  <p id="confirm-password-error" className="mt-1 text-[11px] text-rose-600">
+                    Password belum sama.
+                  </p>
+                )}
               </div>
 
               {error && (
                 <div
                   role="alert"
-                  className="flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700"
+                  className="auth-error col-span-2 flex items-start gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-1.5 text-[11px] text-rose-700"
                 >
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
-              <button type="submit" className="btn-primary w-full" disabled={loading}>
+              <button
+                type="submit"
+                className="btn-primary col-span-2 w-full"
+                disabled={loading}
+              >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus className="h-4 w-4" />
                 )}
                 {loading ? 'Mendaftarkan akun...' : 'Daftar sebagai petani'}
               </button>
             </form>
 
-            <div className="mt-6 border-t border-gray-100 pt-5">
+            <div className="auth-footer mt-4 border-t border-gray-100 pt-3.5">
               <p className="text-center text-sm text-gray-500">
                 Sudah punya akun?{' '}
                 <Link
