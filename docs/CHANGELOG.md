@@ -16,6 +16,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 - Logika UPSERT pada `community_verifications` dan `official_verifications` untuk mencegah duplikasi entri serta memperbarui waktu verifikasi.
 - Konfigurasi ESLint frontend (`.eslintrc.cjs`) beserta dependensi `eslint-plugin-react` dan `eslint-plugin-react-hooks`.
 - Dukungan responsivitas resolusi tinggi dan ultra-wide pada `frontend-web` dengan breakpoint Tailwind `3xl` (1920px) dan `4xl` (2560px), penyesuaian max-width layout, serta grid adaptif di halaman Dashboard, DataLahan, Fields, Katalog, Laporan, Upload, dan VerifikasiKomunitas.
+- Layout auth tanpa scroll (`.auth-shell`) pada Login dan Register dengan adaptasi viewport height untuk layar pendek/keyboard virtual.
 - Job `frontend-build` pada `.github/workflows/ci.yml` untuk memvalidasi linting dan build frontend pada pipeline CI.
 - Konfigurasi database test SQLite terisolasi (`globalSetup.js`, `globalTeardown.js`, `setupEnv.js`) pada Jest runner sehingga seluruh unit dan integration test (53 test) dapat berjalan deterministik di lingkungan CI/CD tanpa dependensi eksternal.
 - Halaman **Laporan Program** (`/laporan`) untuk admin dengan visualisasi ringkasan metrik (lahan, foto, klaim, petani), status lahan, stok kategori, tabel top 10 petani, dan tren bulanan 12 bulan terakhir.

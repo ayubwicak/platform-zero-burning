@@ -2,7 +2,7 @@
 
 | Atribut | Nilai |
 |---|---|
-| Diperbarui | 26 Oktober 2026 |
+| Diperbarui | 28 Oktober 2026 |
 | Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, dan CI pipeline |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
