@@ -10,6 +10,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Komponen layout bersama `AdminLayout`, `Card`, `Button`, `Badge`, dan `StatCard` untuk standardisasi antarmuka admin pasca-login.
+- Aset visual preview redesign dashboard admin pada `docs/screenshots/dashboard-preview.svg`.
 - Komponen `BackToHome` pada halaman Login dan Register dengan target sentuh minimal 40px, data-testid, dan navigasi langsung ke beranda.
 - Pengujian E2E Playwright untuk alur navigasi `BackToHome` dan validasi pemuatan serta vertical centering halaman auth pada resolusi desktop (1920x920, 1440x900, 1366x768).
 - Proteksi keamanan backend dengan HTTP security headers via `helmet` dan rate limiting pada endpoint `/api/auth` (100 permintaan / 15 menit) via `express-rate-limit`.
@@ -23,6 +25,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Changed
 
+- Penyelarasan sistem desain dashboard admin dan seluruh halaman pasca-login dengan identitas visual publik (font serif Fraunces, latar krem hangat, palet forest & aksen terakota ember, pill navigation & button).
+- Pembaruan utility classes komponen pada `frontend-web/src/index.css` (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost-light`, `.card`, `.badge`, `.table-header`, `.table-cell`, `.input-field`, `.sidebar-link`).
+- Pembaruan `Layout.jsx`, `Navbar.jsx`, `Sidebar.jsx`, dan `PageHeader.jsx` agar konsisten dengan branding "Zero Burning".
+- Pembaruan visual halaman `Dashboard.jsx` (hero banner forest, stat cards seragam, dan quick actions palet terbatas).
 - Konversi `frontend-web/playwright.config.js` dari CommonJS syntax (`require`/`module.exports`) ke ES module syntax (`import`/`export default`) sesuai `"type": "module"` pada `frontend-web/package.json`.
 - Job `frontend-build` pada `.github/workflows/ci.yml` untuk memvalidasi linting dan build frontend pada pipeline CI.
 - Konfigurasi database test SQLite terisolasi (`globalSetup.js`, `globalTeardown.js`, `setupEnv.js`) pada Jest runner sehingga seluruh unit dan integration test (53 test) dapat berjalan deterministik di lingkungan CI/CD tanpa dependensi eksternal.
