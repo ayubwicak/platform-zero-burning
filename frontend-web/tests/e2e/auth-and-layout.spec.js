@@ -9,10 +9,7 @@ test.describe('Landing Page', () => {
   });
 
   test('should navigate to login page from landing', async ({ page }) => {
-    await page.goto('/');
-    // The navbar login link is hidden on mobile, so use the hero login link
-    // which is visible across all Playwright projects.
-    await page.getByRole('link', { name: 'Masuk ke sistem', exact: true }).click();
+    await openLoginFromLanding(page);
     await expect(page).toHaveURL('/login');
   });
 });
@@ -137,3 +134,18 @@ test.describe('Responsive Layout', () => {
     expect(horizontalOverflow).toBe(false);
   });
 });
+
+async function openLoginFromLanding(page) {
+  await page.goto('/');
+
+  // Below the md breakpoint the navbar login link is hidden; real users open
+  // the hamburger menu and use the login link inside it.
+  const mobileMenuButton = page.getByRole('button', { name: 'Buka menu' });
+  if (await mobileMenuButton.isVisible()) {
+    await mobileMenuButton.click();
+    await page.getByTestId('nav-login-mobile').click();
+    return;
+  }
+
+  await page.getByTestId('nav-login').click();
+}
