@@ -2,9 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design tokens adapted from the Zero Burning reference (Tailwind v4 OKLCH -> RGB for Tailwind v3 alpha support). */
+:root {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --radius: 0.75rem;
+  --background: 250 246 238; /* oklch(0.975 0.012 85) */
+  --foreground: 21 35 24; /* oklch(0.24 0.03 150) */
+  --card: 254 251 246; /* oklch(0.99 0.008 85) */
+  --card-foreground: 21 35 24;
+  --popover: 254 251 246;
+  --popover-foreground: 21 35 24;
+  --primary: 36 77 46; /* oklch(0.38 0.07 150) */
+  --primary-foreground: 250 245 234;
+  --secondary: 237 232 214; /* oklch(0.93 0.025 95) */
+  --secondary-foreground: 26 46 30;
+  --muted: 241 235 222; /* oklch(0.94 0.018 85) */
+  --muted-foreground: 86 97 84;
+  --accent: 217 220 174; /* oklch(0.88 0.06 110) */
+  --accent-foreground: 21 41 26;
+  --ember: 216 102 42; /* oklch(0.64 0.16 45) */
+  --ember-foreground: 251 248 241;
+  --forest: 16 42 26; /* oklch(0.26 0.045 155) */
+  --forest-foreground: 244 238 224;
+  --destructive: 231 0 11;
+  --destructive-foreground: 250 250 250;
+  --border: 220 215 201; /* oklch(0.88 0.02 90) */
+  --input: 220 215 201;
+  --ring: 36 77 46;
+}
+
 @layer base {
   html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     scroll-behavior: smooth;
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
@@ -15,13 +45,19 @@
     }
   }
   :where(a, button, input, textarea, select):focus-visible {
-    outline: 2px solid #15803d;
+    outline: 2px solid rgb(var(--ring));
     outline-offset: 2px;
   }
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-background text-foreground antialiased;
     overflow-x: hidden;
     min-width: 0;
+  }
+  .public-landing h1,
+  .public-landing h2,
+  .public-landing h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
   img, svg, video, canvas, audio, iframe, embed, object {
     max-width: 100%;
@@ -29,6 +65,9 @@
   }
   table {
     border-collapse: collapse;
+  }
+  ::selection {
+    background-color: rgb(var(--ember) / 0.22);
   }
   ::-webkit-scrollbar {
     width: 8px;
@@ -60,6 +99,12 @@
   }
   .input-field {
     @apply w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500/40 focus:border-green-500 outline-none transition-all duration-200;
+  }
+  .public-field {
+    @apply w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-ring/20;
+  }
+  .public-submit {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0;
   }
   .card {
     @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
@@ -131,7 +176,7 @@
   }
 }
 
-/* Auth pages are locked to the viewport so the page never scrolls. */
+/* Auth pages stay locked to the viewport; the form panel scrolls internally when needed. */
 .auth-shell {
   position: fixed;
   inset: 0;
@@ -139,19 +184,58 @@
   width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
-  background-color: #f9fafb;
+  background-color: rgb(var(--background));
+}
+
+.auth-shell .auth-brand-panel {
+  width: 50%;
+}
+
+.auth-shell .auth-panel {
+  flex: 1 1 0%;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-height: 760px) {
+  .auth-shell .auth-aside-content {
+    padding: 2rem;
+  }
+  .auth-shell .auth-aside-title {
+    font-size: 2.75rem;
+    line-height: 1.05;
+  }
+  .auth-shell .auth-panel-inner {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
 }
 
 @media (max-height: 700px) {
-  .auth-shell .auth-register-panel .auth-subtitle {
+  .auth-shell .auth-subtitle,
+  .auth-shell .auth-hide-short {
     display: none;
   }
-  .auth-shell .auth-card {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
+  .auth-shell .auth-form-grid {
+    row-gap: 0.75rem;
   }
-  .auth-shell .auth-heading {
-    margin-bottom: 0.5rem;
+  .auth-shell .auth-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+}
+
+@media (max-height: 620px) {
+  .auth-shell .auth-aside-points {
+    display: none;
+  }
+  .auth-shell .auth-aside-title {
+    font-size: 2.25rem;
+  }
+  .auth-shell .auth-hide-short {
+    display: none;
   }
   .auth-shell .auth-form-grid {
     row-gap: 0.5rem;
@@ -162,71 +246,15 @@
   }
 }
 
-@media (max-height: 660px) {
-  .auth-shell .auth-hide-short {
-    display: none;
-  }
-}
-
-@media (max-height: 600px) {
-  .auth-shell .auth-register-panel .auth-mobile-header {
-    display: none;
-  }
-  .auth-shell .auth-title {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
-  }
-  .auth-shell .auth-card {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-  .auth-shell .auth-form-grid {
-    row-gap: 0.3125rem;
-  }
-  .auth-shell .auth-footer {
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-  }
-}
-
-@media (max-height: 500px) {
+@media (max-height: 520px) {
   .auth-shell .auth-brand-panel {
     display: none;
   }
-  .auth-shell .auth-mobile-header {
+  .auth-shell .auth-mobile-brand {
     display: none;
   }
-  .auth-shell .auth-subtitle {
+  .auth-shell .auth-hide-short {
     display: none;
-  }
-}
-
-@media (max-height: 500px) and (min-width: 520px) {
-  .auth-shell .auth-register-panel {
-    max-width: 48rem;
-  }
-  .auth-shell .auth-form-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-height: 380px) {
-  .auth-shell .auth-footer {
-    display: none;
-  }
-  .auth-shell .auth-card {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    animation: none;
-    transform: none;
-  }
-  .auth-shell .auth-error {
-    position: fixed;
-    top: 0.5rem;
-    left: 1rem;
-    right: 1rem;
-    z-index: 60;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
   }
 }
 
