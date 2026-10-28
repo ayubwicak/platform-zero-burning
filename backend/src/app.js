@@ -13,6 +13,9 @@ const incentiveRoutes = require('./routes/incentiveRoutes');
 const userRoutes = require('./routes/userRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const { rejectClaim, cancelClaim } = require('./controllers/incentiveController');
+const { authenticateToken, authorizeRoles } = require('./middleware/authMiddleware');
 
 const { errorHandler } = require('./middleware/errorMiddleware');
 const path = require('path');
@@ -62,7 +65,14 @@ app.use('/api/verifications', verificationRoutes);
 app.use('/api/incentives', incentiveRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/audit-logs', auditRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use(reportRoutes);
+
+// Direct claim actions compatibility
+const claimsDirectRouter = express.Router();
+claimsDirectRouter.post('/:id/reject', authenticateToken, authorizeRoles('petugas', 'admin'), rejectClaim);
+claimsDirectRouter.post('/:id/cancel', authenticateToken, authorizeRoles('petugas', 'admin'), cancelClaim);
+app.use('/api/claims', claimsDirectRouter);
 
 // Serve uploaded photos
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

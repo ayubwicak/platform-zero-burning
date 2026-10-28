@@ -15,5 +15,9 @@ router.get('/', authenticateToken, authorizeRoles('petugas', 'admin'), listPhoto
 router.get('/pending', authenticateToken, authorizeRoles('petugas', 'admin'), listPending);
 router.post('/community', authenticateToken, authorizeRoles('petani'), communityVerify);
 router.post('/official', authenticateToken, authorizeRoles('petugas', 'admin'), officialVerify);
+router.post('/override', authenticateToken, authorizeRoles('petugas', 'admin'), (req, res, next) => {
+  req.body.is_override = true;
+  return officialVerify(req, res, next);
+});
 
 module.exports = router;

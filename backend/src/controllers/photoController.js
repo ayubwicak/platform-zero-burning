@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const pool = require('../config/db');
 const { recordAudit } = require('../utils/auditLog');
+const { createNotification } = require('../utils/notificationService');
 
 function removeFile(filePath) {
   if (!filePath) return;
@@ -89,6 +90,20 @@ async function uploadPhoto(req, res, next) {
         summary: `Petani mengunggah foto untuk lahan (field_id: ${field_id})`,
         metadata: { field_id, photo_url: photoUrl, photo_hash: photoHash },
       });
+
+      // Notifikasi ke petugas dan admin bahwa ada foto baru yang menunggu verifikasi
+      const staffUsers = await client.query(
+        `SELECT id FROM users WHERE role IN ('petugas', 'admin') AND is_active = 1 LIMIT 20`
+      );
+      for (const staff of staffUsers.rows) {
+        await createNotification(client, {
+          userId: staff.id,
+          type: 'photo.submitted',
+          title: 'Foto Lahan Baru',
+          message: `${req.user.nama} mengunggah foto progres baru (Lahan #${field_id}) yang menunggu verifikasi.`,
+          data: { photo_id: photo.id, field_id: Number(field_id) },
+        }).catch(() => {});
+      }
 
       await client.query('COMMIT');
 
