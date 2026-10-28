@@ -168,8 +168,8 @@ Catatan implementasi: halaman Verifikasi Warga sudah tersedia dan jumlah suara k
                  │ SQL   │ file
                  ▼       ▼
    ┌──────────────────┐  ┌───────────────┐
-   │ PostgreSQL :5433 │  │ uploads/      │
-   │ zero_burning     │  │ (foto lokal)  │
+   │ SQLite :dbPath │  │ uploads/      │
+   │ zero_burning   │  │ (foto lokal)  │
    └──────────────────┘  └───────────────┘
 ```
 
@@ -179,7 +179,7 @@ Catatan implementasi: halaman Verifikasi Warga sudah tersedia dan jumlah suara k
 
 ## 9. Model Data
 
-Database: `zero_burning` (PostgreSQL 18). Skema ada di `database/schema.sql`, seed di `database/seed.sql`.
+Database: `zero_burning` (SQLite). Skema ada di `backend/setup-sqlite.js`, seed di `backend/setup-sqlite.js`.
 
 | Tabel | Fungsi | Kolom kunci |
 |---|---|---|
@@ -248,7 +248,7 @@ Format respons sukses: `{ "success": true, "data": ... }`. Format error: `{ "err
 | Lapisan | Teknologi | Catatan |
 |---|---|---|
 | Backend | Node.js ≥ 18, Express 4 | Entry point `backend/src/server.js` |
-| Database | PostgreSQL 18 | Cluster lokal `.pgdata` port **5433** |
+| Database | SQLite | File lokal `backend/zero_burning.db` |
 | Autentikasi | JWT (`jsonwebtoken`), bcryptjs | Token 24 jam, hash cost 10 |
 | Unggah berkas | Multer (disk storage) | Maks. 5 MB, hanya `image/*` |
 | Frontend web | React 18, Vite 5, React Router 6 | Port 5173 |
@@ -282,7 +282,7 @@ Format respons sukses: `{ "success": true, "data": ... }`. Format error: `{ "err
 
 ## 14. Lingkungan Pengembangan & Cara Menjalankan
 
-Prasyarat: Node.js ≥ 18, PostgreSQL 18 (binari lokal), npm.
+Prasyarat: Node.js ≥ 18, SQLite (file lokal), npm.
 
 ```bash
 # 1. Instalasi dependensi
@@ -291,7 +291,7 @@ npm run install:all
 # 2. Siapkan environment
 cp backend/.env.example backend/.env   # sesuaikan bila perlu
 
-# 3. Jalankan database lokal (cluster .pgdata, port 5433)
+# 3. Inisialisasi database SQLite (setup-sqlite.js)
 npm run db:start
 
 # 4. Buat database + skema + seed (sekali saja)
@@ -306,7 +306,7 @@ npm run dev
 | Frontend web | http://localhost:5173 |
 | Backend API | http://localhost:3000 |
 | Health check | http://localhost:3000/health |
-| PostgreSQL | `localhost:5433`, database `zero_burning` |
+| SQLite | `backend/zero_burning.db` |
 
 Konfigurasi backend (`backend/.env`):
 
@@ -314,7 +314,7 @@ Konfigurasi backend (`backend/.env`):
 NODE_ENV=development
 PORT=3000
 JWT_SECRET=<string-acak-panjang>
-DATABASE_URL=postgresql://postgres@localhost:5433/zero_burning
+DATABASE_URL=sqlite://backend/zero_burning.db
 ```
 
 Menghentikan database: `npm run db:stop`. Setelah komputer restart, jalankan `npm run db:start` sebelum `npm run dev`.
@@ -337,7 +337,7 @@ Rencana disesuaikan dengan kondisi nyata lingkungan pengembangan. Perubahan ini 
 |---|---|---|---|---|
 | A-01 | PostGIS untuk data spasial | Kolom `latitude`/`longitude` + Haversine | PostGIS tidak tersedia di lingkungan | Tanpa spatial index; cukup untuk radius titik |
 | A-02 | Object storage MinIO/S3 | Folder lokal `uploads/` + static Express | Menyederhanakan lingkungan lokal | Perlu migrasi storage untuk produksi |
-| A-03 | PostgreSQL sistem | Cluster lokal `.pgdata` port 5433 | Password superuser sistem tidak diketahui | Port & path khusus; harus `db:start` |
+| A-03 | SQLite sistem | File lokal `backend/zero_burning.db` | Password superuser sistem tidak diketahui | Port & path khusus; harus `db:start` |
 | A-04 | Tailwind CSS v4 | Tailwind CSS 3.4.17 | Kompatibilitas konfigurasi & PostCSS | Konfigurasi memakai `tailwind.config.js` |
 | A-05 | Entry `app.js` menjalankan server | `app.js` (konfigurasi) + `server.js` (listen) | Pemisahan tanggung jawab | Script `dev`/`start` menunjuk `server.js` |
 | A-06 | Middleware profil terpisah | Profil dilampirkan di `authenticateToken` | Menghindari query ganda & bug `farmerId` | `req.user.farmerId`/`officerId` tersedia |

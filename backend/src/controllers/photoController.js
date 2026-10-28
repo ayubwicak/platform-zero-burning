@@ -30,6 +30,18 @@ async function uploadPhoto(req, res, next) {
     }
 
     const fileBuffer = fs.readFileSync(file.path);
+    // Verifikasi magic bytes gambar (JPEG, PNG, WebP)
+    const isJpeg = fileBuffer.length >= 3 && fileBuffer[0] === 0xFF && fileBuffer[1] === 0xD8 && fileBuffer[2] === 0xFF;
+    const isPng = fileBuffer.length >= 8 && fileBuffer[0] === 0x89 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x4E && fileBuffer[3] === 0x47;
+    const isRiffWebp = fileBuffer.length >= 12 &&
+      fileBuffer.toString('ascii', 0, 4) === 'RIFF' &&
+      fileBuffer.toString('ascii', 8, 12) === 'WEBP';
+
+    if (!isJpeg && !isPng && !isRiffWebp) {
+      removeFile(file.path);
+      return res.status(400).json({ error: 'File bukan gambar valid (JPEG, PNG, atau WebP)' });
+    }
+
     const photoHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
     const duplicate = await pool.query(
@@ -42,46 +54,59 @@ async function uploadPhoto(req, res, next) {
     }
 
     const photoUrl = `/uploads/${file.filename}`;
-    const result = await pool.query(
-      `INSERT INTO field_photos
-         (field_id, photo_url, latitude, longitude, distance_from_center,
-          photo_hash, verification_status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'menunggu_verifikasi', ?)`,
-      [
-        field_id,
-        photoUrl,
-        latitude,
-        longitude,
-        req.geofencingDistance ?? 0,
-        photoHash,
-        takenAt.toISOString(),
-      ]
-    );
+    const client = await pool.connect();
 
-    const inserted = await pool.query(
-      'SELECT *, created_at AS taken_at FROM field_photos WHERE id = ?',
-      [result.rows[0].id]
-    );
-    const photo = inserted.rows[0];
+    try {
+      await client.query('BEGIN');
 
-    await recordAudit(pool, {
-      actor: req.user,
-      action: 'upload',
-      entityType: 'photo',
-      entityId: photo.id,
-      summary: `Petani mengunggah foto untuk lahan (field_id: ${field_id})`,
-      metadata: { field_id, photo_url: photoUrl, photo_hash: photoHash },
-    });
+      const result = await client.query(
+        `INSERT INTO field_photos
+           (field_id, photo_url, latitude, longitude, distance_from_center,
+            photo_hash, verification_status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'menunggu_verifikasi', ?)`,
+        [
+          field_id,
+          photoUrl,
+          latitude,
+          longitude,
+          req.geofencingDistance ?? 0,
+          photoHash,
+          takenAt.toISOString(),
+        ]
+      );
 
-    res.status(201).json({
-      success: true,
-      data: {
-        ...photo,
-        status: photo.verification_status,
-        geofencing_valid: true,
-        distance: req.geofencingDistance,
-      },
-    });
+      const inserted = await client.query(
+        'SELECT *, created_at AS taken_at FROM field_photos WHERE id = ?',
+        [result.rows[0].id]
+      );
+      const photo = inserted.rows[0];
+
+      await recordAudit(client, {
+        actor: req.user,
+        action: 'upload',
+        entityType: 'photo',
+        entityId: photo.id,
+        summary: `Petani mengunggah foto untuk lahan (field_id: ${field_id})`,
+        metadata: { field_id, photo_url: photoUrl, photo_hash: photoHash },
+      });
+
+      await client.query('COMMIT');
+
+      res.status(201).json({
+        success: true,
+        data: {
+          ...photo,
+          status: photo.verification_status,
+          geofencing_valid: true,
+          distance: req.geofencingDistance,
+        },
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     if (file) removeFile(file.path);
     next(err);

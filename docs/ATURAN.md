@@ -137,7 +137,7 @@ Reviewer wajib memeriksa kebenaran logika, keamanan, konsistensi gaya, dan sinkr
 - Gunakan `CREATE TABLE IF NOT EXISTS` dan indeks untuk kolom pencarian.
 - Jangan menghapus data produksi secara manual tanpa backup.
 - Perubahan tipe/kolom harus kompatibel mundur atau melalui migrasi bertahap.
-- Database lokal berjalan di port **5433** (lihat `package.json`).
+- Database lokal berkas SQLite di `backend/zero_burning.db` (lihat `package.json`).
 
 ## 8. Keamanan
 

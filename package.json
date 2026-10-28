@@ -8,9 +8,7 @@
     "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend-web\"",
     "start": "npm start --prefix backend",
     "build:web": "npm run build --prefix frontend-web",
-    "db:start": "/usr/lib/postgresql/18/bin/pg_ctl -D .pgdata -o \"-p 5433 -k /tmp\" -l .pgdata/postgres.log start",
-    "db:stop": "/usr/lib/postgresql/18/bin/pg_ctl -D .pgdata stop",
-    "db:setup": "createdb -h /tmp -p 5433 -U postgres zero_burning && psql -h /tmp -p 5433 -U postgres -d zero_burning -f database/schema.sql && psql -h /tmp -p 5433 -U postgres -d zero_burning -f database/seed.sql"
+    "db:setup": "node backend/setup-sqlite.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

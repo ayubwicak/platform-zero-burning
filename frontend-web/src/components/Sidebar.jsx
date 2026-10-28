@@ -51,7 +51,7 @@ export default function Sidebar({ onClose }) {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 lg:p-5">
+    <div className="flex h-full flex-col overflow-y-auto p-4 lg:p-5">
       <p className="px-3 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
         Menu Utama
       </p>

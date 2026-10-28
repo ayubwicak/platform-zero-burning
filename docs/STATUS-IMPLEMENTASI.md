@@ -2,8 +2,8 @@
 
 | Atribut | Nilai |
 |---|---|
-| Diperbarui | 24 Oktober 2026 |
-| Fase aktif | Fase 3 selesai; pengujian & laporan program |
+| Diperbarui | 28 Oktober 2026 |
+| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, dan CI pipeline |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
 Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan yang memengaruhi status modul (wajib dalam PR yang sama).
@@ -12,11 +12,11 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 
 ## 1. Ringkasan
 
-- Backend API inti **berjalan** dan telah diuji manual (registrasi, login, lahan, unggah foto, verifikasi, insentif, pengelolaan katalog oleh admin, serta audit log administratif).
-- Database PostgreSQL lokal **berjalan** di port 5433 dengan skema non-PostGIS.
+- Backend API inti **berjalan** dan telah diuji manual dan otomatis (registrasi, login, OTP, lahan, unggah foto dengan validasi magic bytes, verifikasi komunitas/resmi dengan UPSERT, insentif dengan validasi foto 30 hari, pengelolaan katalog oleh admin, serta audit log administratif). Keamanan diperkuat dengan Helmet, rate limiting pada `/api/auth`, serta proteksi kebocoran error internal.
+- Database SQLite lokal **berjalan** sebagai file `backend/zero_burning.db`; adapter SQLite untuk runtime produksi dan pengujian terisolasi.
 - **Landing page publik** tersedia di `/` dengan informasi sistem, alur, fitur, manfaat, katalog, dan FAQ.
-- Dashboard web **selesai dari sisi UI/UX dan terhubung API**. Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), audit log (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, dan Distribusi** sudah terhubung ke API. Ringkasan dashboard memakai data program/personal dan aktivitas terbaru dari database.
-- Lint backend dan test otomatis berjalan di CI Pipeline (53 test passing: unit + integration test).
+- Dashboard web **selesai dari sisi UI/UX dan terhubung API**, dengan dukungan tampilan responsif hingga resolusi ultra-wide (3xl/4xl). Login, registrasi petani mandiri, status akun, proteksi route, manajemen pengguna (khusus admin), pengelolaan katalog (khusus admin), audit log (khusus admin), serta **Profil, Lahan, Data Lahan, Unggah Foto, Verifikasi, Verifikasi Warga, Klaim, Katalog, Distribusi, dan Laporan** sudah terhubung ke API.
+- Lint backend, unit/integration test backend (53 test passing), serta lint dan build frontend berjalan otomatis di CI Pipeline.
 - Aplikasi mobile Flutter masih **skeleton**.
 
 ## 2. Status per Modul
@@ -59,7 +59,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Halaman Pengguna (admin) | ✅ Selesai | Statistik, filter role/status, pencarian, tambah pengguna, ubah role, nonaktifkan/aktifkan akun | `pages/Pengguna.jsx` |
 | Integrasi web ↔ API | ✅ Selesai | Login, registrasi petani, profil, pengguna, audit log, lahan, data lahan, unggah, verifikasi, verifikasi warga, klaim, katalog admin, distribusi, dan ringkasan dashboard terhubung ke API | `frontend-web/src/` |
 | Mobile Flutter | ◐ Skeleton | Belum dijalankan/diuji | `frontend-mobile/` |
-| CI (lint + test) | ✅ Selesai | Workflow GitHub Actions; ESLint backend lulus; 53 automated tests (unit + integration test auth/fields/reports) berjalan dengan database test SQLite terisolasi | `.github/workflows/ci.yml`, `backend/jest.config.js`, `backend/__tests__/` |
+| CI (lint + test) | ✅ Selesai | Workflow GitHub Actions (backend-test: 53 tests passing & ESLint; frontend-build: ESLint & Vite production build) | `.github/workflows/ci.yml`, `backend/jest.config.js`, `frontend-web/` |
 
 Catatan metrik dashboard: jumlah lahan terverifikasi mengikuti status foto terbaru lahan (konsisten dengan syarat klaim), sedangkan “Insentif Tersalurkan” adalah jumlah paket distribusi karena skema belum menyimpan nilai uang.
 
@@ -69,7 +69,7 @@ Ringkasan penyimpangan resmi (detail lengkap di `PERENCANAAN.md` §16):
 
 1. **PostGIS → `latitude`/`longitude` + Haversine.** PostGIS tidak tersedia; radius dihitung di JavaScript.
 2. **MinIO/S3 → folder lokal `uploads/`.** Foto disajikan Express melalui `/uploads`.
-3. **PostgreSQL sistem → cluster lokal `.pgdata` port 5433.** Password superuser sistem tidak diketahui.
+3. **SQLite sistem → file lokal `backend/zero_burning.db`.** Password superuser tidak diperlukan.
 4. **Tailwind v4 → v3.4.17.** Kompatibilitas konfigurasi.
 5. **`app.js` → `app.js` + `server.js`.** Entry point listen dipisahkan.
 6. **Profil petugas/petani dilampirkan di `authenticateToken`.** Menghilangkan middleware terpisah dan bug `farmerId`.

@@ -23,7 +23,7 @@ const voteLabels = {
 
 function CommunitySkeletons() {
   return (
-    <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
+    <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5" aria-hidden="true">
       {[1, 2, 3].map((item) => (
         <div key={item} className="card animate-pulse overflow-hidden">
           <div className="aspect-[16/10] bg-gray-100" />
@@ -171,7 +171,7 @@ export default function VerifikasiKomunitas() {
           </p>
         </div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5">
           {photos.map((photo, index) => {
             const setujuBusy = actionId === `${photo.id}-setuju`;
             const tidakBusy = actionId === `${photo.id}-tidak_setuju`;

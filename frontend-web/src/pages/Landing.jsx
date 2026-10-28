@@ -301,7 +301,7 @@ export default function Landing() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-2 md:flex">
+          <nav className="hidden items-center gap-2 lg:flex">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -332,7 +332,7 @@ export default function Landing() {
             </Link>
             <button
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="rounded-lg p-2 text-green-100 transition-colors hover:bg-green-600 md:hidden"
+              className="rounded-lg p-2 text-green-100 transition-colors hover:bg-green-600 lg:hidden"
               aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
               aria-expanded={menuOpen}
             >
@@ -342,7 +342,7 @@ export default function Landing() {
         </div>
 
         {menuOpen && (
-          <div className="bg-green-700 px-5 py-3 sm:px-8 md:hidden">
+          <div className="bg-green-700 px-5 py-3 sm:px-8 lg:hidden">
             <nav className="space-y-1">
               {navLinks.map((link) => (
                 <a
@@ -358,7 +358,7 @@ export default function Landing() {
                 <Link
                   to="/login"
                   onClick={() => setMenuOpen(false)}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800 sm:hidden"
                 >
                   <LogIn className="h-4 w-4" />
                   Masuk
@@ -367,7 +367,7 @@ export default function Landing() {
               <Link
                 to={primaryHref}
                 onClick={() => setMenuOpen(false)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50 sm:hidden"
               >
                 <PrimaryIcon className="h-4 w-4" />
                 {primaryLabel}

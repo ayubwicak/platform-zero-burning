@@ -361,16 +361,31 @@ async function createClaim(req, res, next) {
     }
 
     const fieldCheck = await pool.query(
-      `SELECT 1 FROM field_photos fp
+      `SELECT fp.id, fp.verification_status, fp.created_at
+       FROM field_photos fp
        JOIN fields f ON fp.field_id = f.id
        WHERE f.id = ? AND f.id_farmer = ? AND f.status = 'active'
-         AND fp.verification_status = 'terverifikasi'
+       ORDER BY fp.created_at DESC, fp.id DESC
        LIMIT 1`,
       [field_id, farmerId]
     );
 
     if (fieldCheck.rows.length === 0) {
-      return res.status(400).json({ error: 'Lahan belum terverifikasi zero burning' });
+      return res.status(400).json({ error: 'Lahan belum memiliki foto progres' });
+    }
+
+    const latestPhoto = fieldCheck.rows[0];
+    if (latestPhoto.verification_status !== 'terverifikasi') {
+      return res.status(400).json({ error: 'Foto terbaru lahan belum terverifikasi zero burning' });
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const photoDate = new Date(latestPhoto.created_at);
+    if (photoDate < thirtyDaysAgo) {
+      return res.status(400).json({
+        error: 'Foto terverifikasi sudah kedaluwarsa (lebih dari 30 hari). Silakan unggah foto terbaru.',
+      });
     }
 
     const duplicate = await pool.query(

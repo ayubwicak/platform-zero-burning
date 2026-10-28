@@ -3,7 +3,7 @@
 ## Persyaratan
 
 - Node.js v18+
-- PostgreSQL 18 (tanpa ekstensi PostGIS)
+- SQLite (database file lokal)
 
 Foto disimpan di folder lokal `backend/uploads/` dan disajikan melalui `/uploads`.
 
@@ -23,17 +23,15 @@ Konfigurasi `.env`:
 NODE_ENV=development
 PORT=3000
 JWT_SECRET=<string-acak-panjang>
-DATABASE_URL=postgresql://postgres@localhost:5433/zero_burning
+DATABASE_URL=sqlite://backend/zero_burning.db
 ```
 
 ## Database
 
-Database berjalan sebagai cluster lokal di `.pgdata` (port **5433**).
+Database berkas SQLite lokal di `backend/zero_burning.db`, dibuat otomatis saat pertama kali dijalankan.
 
 ```bash
-npm run db:start   # nyalakan PostgreSQL
 npm run db:setup   # buat DB + skema + seed (sekali saja)
-npm run db:stop    # hentikan PostgreSQL
 ```
 
 Skema: `database/schema.sql` · Seed: `database/seed.sql`.

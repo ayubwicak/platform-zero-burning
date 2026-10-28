@@ -154,6 +154,13 @@ async function login(req, res, next) {
       });
     }
 
+    if (process.env.NODE_ENV === 'production' && !user.email_verified) {
+      return res.status(403).json({
+        error: 'Email belum diverifikasi. Silakan masukkan kode OTP yang telah dikirim ke email Anda.',
+        email_unverified: true,
+      });
+    }
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,

@@ -15,7 +15,7 @@ export default function Layout() {
 
       <div className="flex pt-16">
         {/* Sidebar Desktop */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col bg-white border-r border-gray-200 shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
+        <aside className="hidden lg:flex lg:w-64 3xl:w-80 lg:flex-col bg-white border-r border-gray-200 shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
           <Sidebar onClose={() => {}} />
         </aside>
 
@@ -30,7 +30,7 @@ export default function Layout() {
 
         {/* Konten utama */}
         <main id="main-content" className="min-w-0 flex-1 min-h-[calc(100vh-4rem)]">
-          <div className="mx-auto w-full max-w-[1500px] p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-[1920px] 3xl:max-w-[2560px] 4xl:max-w-[3400px] p-4 sm:p-6 lg:p-8 2xl:p-10 3xl:p-12">
             <Outlet />
           </div>
         </main>

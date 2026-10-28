@@ -226,7 +226,7 @@ function buildStats(scope, metrics) {
 
 function StatSkeletons() {
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5" aria-hidden="true">
+    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5" aria-hidden="true">
       {[1, 2, 3, 4].map((item) => (
         <div key={item} className="card p-5 animate-pulse">
           <div className="flex items-start justify-between">
@@ -392,7 +392,7 @@ export default function Dashboard() {
       {isLoading ? (
         <StatSkeletons />
       ) : data ? (
-        <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-4 gap-4 lg:gap-5">
           {stats.map((stat, i) => (
             <div
               key={stat.title}
@@ -423,9 +423,9 @@ export default function Dashboard() {
       ) : null}
 
       {/* Aktivitas + aksi cepat */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+      <section className="grid grid-cols-1 xl:grid-cols-3 3xl:grid-cols-4 gap-5">
         {showActivity && (
-          <div className="card p-5 lg:p-6 xl:col-span-2 animate-fade-up">
+          <div className="card p-5 lg:p-6 xl:col-span-2 3xl:col-span-3 animate-fade-up">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-base lg:text-lg font-bold text-gray-900">Aktivitas Terkini</h3>
