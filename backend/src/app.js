@@ -19,6 +19,9 @@ const path = require('path');
 
 const app = express();
 
+// Konfigurasi trust proxy untuk penanganan IP akurat di balik reverse proxy
+app.set('trust proxy', 1);
+
 // Keamanan HTTP Header via Helmet
 app.use(
   helmet({

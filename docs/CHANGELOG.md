@@ -10,6 +10,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Rate limiter khusus upload foto (`uploadLimiter`) via `express-rate-limit` pada endpoint `POST /api/photos` dengan batas 30 unggahan per jam per pengguna (konfigurasi via `UPLOAD_RATE_LIMIT`), key generator user ID dengan fallback IP, `trust proxy`, dan penanganan status 429 ramah di frontend `Upload.jsx`.
+- Test suite integrasi `photo.integration.test.js` untuk menguji kuota rate limiting upload foto per user tanpa mempengaruhi user lain.
 - Aset visual perbandingan skala visual sebelum dan sesudah 80% pada `docs/screenshots/dashboard-scale-comparison.svg`.
 - Token layout konsisten `--header-h` (4rem) dan `--sidebar-w` (16rem / 20rem) pada root CSS.
 - Sistem batas keterbacaan teks minimum 12px aktual untuk token caption, badge, label, subtext, dan header tabel di bawah layout admin.
@@ -29,6 +31,9 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Changed
 
+- Standardisasi antarmuka `Laporan.jsx` menggunakan `PageHeader` (dengan aksen dot ember & font Fraunces), token warna semantik (`text-foreground`, `text-muted-foreground`, `bg-muted/40`, `card`), dan kelas `.table-header`/`.table-cell` tanpa kelas warna Tailwind mentah.
+- Penyelarasan format gambar yang didukung pada `Upload.jsx` (pesan validasi, dropzone, dan atribut `accept` pada `<input type="file">` kini konsisten mendukung JPG, PNG, dan WebP sesuai backend).
+- Penegakan otorisasi role admin via middleware `authorizeRoles('admin')` pada route `/api/reports` dan `/api/reports/export` di `reportRoutes.js`.
 - Penerapan skala visual proporsional 80% (root font-size 80% / 12.8px) khusus antarmuka admin/pasca-login pada desktop (`min-width: 1024px`) via `html.admin-mode` dan `html:has(.admin-layout)` tanpa memakai CSS zoom atau transform scale, dengan isolasi penuh sehingga halaman publik (Landing, Login, Register) tetap 100% (16px).
 - Penyelarasan sistem desain dashboard admin dan seluruh halaman pasca-login dengan identitas visual publik (font serif Fraunces, latar krem hangat, palet forest & aksen terakota ember, pill navigation & button).
 - Pembaruan utility classes komponen pada `frontend-web/src/index.css` (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost-light`, `.card`, `.badge`, `.table-header`, `.table-cell`, `.input-field`, `.sidebar-link`).
