@@ -10,6 +10,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- Aset visual perbandingan skala visual sebelum dan sesudah 80% pada `docs/screenshots/dashboard-scale-comparison.svg`.
+- Token layout konsisten `--header-h` (4rem) dan `--sidebar-w` (16rem / 20rem) pada root CSS.
+- Sistem batas keterbacaan teks minimum 12px aktual untuk token caption, badge, label, subtext, dan header tabel di bawah layout admin.
+- Penegakan target sentuh interaktif mobile dan tablet minimal 40px pada seluruh elemen klik dan tautan admin.
 - Komponen layout bersama `AdminLayout`, `Card`, `Button`, `Badge`, dan `StatCard` untuk standardisasi antarmuka admin pasca-login.
 - Aset visual preview redesign dashboard admin pada `docs/screenshots/dashboard-preview.svg`.
 - Komponen `BackToHome` pada halaman Login dan Register dengan target sentuh minimal 40px, data-testid, dan navigasi langsung ke beranda.
@@ -25,6 +29,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Changed
 
+- Penerapan skala visual proporsional 80% (root font-size 80% / 12.8px) khusus antarmuka admin/pasca-login pada desktop (`min-width: 1024px`) via `html.admin-mode` dan `html:has(.admin-layout)` tanpa memakai CSS zoom atau transform scale, dengan isolasi penuh sehingga halaman publik (Landing, Login, Register) tetap 100% (16px).
 - Penyelarasan sistem desain dashboard admin dan seluruh halaman pasca-login dengan identitas visual publik (font serif Fraunces, latar krem hangat, palet forest & aksen terakota ember, pill navigation & button).
 - Pembaruan utility classes komponen pada `frontend-web/src/index.css` (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost-light`, `.card`, `.badge`, `.table-header`, `.table-cell`, `.input-field`, `.sidebar-link`).
 - Pembaruan `Layout.jsx`, `Navbar.jsx`, `Sidebar.jsx`, dan `PageHeader.jsx` agar konsisten dengan branding "Zero Burning".

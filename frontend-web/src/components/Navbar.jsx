@@ -31,13 +31,13 @@ export default function Navbar({ onToggle }) {
   }, [notifOpen]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-card/95 backdrop-blur border-b border-border shadow-xs">
+    <header className="fixed top-0 left-0 right-0 z-40 h-[var(--header-h,4rem)] bg-card/95 backdrop-blur border-b border-border shadow-xs">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         {/* Kiri atas: branding Zero Burning */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onToggle}
-            className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+            className="lg:hidden p-2 min-h-[40px] min-w-[40px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
             aria-label="Toggle sidebar"
           >
             <Menu className="w-5 h-5" />
@@ -63,7 +63,7 @@ export default function Navbar({ onToggle }) {
           <div className="relative">
             <button
               onClick={() => setNotifOpen((prev) => !prev)}
-              className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+              className="relative p-2 min-h-[40px] min-w-[40px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
               aria-label="Notifikasi"
               aria-expanded={notifOpen}
               aria-haspopup="true"
@@ -92,7 +92,7 @@ export default function Navbar({ onToggle }) {
 
           <Link
             to="/profil"
-            className="flex items-center gap-2.5 rounded-full px-2 py-1 transition-colors hover:bg-muted/80"
+            className="flex items-center gap-2.5 min-h-[40px] rounded-full px-2 py-1 transition-colors hover:bg-muted/80"
           >
             <div className="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-display text-sm font-bold shadow-xs">
               {initial}

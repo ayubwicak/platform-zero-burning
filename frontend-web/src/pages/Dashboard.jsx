@@ -457,7 +457,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="relative">
-                <span aria-hidden="true" className="absolute left-[21px] top-3 bottom-3 w-px bg-border/70" />
+                <span aria-hidden="true" className="absolute left-5 top-3 bottom-3 w-px bg-border/70" />
                 <ol className="relative space-y-1">
                   {activityViews.map((activity) => (
                     <li key={`${activity.type}-${activity.id}`} className="relative flex items-start gap-4 rounded-xl p-2.5 hover:bg-muted/40 transition-colors">

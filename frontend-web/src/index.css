@@ -7,6 +7,9 @@
   --font-display: 'Fraunces', Georgia, serif;
   --font-sans: 'Manrope', system-ui, sans-serif;
   --radius: 0.75rem;
+  --header-h: 4rem;
+  --sidebar-w: 16rem;
+  --sidebar-w-wide: 20rem;
   --background: 250 246 238; /* oklch(0.975 0.012 85) */
   --foreground: 21 35 24; /* oklch(0.24 0.03 150) */
   --card: 254 251 246; /* oklch(0.99 0.008 85) */
@@ -428,4 +431,59 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-14px); }
+}
+
+/*
+ * Admin Scale & Typography System:
+ * Menerapkan skala visual 80% (12.8px) proporsional khusus untuk seluruh halaman setelah login
+ * pada viewport desktop (min-width: 1024px) tanpa CSS zoom atau transform scale.
+ * Halaman publik (Landing, Login, Register) tidak terpengaruh (tetap 100% / 16px).
+ * Di mobile/tablet (< 1024px), skala dikembalikan ke 100% dengan touch target minimal 40px.
+ */
+@media (min-width: 1024px) {
+  html.admin-mode,
+  html:has(.admin-layout) {
+    font-size: 80%; /* 16px -> 12.8px */
+  }
+
+  /*
+   * Penegakan batas teks terkecil: caption, badge, label, subtext, header tabel
+   * tidak boleh di bawah 12px aktual.
+   */
+  html.admin-mode .text-\[10px\],
+  html:has(.admin-layout) .text-\[10px\],
+  html.admin-mode .text-\[11px\],
+  html:has(.admin-layout) .text-\[11px\],
+  html.admin-mode .text-xs,
+  html:has(.admin-layout) .text-xs,
+  html.admin-mode .badge,
+  html:has(.admin-layout) .badge,
+  html.admin-mode .table-header,
+  html:has(.admin-layout) .table-header,
+  html.admin-mode .chip,
+  html:has(.admin-layout) .chip {
+    font-size: 12px;
+  }
+
+  /*
+   * Penyelarasan .text-sm ke 12.5px agar tidak di bawah 12px aktual dan menjaga hierarki visual
+   */
+  html.admin-mode .text-sm,
+  html:has(.admin-layout) .text-sm {
+    font-size: 12.5px;
+    line-height: 1.35rem;
+  }
+}
+
+/* Penegakan area sentuh interaktif mobile minimal 40px */
+@media (max-width: 1023px) {
+  .admin-layout button,
+  .admin-layout .sidebar-link,
+  .admin-layout .btn-primary,
+  .admin-layout .btn-secondary,
+  .admin-layout .btn-danger,
+  .admin-layout .btn-ghost-light,
+  .admin-layout a[role="button"] {
+    min-height: 40px;
+  }
 }

@@ -65,7 +65,7 @@ export default function Sidebar({ onClose }) {
               to={item.path}
               onClick={onClose}
               className={({ isActive }) =>
-                `group flex items-center gap-3 w-full px-3.5 py-2.5 text-sm rounded-full transition-all duration-200 ${
+                `group flex items-center gap-3 w-full min-h-[40px] px-3.5 py-2.5 text-sm rounded-full transition-all duration-200 ${
                   isActive
                     ? 'bg-primary text-primary-foreground font-semibold shadow-sm shadow-primary/20'
                     : 'text-muted-foreground hover:bg-secondary hover:text-foreground font-medium'
@@ -87,7 +87,7 @@ export default function Sidebar({ onClose }) {
         <Link
           to="/profil"
           onClick={onClose}
-          className="flex items-center gap-3 p-3 bg-muted/40 rounded-2xl border border-border/80 transition-colors hover:bg-secondary/60"
+          className="flex items-center gap-3 min-h-[40px] p-3 bg-muted/40 rounded-2xl border border-border/80 transition-colors hover:bg-secondary/60"
         >
           <div className="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center shrink-0 font-display text-sm font-bold shadow-xs">
             {initial}
@@ -105,7 +105,7 @@ export default function Sidebar({ onClose }) {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-full transition-colors"
+          className="flex items-center gap-3 w-full min-h-[40px] px-3.5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-full transition-colors"
         >
           <LogOut className="w-5 h-5 shrink-0" />
           <span>Keluar</span>
