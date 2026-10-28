@@ -31,39 +31,39 @@ export default function Navbar({ onToggle }) {
   }, [notifOpen]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-white border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-card/95 backdrop-blur border-b border-border shadow-xs">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
-        {/* Kiri atas: icon + nama sistem */}
+        {/* Kiri atas: branding Zero Burning */}
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onToggle}
-            className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
             aria-label="Toggle sidebar"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-green-700 shadow-md shadow-green-200 sm:h-11 sm:w-11">
-              <ShieldCheck className="h-5 w-5 text-white sm:h-6 sm:w-6" />
-            </div>
+          <Link to="/dashboard" className="flex items-center gap-2.5 sm:gap-3">
+            <span className="grid h-9 w-9 sm:h-10 sm:w-10 place-items-center rounded-full bg-primary font-display text-lg text-primary-foreground shadow-sm">
+              Z
+            </span>
             <div className="leading-tight">
-              <p className="text-sm font-extrabold text-gray-900 tracking-tight sm:text-base lg:text-lg">
+              <p className="font-display text-base sm:text-lg font-bold tracking-tight text-foreground">
                 Zero Burning
               </p>
-              <p className="text-[10px] lg:text-[11px] font-semibold text-green-700 uppercase tracking-widest">
-                {portalLabels[user?.role] || 'Platform Insentif'}
+              <p className="text-[10px] sm:text-[11px] font-bold text-primary uppercase tracking-widest">
+                {portalLabels[user?.role] || 'PORTAL INSENTIF'}
               </p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Kanan: notifikasi + profil */}
-        <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
           <div className="relative">
             <button
               onClick={() => setNotifOpen((prev) => !prev)}
-              className="relative p-2 text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+              className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
               aria-label="Notifikasi"
               aria-expanded={notifOpen}
               aria-haspopup="true"
@@ -78,9 +78,9 @@ export default function Navbar({ onToggle }) {
                   className="fixed inset-0 z-40 cursor-default"
                   onClick={() => setNotifOpen(false)}
                 />
-                <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl">
-                  <p className="text-sm font-bold text-gray-900">Notifikasi</p>
-                  <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                <div className="absolute right-0 top-12 z-50 w-72 rounded-2xl border border-border bg-card p-4 shadow-xl">
+                  <p className="text-sm font-bold text-foreground">Notifikasi</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     Belum ada notifikasi baru. Aktivitas verifikasi dan klaim akan muncul di sini.
                   </p>
                 </div>
@@ -88,18 +88,18 @@ export default function Navbar({ onToggle }) {
             )}
           </div>
 
-          <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
+          <div className="w-px h-7 bg-border hidden sm:block"></div>
 
           <Link
             to="/profil"
-            className="flex items-center gap-2 rounded-xl px-1.5 py-1 -m-1.5 transition-colors hover:bg-green-50"
+            className="flex items-center gap-2.5 rounded-full px-2 py-1 transition-colors hover:bg-muted/80"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm">
+            <div className="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-display text-sm font-bold shadow-xs">
               {initial}
             </div>
             <div className="hidden sm:block leading-tight">
-              <p className="text-sm font-semibold text-gray-900">{user?.nama || 'Pengguna'}</p>
-              <p className="text-xs text-gray-500">{roleLabels[user?.role] || 'Belum masuk'}</p>
+              <p className="text-sm font-semibold text-foreground">{user?.nama || 'Pengguna'}</p>
+              <p className="text-xs text-muted-foreground">{roleLabels[user?.role] || 'Belum masuk'}</p>
             </div>
             <span className="sr-only">Buka profil</span>
           </Link>

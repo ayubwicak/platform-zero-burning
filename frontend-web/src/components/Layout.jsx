@@ -7,7 +7,7 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       <a href="#main-content" className="skip-link">
         Lewati ke konten utama
       </a>
@@ -15,13 +15,13 @@ export default function Layout() {
 
       <div className="flex pt-16">
         {/* Sidebar Desktop */}
-        <aside className="hidden lg:flex lg:w-64 3xl:w-80 lg:flex-col bg-white border-r border-gray-200 shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
+        <aside className="hidden lg:flex lg:w-64 3xl:w-80 lg:flex-col bg-card border-r border-border shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
           <Sidebar onClose={() => {}} />
         </aside>
 
         {/* Sidebar Mobile */}
         <aside
-          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 lg:hidden ${
+          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 lg:hidden ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
@@ -39,7 +39,7 @@ export default function Layout() {
       {/* Backdrop mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 top-16 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 top-16 z-40 bg-foreground/40 backdrop-blur-xs lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
