@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
+import BackToHome from '../components/BackToHome';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -92,7 +93,8 @@ export default function Register() {
     form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
   return (
-    <AuthShell maxWidth="max-w-xl">
+    <AuthShell variant="register">
+      <BackToHome className="auth-back-home" />
       <p className="text-xs uppercase tracking-[0.2em] text-ember">Daftar petani</p>
       <h1 className="auth-title mt-3 font-display text-4xl leading-tight text-foreground">
         Mulai tanpa membakar.
@@ -103,7 +105,7 @@ export default function Register() {
 
       <form
         onSubmit={handleSubmit}
-        className="auth-form-grid mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-5"
+        className="auth-form auth-form-grid mt-8 grid grid-cols-1 sm:grid-cols-2"
         noValidate
       >
         <div>
@@ -293,7 +295,7 @@ export default function Register() {
         </button>
       </form>
 
-      <div className="auth-footer mt-8 border-t border-border pt-6 text-center text-sm">
+      <div className="auth-card-footer auth-footer mt-8 border-t border-border pt-6 text-center text-sm">
         <p className="text-muted-foreground">
           Sudah punya akun?{' '}
           <Link

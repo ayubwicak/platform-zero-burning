@@ -6,9 +6,11 @@ const points = [
   'Insentif transparan bagi petani tanpa bakar',
 ];
 
-export default function AuthShell({ children, maxWidth = 'max-w-md' }) {
+export default function AuthShell({ children, maxWidth = 'max-w-xl', variant }) {
+  const variantClass = variant ? ` auth-${variant}` : '';
+
   return (
-    <div className="auth-shell font-sans">
+    <div className={`auth-shell font-sans${variantClass}`}>
       <aside className="auth-brand-panel relative hidden shrink-0 overflow-hidden bg-forest text-forest-foreground lg:block">
         <img
           src="/images/hero-rice-field.jpg"
@@ -59,14 +61,11 @@ export default function AuthShell({ children, maxWidth = 'max-w-md' }) {
               </span>
               <span className="font-display text-xl text-foreground">Zero Burning</span>
             </Link>
-            <Link to="/" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              ← Kembali
-            </Link>
           </div>
 
           <div className={`auth-card rise w-full ${maxWidth}`}>{children}</div>
 
-          <p className="auth-footer mt-10 text-xs text-muted-foreground">
+          <p className="auth-panel-note mt-10 text-xs text-muted-foreground">
             Bersama menjaga lahan tanpa membakar
           </p>
         </div>

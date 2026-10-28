@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
+import BackToHome from '../components/BackToHome';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -48,6 +49,7 @@ export default function Login() {
 
   return (
     <AuthShell>
+      <BackToHome className="auth-back-home" />
       <p className="text-xs uppercase tracking-[0.2em] text-ember">Masuk</p>
       <h2 className="auth-title mt-3 font-display text-4xl leading-tight text-foreground">
         Selamat datang kembali.
@@ -85,7 +87,7 @@ export default function Login() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      <form onSubmit={handleSubmit} className="auth-form mt-8">
         <div>
           <label htmlFor="login-email" className="block text-sm font-semibold text-foreground">
             Email
@@ -154,7 +156,7 @@ export default function Login() {
         </div>
       )}
 
-      <div className="auth-footer mt-8 border-t border-border pt-6 text-center text-sm">
+      <div className="auth-card-footer auth-footer mt-8 border-t border-border pt-6 text-center text-sm">
         <p className="text-muted-foreground">
           Belum punya akun?{' '}
           <Link
