@@ -15,6 +15,8 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  XCircle,
+  Ban,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import api from '../lib/api';
@@ -29,6 +31,8 @@ const steps = [
 const claimStatus = {
   diajukan: { label: 'Diproses', cls: 'badge-warning', icon: Clock },
   disetujui: { label: 'Disetujui', cls: 'badge-success', icon: CheckCircle2 },
+  ditolak: { label: 'Ditolak', cls: 'badge-danger', icon: XCircle },
+  dibatalkan: { label: 'Dibatalkan', cls: 'badge-danger', icon: Ban },
 };
 
 function categoryType(name) {
@@ -334,8 +338,13 @@ export default function Klaim() {
                             <span className={`badge ${meta.cls}`}>
                               <meta.icon className="w-3 h-3" /> {meta.label}
                             </span>
+                            {claim.reason && (
+                              <p className="mt-1 text-[11px] text-destructive max-w-[200px] ml-auto text-right font-medium" title={claim.reason}>
+                                Alasan: {claim.reason}
+                              </p>
+                            )}
                             {claim.distribution_date && (
-                              <p className="mt-1 text-[10px] text-gray-400">
+                              <p className="mt-1 text-[10px] text-muted-foreground">
                                 Distribusi {formatDate(claim.distribution_date)}
                               </p>
                             )}

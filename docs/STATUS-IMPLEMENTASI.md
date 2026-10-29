@@ -3,7 +3,7 @@
 | Atribut | Nilai |
 |---|---|
 | Diperbarui | 28 Oktober 2026 |
-| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, dan CI pipeline |
+| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, penyempurnaan alur klaim & voting warga, notifikasi real-time, dan CI pipeline |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
 Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan yang memengaruhi status modul (wajib dalam PR yang sama).
@@ -41,6 +41,9 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Katalog insentif | ✅ Selesai | Endpoint kategori + seed; admin dapat menambah kategori, mengubah nama/persyaratan, dan memperbarui stok | `incentiveController.js` |
 | Klaim insentif | ✅ Selesai | Syarat foto terbaru terverifikasi, cek stok, cegah klaim aktif ganda | `incentiveController.js` |
 | Distribusi insentif | ✅ Selesai | API transaksi + halaman distribusi: antrean, catat penyaluran, riwayat; stok berkurang 1 | `incentiveController.js`, `pages/Distribusi.jsx` |
+| Penolakan & pembatalan klaim | ✅ Selesai | Alasan wajib terstandar, pengembalian stok atomik saat pembatalan klaim disetujui (khusus admin), status `ditolak`/`dibatalkan`, filter status di Distribusi, audit log | `incentiveController.js`, `pages/Distribusi.jsx`, `pages/Klaim.jsx` |
+| Ambang batas verifikasi warga | ✅ Selesai | Ambang batas dinamis (`VOTE_APPROVE_THRESHOLD`, `VOTE_REJECT_THRESHOLD`), mode `flag` & `auto`, pencegahan klaim mandiri, override petugas/admin dengan alasan wajib, audit log sistem | `verificationController.js`, `pages/Verifikasi.jsx` |
+| Notifikasi berbasis event | ✅ Selesai | Tabel `notifications`, API unread count/read/read-all, polling ramah baterai di Navbar, badge 9+, popover dropdown interaktif | `notificationController.js`, `notificationService.js`, `components/Navbar.jsx` |
 | Landing page publik | ✅ Selesai | Hero, cara kerja, fitur, manfaat, katalog, FAQ, CTA, footer | `pages/Landing.jsx` |
 | Layout & navigasi web | ✅ Selesai | Navbar fixed, sidebar, drawer mobile | `frontend-web/src/components/` |
 | Dashboard web | ✅ Selesai | Ringkasan program/personal + aktivitas dari `GET /api/dashboard`; loading, error, dan empty state role-aware | `pages/Dashboard.jsx`, `dashboardController.js` |
@@ -133,3 +136,4 @@ npm run dev
 | 22 Okt 2026 | Status akun pengguna: admin dapat menonaktifkan/mengaktifkan akun melalui `/pengguna`; login dan token akun nonaktif langsung ditolak, dengan proteksi akun sendiri |
 | 22 Okt 2026 | Data Lahan untuk petugas/admin: `/data-lahan` read-only dengan pemilik/kontak, koordinat, filter status, pencarian, dan progres foto; `GET /api/fields` menjadi role-aware tanpa membuka mutasi lahan |
 | 22 Okt 2026 | Audit log admin: pencatatan perubahan role/status akun, kategori, dan stok (termasuk distribusi); endpoint `GET /api/audit-logs` dengan filter/pagination dan halaman `/audit-log` read-only |
+| 28 Okt 2026 | Fitur A, B, C lanjutan selesai: alur penolakan & pembatalan klaim dengan pengembalian stok atomik, verifikasi warga dengan ambang batas dinamis & mode auto-verifikasi serta override petugas, dan sistem notifikasi pengguna berbasis event dengan popover interaktif pada Navbar; 11 test integrasi baru lulus 100% (total 68 passing). |

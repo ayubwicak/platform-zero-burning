@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" style="background:#FAF6EE; font-family:'Manrope',system-ui,sans-serif;">
+  <defs>
+    <linearGradient id="forestHero" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#102A1A"/>
+      <stop offset="60%" stop-color="#163822"/>
+      <stop offset="100%" stop-color="#244D2E"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#152318" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <!-- Top Navbar -->
+  <rect x="0" y="0" width="1440" height="64" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1"/>
+  <!-- Navbar Brand -->
+  <circle cx="44" cy="32" r="18" fill="#244D2E"/>
+  <text x="44" y="38" font-family="'Fraunces',Georgia,serif" font-size="18" font-weight="700" fill="#FAF5EA" text-anchor="middle">Z</text>
+  <text x="74" y="29" font-family="'Fraunces',Georgia,serif" font-size="17" font-weight="700" fill="#152318">Zero Burning</text>
+  <text x="74" y="44" font-size="10" font-weight="800" fill="#244D2E" letter-spacing="1.5">PORTAL INSENTIF</text>
+
+  <!-- Navbar Right -->
+  <circle cx="1290" cy="32" r="16" fill="none" stroke="#DCD7C9" stroke-width="1"/>
+  <circle cx="1290" cy="32" r="6" fill="#889586"/>
+  <circle cx="1370" cy="32" r="18" fill="#244D2E"/>
+  <text x="1370" y="38" font-family="'Fraunces',Georgia,serif" font-size="14" font-weight="700" fill="#FAF5EA" text-anchor="middle">A</text>
+  <text x="1340" y="32" font-size="13" font-weight="600" fill="#152318" text-anchor="end">Administrator</text>
+
+  <!-- Sidebar -->
+  <rect x="0" y="64" width="260" height="836" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1"/>
+  <text x="24" y="102" font-size="10" font-weight="800" fill="#889586" letter-spacing="1.5">MENU UTAMA</text>
+
+  <!-- Active Sidebar Pill: Dashboard -->
+  <rect x="16" y="116" width="228" height="42" rx="21" fill="#244D2E"/>
+  <rect x="36" y="129" width="14" height="14" rx="3" fill="#FAF5EA" opacity="0.9"/>
+  <text x="60" y="142" font-size="13.5" font-weight="600" fill="#FAF5EA">Dashboard</text>
+
+  <!-- Inactive Sidebar Items -->
+  <g fill="#566154" font-size="13.5" font-weight="500">
+    <text x="60" y="190">Data Lahan</text>
+    <rect x="36" y="177" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+
+    <text x="60" y="234">Verifikasi</text>
+    <rect x="36" y="221" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+
+    <text x="60" y="278">Distribusi</text>
+    <rect x="36" y="265" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+
+    <text x="60" y="322">Katalog</text>
+    <rect x="36" y="309" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+
+    <text x="60" y="366">Pengguna</text>
+    <rect x="36" y="353" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+
+    <text x="60" y="410">Audit Log</text>
+    <rect x="36" y="397" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+
+    <text x="60" y="454">Laporan</text>
+    <rect x="36" y="441" width="14" height="14" rx="3" fill="#889586" opacity="0.4"/>
+  </g>
+
+  <!-- Main Content Area (Warm Cream Background #FAF6EE) -->
+  <g transform="translate(292, 88)">
+    <!-- Hero Banner -->
+    <rect x="0" y="0" width="1116" height="204" rx="24" fill="url(#forestHero)" stroke="#1C4528" stroke-width="1"/>
+    
+    <!-- Hero Eyebrow Pill -->
+    <rect x="36" y="28" width="170" height="26" rx="13" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-opacity="0.2"/>
+    <circle cx="48" cy="41" r="3" fill="#D8662A"/>
+    <text x="58" y="45" font-size="10" font-weight="800" fill="#F4EEE0" letter-spacing="1.2">RINGKASAN PROGRAM</text>
+
+    <!-- Hero Title & Body -->
+    <text x="36" y="96" font-family="'Fraunces',Georgia,serif" font-size="28" font-weight="700" fill="#FAF5EA">Selamat datang kembali, Administrator</text>
+    <text x="36" y="128" font-size="14" fill="#E2DAC8">
+      Pantau pelaksanaan program, kelola pengguna, dan pastikan insentif 
+      <tspan font-family="'Fraunces',Georgia,serif" font-style="italic" font-weight="600" fill="#D8662A">tanpa</tspan> bakar tersalurkan transparan.
+    </text>
+
+    <!-- Hero Action Buttons -->
+    <rect x="36" y="148" width="168" height="38" rx="19" fill="#FAF5EA"/>
+    <text x="120" y="172" font-size="13" font-weight="700" fill="#244D2E" text-anchor="middle">Tinjau Verifikasi</text>
+
+    <rect x="216" y="148" width="134" height="38" rx="19" fill="#FFFFFF" fill-opacity="0.12" stroke="#FFFFFF" stroke-opacity="0.25"/>
+    <text x="283" y="172" font-size="13" font-weight="600" fill="#FAF5EA" text-anchor="middle">Lihat Katalog ↗</text>
+
+    <!-- Hero Right KPI Badges -->
+    <g transform="translate(780, 24)">
+      <rect x="0" y="0" width="144" height="72" rx="14" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.15"/>
+      <circle cx="24" cy="24" r="8" fill="#D8662A" opacity="0.8"/>
+      <text x="24" y="56" font-family="'Fraunces',Georgia,serif" font-size="20" font-weight="700" fill="#FAF5EA">148</text>
+      <text x="64" y="54" font-size="11" fill="#E2DAC8">Lahan lolos</text>
+
+      <rect x="156" y="0" width="144" height="72" rx="14" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.15"/>
+      <circle cx="180" cy="24" r="8" fill="#D8662A" opacity="0.8"/>
+      <text x="180" y="56" font-family="'Fraunces',Georgia,serif" font-size="20" font-weight="700" fill="#FAF5EA">52</text>
+      <text x="214" y="54" font-size="11" fill="#E2DAC8">Petani aktif</text>
+
+      <rect x="0" y="82" width="144" height="72" rx="14" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.15"/>
+      <circle cx="24" cy="106" r="8" fill="#D8662A" opacity="0.8"/>
+      <text x="24" y="138" font-family="'Fraunces',Georgia,serif" font-size="20" font-weight="700" fill="#FAF5EA">16</text>
+      <text x="56" y="136" font-size="11" fill="#E2DAC8">Menunggu</text>
+
+      <rect x="156" y="82" width="144" height="72" rx="14" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.15"/>
+      <circle cx="180" cy="106" r="8" fill="#D8662A" opacity="0.8"/>
+      <text x="180" y="138" font-family="'Fraunces',Georgia,serif" font-size="20" font-weight="700" fill="#FAF5EA">94</text>
+      <text x="214" y="136" font-size="11" fill="#E2DAC8">Tersalurkan</text>
+    </g>
+
+    <!-- 4 Stat Cards Row -->
+    <g transform="translate(0, 226)">
+      <!-- Card 1: Total Lahan -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="264" height="136" rx="18" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1" filter="url(#cardShadow)"/>
+        <circle cx="34" cy="34" r="18" fill="#244D2E" fill-opacity="0.1"/>
+        <rect x="28" y="28" width="12" height="12" rx="2" fill="#244D2E"/>
+        <rect x="144" y="24" width="104" height="22" rx="11" fill="#244D2E" fill-opacity="0.1"/>
+        <text x="196" y="39" font-size="10" font-weight="800" fill="#244D2E" text-anchor="middle">+12 LAHAN BARU</text>
+        <text x="20" y="88" font-family="'Fraunces',Georgia,serif" font-size="28" font-weight="700" fill="#152318">184</text>
+        <text x="20" y="106" font-size="13" font-weight="500" fill="#566154">Total Lahan Terdaftar</text>
+        <rect x="20" y="118" width="224" height="5" rx="2.5" fill="#EDE8D6"/>
+        <rect x="20" y="118" width="224" height="5" rx="2.5" fill="#244D2E"/>
+      </g>
+
+      <!-- Card 2: Terverifikasi -->
+      <g transform="translate(284, 0)">
+        <rect x="0" y="0" width="264" height="136" rx="18" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1" filter="url(#cardShadow)"/>
+        <circle cx="34" cy="34" r="18" fill="#244D2E" fill-opacity="0.1"/>
+        <rect x="28" y="28" width="12" height="12" rx="2" fill="#244D2E"/>
+        <rect x="156" y="24" width="92" height="22" rx="11" fill="#244D2E" fill-opacity="0.1"/>
+        <text x="202" y="39" font-size="10" font-weight="800" fill="#244D2E" text-anchor="middle">80% TERVERIFIKASI</text>
+        <text x="20" y="88" font-family="'Fraunces',Georgia,serif" font-size="28" font-weight="700" fill="#152318">148</text>
+        <text x="20" y="106" font-size="13" font-weight="500" fill="#566154">Lahan Terverifikasi</text>
+        <rect x="20" y="118" width="224" height="5" rx="2.5" fill="#EDE8D6"/>
+        <rect x="20" y="118" width="180" height="5" rx="2.5" fill="#244D2E"/>
+      </g>
+
+      <!-- Card 3: Menunggu Verifikasi (Terracotta Accent) -->
+      <g transform="translate(568, 0)">
+        <rect x="0" y="0" width="264" height="136" rx="18" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1" filter="url(#cardShadow)"/>
+        <circle cx="34" cy="34" r="18" fill="#D8662A" fill-opacity="0.12"/>
+        <rect x="28" y="28" width="12" height="12" rx="2" fill="#D8662A"/>
+        <rect x="150" y="24" width="98" height="22" rx="11" fill="#D8662A" fill-opacity="0.12"/>
+        <text x="199" y="39" font-size="10" font-weight="800" fill="#D8662A" text-anchor="middle">BUTUH TINDAKAN</text>
+        <text x="20" y="88" font-family="'Fraunces',Georgia,serif" font-size="28" font-weight="700" fill="#152318">16</text>
+        <text x="20" y="106" font-size="13" font-weight="500" fill="#566154">Menunggu Verifikasi</text>
+        <rect x="20" y="118" width="224" height="5" rx="2.5" fill="#EDE8D6"/>
+        <rect x="20" y="118" width="60" height="5" rx="2.5" fill="#D8662A"/>
+      </g>
+
+      <!-- Card 4: Insentif Tersalurkan -->
+      <g transform="translate(852, 0)">
+        <rect x="0" y="0" width="264" height="136" rx="18" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1" filter="url(#cardShadow)"/>
+        <circle cx="34" cy="34" r="18" fill="#EDE8D6"/>
+        <rect x="28" y="28" width="12" height="12" rx="2" fill="#152318"/>
+        <rect x="146" y="24" width="102" height="22" rx="11" fill="#244D2E" fill-opacity="0.1"/>
+        <text x="197" y="39" font-size="10" font-weight="800" fill="#244D2E" text-anchor="middle">+8 MINGGU INI</text>
+        <text x="20" y="88" font-family="'Fraunces',Georgia,serif" font-size="28" font-weight="700" fill="#152318">94</text>
+        <text x="20" y="106" font-size="13" font-weight="500" fill="#566154">Insentif Tersalurkan</text>
+        <rect x="20" y="118" width="224" height="5" rx="2.5" fill="#EDE8D6"/>
+        <rect x="20" y="118" width="190" height="5" rx="2.5" fill="#244D2E"/>
+      </g>
+    </g>
+
+    <!-- Bottom Row: Aktivitas Terkini (Left 65%) + Aksi Cepat (Right 35%) -->
+    <g transform="translate(0, 384)">
+      <!-- Aktivitas Terkini -->
+      <rect x="0" y="0" width="716" height="350" rx="18" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1" filter="url(#cardShadow)"/>
+      <text x="28" y="38" font-family="'Fraunces',Georgia,serif" font-size="18" font-weight="700" fill="#152318">Aktivitas Terkini</text>
+      <text x="28" y="56" font-size="12" fill="#566154">Pembaruan verifikasi dan klaim dari lapangan</text>
+      <text x="688" y="44" font-size="13" font-weight="600" fill="#244D2E" text-anchor="end">Lihat semua ↗</text>
+
+      <!-- Activity Items -->
+      <g transform="translate(28, 80)">
+        <line x1="20" y1="12" x2="20" y2="210" stroke="#DCD7C9" stroke-width="1.5"/>
+        
+        <!-- Item 1 -->
+        <circle cx="20" cy="18" r="16" fill="#244D2E" fill-opacity="0.1"/>
+        <text x="52" y="16" font-size="13.5" font-weight="600" fill="#152318">Budi Santoso <tspan font-weight="400" fill="#566154">mengunggah foto progres</tspan> <tspan font-weight="600" fill="#244D2E">Lahan Jagung Blok B</tspan></text>
+        <text x="52" y="34" font-size="11" fill="#889586">Hari ini, 10:15 WIB</text>
+        <rect x="580" y="6" width="80" height="20" rx="10" fill="#244D2E" fill-opacity="0.1"/>
+        <text x="620" y="20" font-size="9.5" font-weight="800" fill="#244D2E" text-anchor="middle">TERVERIFIKASI</text>
+
+        <!-- Item 2 -->
+        <circle cx="20" cy="80" r="16" fill="#D8662A" fill-opacity="0.12"/>
+        <text x="52" y="78" font-size="13.5" font-weight="600" fill="#152318">Ahmad Fauzi <tspan font-weight="400" fill="#566154">mengajukan klaim insentif</tspan> <tspan font-weight="600" fill="#244D2E">Paket Bibit Unggul</tspan></text>
+        <text x="52" y="96" font-size="11" fill="#889586">Hari ini, 08:30 WIB</text>
+        <rect x="580" y="68" width="80" height="20" rx="10" fill="#D8662A" fill-opacity="0.12"/>
+        <text x="620" y="82" font-size="9.5" font-weight="800" fill="#D8662A" text-anchor="middle">DIPROSES</text>
+
+        <!-- Item 3 -->
+        <circle cx="20" cy="142" r="16" fill="#EDE8D6"/>
+        <text x="52" y="140" font-size="13.5" font-weight="600" fill="#152318">Petugas Rudi <tspan font-weight="400" fill="#566154">mencatat distribusi insentif</tspan> <tspan font-weight="600" fill="#244D2E">Kelompok Tani Makmur</tspan></text>
+        <text x="52" y="158" font-size="11" fill="#889586">Kemarin, 16:40 WIB</text>
+        <rect x="580" y="130" width="80" height="20" rx="10" fill="#244D2E" fill-opacity="0.1"/>
+        <text x="620" y="144" font-size="9.5" font-weight="800" fill="#244D2E" text-anchor="middle">DISALURKAN</text>
+      </g>
+
+      <!-- Aksi Cepat (Right Panel) -->
+      <g transform="translate(738, 0)">
+        <rect x="0" y="0" width="378" height="350" rx="18" fill="#FEFBF6" stroke="#DCD7C9" stroke-width="1" filter="url(#cardShadow)"/>
+        <text x="24" y="38" font-family="'Fraunces',Georgia,serif" font-size="18" font-weight="700" fill="#152318">Aksi Cepat</text>
+        <text x="24" y="56" font-size="12" fill="#566154">Pintasan tugas sehari-hari</text>
+
+        <!-- 4 Quick Action Tiles -->
+        <g transform="translate(24, 76)">
+          <rect x="0" y="0" width="158" height="74" rx="14" fill="#F4EEE0" stroke="#DCD7C9" stroke-width="0.8"/>
+          <circle cx="26" cy="24" r="12" fill="#102A1A"/>
+          <text x="46" y="28" font-size="12" font-weight="700" fill="#152318">Verifikasi</text>
+          <text x="14" y="56" font-size="10.5" fill="#566154">Tinjau foto petani</text>
+
+          <rect x="172" y="0" width="158" height="74" rx="14" fill="#F4EEE0" stroke="#DCD7C9" stroke-width="0.8"/>
+          <circle cx="198" cy="24" r="12" fill="#244D2E"/>
+          <text x="218" y="28" font-size="12" font-weight="700" fill="#152318">Distribusi</text>
+          <text x="186" y="56" font-size="10.5" fill="#566154">Penyaluran bantuan</text>
+
+          <rect x="0" y="86" width="158" height="74" rx="14" fill="#F4EEE0" stroke="#DCD7C9" stroke-width="0.8"/>
+          <circle cx="26" cy="110" r="12" fill="#D8662A"/>
+          <text x="46" y="114" font-size="12" font-weight="700" fill="#152318">Pengguna</text>
+          <text x="14" y="142" font-size="10.5" fill="#566154">Kelola akun & peran</text>
+
+          <rect x="172" y="86" width="158" height="74" rx="14" fill="#F4EEE0" stroke="#DCD7C9" stroke-width="0.8"/>
+          <circle cx="198" cy="110" r="12" fill="#EDE8D6"/>
+          <text x="218" y="114" font-size="12" font-weight="700" fill="#152318">Katalog</text>
+          <text x="186" y="142" font-size="10.5" fill="#566154">Lihat stok insentif</text>
+        </g>
+
+        <!-- Kesiapan Klaim Box -->
+        <rect x="24" y="254" width="330" height="74" rx="14" fill="#EDE8D6" fill-opacity="0.5" stroke="#DCD7C9" stroke-width="1"/>
+        <text x="40" y="278" font-size="12.5" font-weight="700" fill="#152318">Tingkat Verifikasi Lahan</text>
+        <text x="40" y="296" font-size="11" fill="#566154">148 dari 184 lahan aktif terverifikasi bebas bakar.</text>
+        <rect x="40" y="306" width="298" height="5" rx="2.5" fill="#DCD7C9"/>
+        <rect x="40" y="306" width="240" height="5" rx="2.5" fill="#244D2E"/>
+      </g>
+    </g>
+  </g>
+</svg>

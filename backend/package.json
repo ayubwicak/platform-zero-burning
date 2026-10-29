@@ -7,7 +7,10 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint src/",
-    "test": "jest --detectOpenHandles --passWithNoTests"
+    "test": "jest --detectOpenHandles --passWithNoTests",
+    "seed:farmer": "node scripts/seed-farmer.js",
+    "setup:sqlite": "node setup-sqlite.js",
+    "start:e2e": "node setup-sqlite.js && node src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

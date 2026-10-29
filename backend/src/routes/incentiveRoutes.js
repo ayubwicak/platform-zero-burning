@@ -9,6 +9,8 @@ const {
   listDistributions,
   createClaim,
   recordDistribution,
+  rejectClaim,
+  cancelClaim,
 } = require('../controllers/incentiveController');
 
 const router = express.Router();
@@ -19,6 +21,8 @@ router.patch('/categories/:id', authenticateToken, authorizeRoles('admin'), upda
 router.get('/claims/pending', authenticateToken, authorizeRoles('petugas', 'admin'), listPendingClaims);
 router.get('/claims', authenticateToken, authorizeRoles('petani'), listClaims);
 router.post('/claims', authenticateToken, authorizeRoles('petani'), createClaim);
+router.post('/claims/:id/reject', authenticateToken, authorizeRoles('petugas', 'admin'), rejectClaim);
+router.post('/claims/:id/cancel', authenticateToken, authorizeRoles('petugas', 'admin'), cancelClaim);
 router.get('/distributions', authenticateToken, authorizeRoles('petugas', 'admin'), listDistributions);
 router.post('/distributions', authenticateToken, authorizeRoles('petugas', 'admin'), recordDistribution);
 

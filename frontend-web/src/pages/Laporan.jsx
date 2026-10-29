@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Download, TrendingUp, Users, FileText, Leaf } from 'lucide-react';
+import { Download, TrendingUp, Users, FileText, Leaf, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import PageHeader from '../components/PageHeader';
+
+const statusBadgeMap = {
+  terverifikasi: 'badge-success',
+  menunggu_verifikasi: 'badge-warning',
+  ditolak: 'badge-danger',
+  belum_ada_foto: 'badge-info',
+};
 
 export default function Laporan() {
   const { user } = useAuth();
@@ -60,8 +68,8 @@ export default function Laporan() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-green-200 border-t-green-600 animate-spin mx-auto mb-3"></div>
-          <p className="text-gray-600">Memuat laporan...</p>
+          <div className="w-10 h-10 rounded-full border-4 border-muted border-t-primary animate-spin mx-auto mb-3" />
+          <p className="text-sm font-medium text-muted-foreground">Memuat laporan program...</p>
         </div>
       </div>
     );
@@ -69,112 +77,115 @@ export default function Laporan() {
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+      <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive">
         {error}
       </div>
     );
   }
 
   if (!report) {
-    return <div className="p-6 text-gray-600">Laporan tidak tersedia</div>;
+    return (
+      <div className="card p-8 text-center text-muted-foreground text-sm">
+        Laporan tidak tersedia
+      </div>
+    );
   }
 
   const { summary, fields_by_status, top_farmers, category_distribution, monthly_trend } = report;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 md:text-3xl">
-            <FileText className="h-7 w-7 shrink-0 text-green-600 sm:h-8 sm:w-8" />
-            Laporan Program
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Diperbarui: {new Date(report.generated_at).toLocaleString('id-ID')}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => handleExport('csv')}
-            disabled={exporting}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-          <button
-            onClick={() => handleExport('json')}
-            disabled={exporting}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export JSON
-          </button>
-        </div>
-      </div>
+      {/* PageHeader seragam */}
+      <PageHeader
+        eyebrow="LAPORAN PROGRAM"
+        title="Laporan Program"
+        subtitle={`Diperbarui: ${new Date(report.generated_at).toLocaleString('id-ID')}`}
+        action={
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+              className="btn-secondary"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => handleExport('json')}
+              disabled={exporting}
+              className="btn-secondary"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export JSON</span>
+            </button>
+          </div>
+        }
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-4 gap-4">
-        <Card
+        <SummaryCard
           icon={Leaf}
           title="Total Lahan"
           value={summary.total_fields}
           subtitle={`${summary.verified_fields} terverifikasi (${summary.verification_rate}%)`}
-          color="green"
+          iconTone="bg-primary/10 text-primary"
         />
-        <Card
+        <SummaryCard
           icon={TrendingUp}
           title="Total Foto"
           value={summary.total_photos}
           subtitle={`${summary.verified_photos} terverifikasi`}
-          color="blue"
+          iconTone="bg-forest/10 text-forest"
         />
-        <Card
+        <SummaryCard
           icon={FileText}
           title="Total Klaim"
           value={summary.total_claims}
           subtitle={`${summary.approved_claims} disetujui (${summary.approval_rate}%)`}
-          color="amber"
+          iconTone="bg-ember/10 text-ember"
         />
-        <Card
+        <SummaryCard
           icon={Users}
           title="Total Petani"
           value={summary.total_farmers}
           subtitle={`${summary.total_petani_users} pengguna terdaftar`}
-          color="purple"
+          iconTone="bg-primary/10 text-primary"
         />
       </div>
 
       {/* Detail Sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-2 gap-6">
         {/* Fields by Status */}
-        <div className="card p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Status Lahan</h2>
-          <div className="space-y-3">
-            {fields_by_status.map((item) => (
-              <div key={item.status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="font-medium text-gray-700 capitalize">{item.status.replace(/_/g, ' ')}</span>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold text-sm">
-                  {item.count}
-                </span>
-              </div>
-            ))}
+        <div className="card p-5 lg:p-6 animate-fade-up">
+          <h2 className="font-display text-base lg:text-lg font-bold text-foreground mb-4">Status Lahan</h2>
+          <div className="space-y-2.5">
+            {fields_by_status.map((item) => {
+              const badgeClass = statusBadgeMap[item.status] || 'badge-info';
+              return (
+                <div key={item.status} className="flex items-center justify-between p-3.5 bg-muted/40 rounded-xl border border-border/60">
+                  <span className="font-medium text-foreground capitalize text-sm">{item.status.replace(/_/g, ' ')}</span>
+                  <span className={`badge ${badgeClass}`}>
+                    {item.count}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Category Distribution */}
-        <div className="card p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Stok Kategori</h2>
-          <div className="space-y-3">
+        <div className="card p-5 lg:p-6 animate-fade-up">
+          <h2 className="font-display text-base lg:text-lg font-bold text-foreground mb-4">Stok Kategori</h2>
+          <div className="space-y-2.5">
             {category_distribution.map((item) => (
-              <div key={item.category} className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-700">{item.category}</span>
-                  <span className="text-sm text-gray-500">{item.total_distributed} disalurkan</span>
+              <div key={item.category} className="p-3.5 bg-muted/40 rounded-xl border border-border/60">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-semibold text-foreground text-sm">{item.category}</span>
+                  <span className="text-xs text-muted-foreground">{item.total_distributed} disalurkan</span>
                 </div>
-                <div className="text-sm text-gray-600">
-                  Sisa stok: <span className="font-semibold">{item.remaining_stock}</span>
+                <div className="text-xs text-muted-foreground">
+                  Sisa stok: <span className="font-semibold text-foreground">{item.remaining_stock}</span>
                 </div>
               </div>
             ))}
@@ -183,31 +194,31 @@ export default function Laporan() {
       </div>
 
       {/* Top Farmers */}
-      <div className="card p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Top 10 Petani</h2>
-        <div className="overflow-x-auto">
+      <div className="card p-5 lg:p-6 animate-fade-up">
+        <h2 className="font-display text-base lg:text-lg font-bold text-foreground mb-4">Top 10 Petani</h2>
+        <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full text-sm">
-            <thead className="border-b border-gray-200">
+            <thead>
               <tr>
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">#</th>
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">Nama</th>
-                <th className="text-left py-2 px-3 text-gray-600 font-semibold">Email</th>
-                <th className="text-center py-2 px-3 text-gray-600 font-semibold">Klaim Disetujui</th>
-                <th className="text-center py-2 px-3 text-gray-600 font-semibold">Total Klaim</th>
+                <th className="table-header">#</th>
+                <th className="table-header">Nama</th>
+                <th className="table-header">Email</th>
+                <th className="table-header text-center">Klaim Disetujui</th>
+                <th className="table-header text-center">Total Klaim</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/60 bg-card">
               {top_farmers.map((farmer, idx) => (
-                <tr key={farmer.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-3 text-gray-600">{idx + 1}</td>
-                  <td className="py-3 px-3 font-medium text-gray-900">{farmer.nama}</td>
-                  <td className="py-3 px-3 text-gray-600 text-xs">{farmer.email}</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+                <tr key={farmer.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="table-cell text-muted-foreground">{idx + 1}</td>
+                  <td className="table-cell font-semibold text-foreground">{farmer.nama}</td>
+                  <td className="table-cell text-muted-foreground text-xs">{farmer.email}</td>
+                  <td className="table-cell text-center">
+                    <span className="badge badge-success">
                       {farmer.approved_claims}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-center text-gray-600">{farmer.total_claims}</td>
+                  <td className="table-cell text-center text-muted-foreground font-medium">{farmer.total_claims}</td>
                 </tr>
               ))}
             </tbody>
@@ -217,18 +228,18 @@ export default function Laporan() {
 
       {/* Monthly Trend */}
       {monthly_trend.length > 0 && (
-        <div className="card p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Tren Bulanan (12 Bulan Terakhir)</h2>
-          <div className="space-y-3">
+        <div className="card p-5 lg:p-6 animate-fade-up">
+          <h2 className="font-display text-base lg:text-lg font-bold text-foreground mb-4">Tren Bulanan (12 Bulan Terakhir)</h2>
+          <div className="space-y-2.5">
             {monthly_trend.slice(0, 12).map((item) => (
-              <div key={`${item.month}-${item.type}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={`${item.month}-${item.type}`} className="flex items-center justify-between p-3.5 bg-muted/40 rounded-xl border border-border/60">
                 <div>
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-foreground text-sm">
                     {new Date(item.month).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
                   </span>
-                  <span className="text-xs text-gray-500 ml-2 capitalize">({item.type})</span>
+                  <span className="text-xs text-muted-foreground ml-2 capitalize">({item.type})</span>
                 </div>
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold text-sm">
+                <span className="badge badge-info">
                   {item.count}
                 </span>
               </div>
@@ -240,24 +251,19 @@ export default function Laporan() {
   );
 }
 
-function Card({ icon: Icon, title, value, subtitle, color }) {
-  const colorClasses = {
-    green: 'bg-green-50 text-green-700',
-    blue: 'bg-blue-50 text-blue-700',
-    amber: 'bg-amber-50 text-amber-700',
-    purple: 'bg-purple-50 text-purple-700',
-  };
-
+function SummaryCard({ icon: Icon, title, value, subtitle, iconTone }) {
   return (
-    <div className={`card p-6 ${colorClasses[color]}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium opacity-75">{title}</p>
-          <p className="text-3xl font-bold mt-2">{value}</p>
-          <p className="text-xs mt-2 opacity-75">{subtitle}</p>
+    <div className="card card-hover p-5 lg:p-6 animate-fade-up">
+      <div className="flex items-start justify-between">
+        <div className={`icon-tile w-11 h-11 shrink-0 ${iconTone}`}>
+          <Icon className="w-5 h-5" aria-hidden="true" />
         </div>
-        <Icon className="w-10 h-10 opacity-20" />
       </div>
+      <p className="mt-4 font-display text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
+        {value}
+      </p>
+      <p className="text-sm font-medium text-muted-foreground mt-0.5">{title}</p>
+      {subtitle && <p className="text-xs text-muted-foreground/80 mt-1">{subtitle}</p>}
     </div>
   );
 }

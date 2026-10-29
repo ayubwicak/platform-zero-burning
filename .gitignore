@@ -44,3 +44,7 @@ uploads/
 *.sqlite
 *.sqlite3
 *.backup
+
+# Test artifacts
+test-results/
+playwright-report/

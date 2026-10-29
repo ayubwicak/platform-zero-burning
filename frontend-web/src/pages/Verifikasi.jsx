@@ -9,15 +9,21 @@ import {
   MapPin,
   Loader2,
   AlertCircle,
+  Users,
+  ShieldAlert,
+  SlidersHorizontal,
+  X,
+  Ban,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import Badge from '../components/Badge';
 import api from '../lib/api';
 import { formatCoord } from '../lib/format';
 
 const statusMeta = {
-  menunggu_verifikasi: { key: 'menunggu', label: 'Menunggu', cls: 'badge-warning', icon: Clock },
-  terverifikasi: { key: 'terverifikasi', label: 'Terverifikasi', cls: 'badge-success', icon: CheckCircle2 },
-  ditolak: { key: 'ditolak', label: 'Ditolak', cls: 'badge-danger', icon: XCircle },
+  menunggu_verifikasi: { key: 'menunggu', label: 'Menunggu', variant: 'warning', icon: Clock },
+  terverifikasi: { key: 'terverifikasi', label: 'Terverifikasi', variant: 'success', icon: CheckCircle2 },
+  ditolak: { key: 'ditolak', label: 'Ditolak', variant: 'danger', icon: XCircle },
 };
 
 const tabs = [
@@ -47,30 +53,178 @@ function formatTime(value) {
   };
 }
 
+function OverrideModal({ photo, onClose, onConfirm, submitting, error }) {
+  const [overrideStatus, setOverrideStatus] = useState('tidak_lolos');
+  const [note, setNote] = useState('');
+
+  useEffect(() => {
+    const handleKey = (event) => {
+      if (event.key === 'Escape' && !submitting) onClose();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose, submitting]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!note.trim() || note.trim().length < 5) return;
+    onConfirm({
+      photo_id: photo.id,
+      status: overrideStatus,
+      note: note.trim(),
+      is_override: true,
+    });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm animate-fade-in"
+      onClick={() => !submitting && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="override-title"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-card p-6 shadow-2xl border border-border animate-fade-up"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div className="flex items-center gap-3">
+            <div className="icon-tile h-10 w-10 bg-destructive/10 text-destructive">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 id="override-title" className="text-base font-bold text-foreground">
+                Anulir Hasil Verifikasi
+              </h2>
+              <p className="text-xs text-muted-foreground">{photo.farmer_name} - {photo.field_name}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Sebagai petugas atau admin, Anda dapat menganulir status verifikasi ini.
+            Tindakan ini akan membatalkan status sebelumnya dan tercatat lengkap di Audit Log.
+          </p>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1.5">
+              Status Baru <span className="text-destructive">*</span>
+            </label>
+            <select
+              value={overrideStatus}
+              onChange={(e) => setOverrideStatus(e.target.value)}
+              className="input-field text-sm"
+              disabled={submitting}
+            >
+              <option value="tidak_lolos">Tolak (Tidak Lolos Verifikasi)</option>
+              <option value="lolos">Setujui (Lolos Verifikasi Resmi)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1.5">
+              Alasan Pembatalan / Catatan Petugas <span className="text-destructive">* (wajib)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={300}
+              placeholder="Jelaskan alasan resmi pembatalan/anulir (minimal 5 karakter)..."
+              className="input-field resize-none text-xs"
+              disabled={submitting}
+              required
+            />
+            <p className="text-[10px] text-muted-foreground text-right mt-1">{note.length}/300</p>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="btn-secondary flex-1"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || note.trim().length < 5}
+              className="btn-danger flex-1"
+            >
+              {submitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Ban className="h-4 w-4" />
+              )}
+              {submitting ? 'Memproses...' : 'Simpan Anulir'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Verifikasi() {
   const [photos, setPhotos] = useState([]);
+  const [votingConfig, setVotingConfig] = useState({ approveThreshold: 5, rejectThreshold: 3, autoMode: 'flag' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [tab, setTab] = useState('semua');
   const [query, setQuery] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState(false);
   const [actionId, setActionId] = useState(null);
+
+  // Override modal state
+  const [overridePhoto, setOverridePhoto] = useState(null);
+  const [overrideError, setOverrideError] = useState('');
+  const [submittingOverride, setSubmittingOverride] = useState(false);
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await api.get('/verifications');
+      const url = priorityFilter ? '/verifications?prioritas=warga' : '/verifications';
+      const response = await api.get(url);
       setPhotos(response.data.data || []);
+      if (response.data.config) {
+        setVotingConfig(response.data.config);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Gagal memuat data verifikasi.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [priorityFilter]);
 
   useEffect(() => {
     loadPhotos();
   }, [loadPhotos]);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => setNotice(''), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const counts = useMemo(() => {
     const result = { semua: photos.length, menunggu: 0, terverifikasi: 0, ditolak: 0 };
@@ -105,6 +259,7 @@ export default function Verifikasi() {
         status,
         note: null,
       });
+      setNotice(`Verifikasi foto #${photo.id} (${status === 'lolos' ? 'Disetujui' : 'Ditolak'}) berhasil dicatat.`);
       await loadPhotos();
     } catch (err) {
       setError(err.response?.data?.error || 'Gagal menyimpan hasil verifikasi.');
@@ -113,12 +268,27 @@ export default function Verifikasi() {
     }
   }
 
+  async function handleOverrideConfirm(payload) {
+    setSubmittingOverride(true);
+    setOverrideError('');
+    try {
+      await api.post('/verifications/override', payload);
+      setNotice(`Status foto #${payload.photo_id} berhasil dianulir oleh petugas.`);
+      setOverridePhoto(null);
+      await loadPhotos();
+    } catch (err) {
+      setOverrideError(err.response?.data?.error || 'Gagal menganulir status verifikasi.');
+    } finally {
+      setSubmittingOverride(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
         eyebrow="Validasi Bukti"
         title="Verifikasi Foto"
-        subtitle="Tinjau foto progres lahan dan tentukan status verifikasi."
+        subtitle="Tinjau foto progres lahan, rekomendasi warga sekitar, dan tentukan status verifikasi."
         action={
           <button onClick={loadPhotos} disabled={loading} className="btn-secondary">
             {loading ? (
@@ -130,27 +300,51 @@ export default function Verifikasi() {
           </button>
         }
       >
-        <div className="grid grid-cols-1 gap-3 max-w-lg sm:grid-cols-3">
-          {[
-            { label: 'Menunggu', value: counts.menunggu, cls: 'bg-amber-100 text-amber-600', icon: Clock },
-            { label: 'Terverifikasi', value: counts.terverifikasi, cls: 'bg-green-100 text-green-600', icon: CheckCircle2 },
-            { label: 'Ditolak', value: counts.ditolak, cls: 'bg-rose-100 text-rose-600', icon: XCircle },
-          ].map((stat) => (
-            <div key={stat.label} className="card p-3.5 flex items-center gap-3">
-              <div className={`icon-tile w-9 h-9 ${stat.cls}`}>
-                <stat.icon className="w-4 h-4" />
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="grid grid-cols-1 gap-3 max-w-lg sm:grid-cols-3">
+            {[
+              { label: 'Menunggu', value: counts.menunggu, cls: 'bg-amber-100 text-amber-600', icon: Clock },
+              { label: 'Terverifikasi', value: counts.terverifikasi, cls: 'bg-green-100 text-green-600', icon: CheckCircle2 },
+              { label: 'Ditolak', value: counts.ditolak, cls: 'bg-rose-100 text-rose-600', icon: XCircle },
+            ].map((stat) => (
+              <div key={stat.label} className="card p-3.5 flex items-center gap-3">
+                <div className={`icon-tile w-9 h-9 ${stat.cls}`}>
+                  <stat.icon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-lg font-extrabold text-foreground leading-none">{stat.value}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">{stat.label}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-lg font-extrabold text-gray-900 leading-none">{stat.value}</p>
-                <p className="text-[11px] text-gray-500 mt-1">{stat.label}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">Sistem Voting Warga: </span>
+            <span>Ambang batas {votingConfig.approveThreshold} suara setuju (Mode: <strong className="text-foreground uppercase">{votingConfig.autoMode}</strong>)</span>
+          </div>
         </div>
       </PageHeader>
 
+      {notice && (
+        <div
+          role="status"
+          className="mt-4 flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-xs text-primary"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{notice}</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-xs text-destructive">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {tabs.map((item) => (
             <button
               key={item.key}
@@ -160,42 +354,46 @@ export default function Verifikasi() {
               {item.label}
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  tab === item.key ? 'bg-white/20' : 'bg-gray-100'
+                  tab === item.key ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {counts[item.key]}
               </span>
             </button>
           ))}
+
+          <button
+            type="button"
+            onClick={() => setPriorityFilter((prev) => !prev)}
+            className={`chip inline-flex items-center gap-1.5 ${
+              priorityFilter ? 'chip-active' : 'bg-card border border-border text-foreground'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Prioritas Warga</span>
+          </button>
         </div>
 
         <div className="relative w-full lg:w-72">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Cari petani atau lahan..."
-            className="input-field pl-10"
+            className="input-field pl-10 text-xs"
           />
         </div>
       </div>
 
-      {error && (
-        <div className="mt-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{error}</span>
-        </div>
-      )}
-
       <div className="mt-4 card overflow-hidden animate-fade-up">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px]">
+          <table className="w-full min-w-[960px]">
             <thead>
               <tr>
                 <th className="table-header">Foto</th>
                 <th className="table-header">Petani</th>
-                <th className="table-header">Lahan</th>
-                <th className="table-header">Lokasi</th>
+                <th className="table-header">Lahan & Lokasi</th>
+                <th className="table-header">Dukungan Warga</th>
                 <th className="table-header">Waktu</th>
                 <th className="table-header">Status</th>
                 <th className="table-header text-right">Aksi</th>
@@ -204,30 +402,40 @@ export default function Verifikasi() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-500">
-                    <Loader2 className="mx-auto w-5 h-5 animate-spin text-green-600" />
+                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-muted-foreground">
+                    <Loader2 className="mx-auto w-5 h-5 animate-spin text-primary" />
                     <p className="mt-2">Memuat foto...</p>
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-muted-foreground">
+                    Tidak ada foto verifikasi ditemukan.
                   </td>
                 </tr>
               ) : (
                 filtered.map((photo) => {
                   const meta = statusMeta[photo.status] || {
                     label: photo.status,
-                    cls: 'badge-info',
+                    variant: 'info',
                     icon: Clock,
                     key: 'lainnya',
                   };
                   const { time, date } = formatTime(photo.taken_at || photo.created_at);
                   const busy = actionId === photo.id;
+                  const setuju = photo.setuju_count || 0;
+                  const tidakSetuju = photo.tidak_setuju_count || 0;
+                  const threshold = votingConfig.approveThreshold || 5;
+                  const progressPct = Math.min(100, Math.round((setuju / threshold) * 100));
 
                   return (
-                    <tr key={photo.id} className="hover:bg-gray-50/70 transition-colors">
+                    <tr key={photo.id} className="hover:bg-muted/30 transition-colors">
                       <td className="table-cell">
                         <a
                           href={photo.photo_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="block h-14 w-20 overflow-hidden rounded-xl bg-gray-100"
+                          className="block h-14 w-20 overflow-hidden rounded-xl bg-muted"
                         >
                           {photo.photo_url ? (
                             <img
@@ -238,44 +446,86 @@ export default function Verifikasi() {
                             />
                           ) : (
                             <span className="flex h-full w-full items-center justify-center">
-                              <Eye className="w-5 h-5 text-gray-400" />
+                              <Eye className="w-5 h-5 text-muted-foreground" />
                             </span>
                           )}
                         </a>
                       </td>
+
                       <td className="table-cell">
                         <div className="flex items-center gap-2.5">
-                          <div className="icon-tile w-8 h-8 rounded-full bg-gray-100 text-gray-600 text-[11px] font-bold">
+                          <div className="icon-tile w-8 h-8 rounded-full bg-muted text-foreground text-[11px] font-bold">
                             {initials(photo.farmer_name)}
                           </div>
-                          <span className="font-semibold text-gray-900">
-                            {photo.farmer_name || 'Petani'}
-                          </span>
+                          <div>
+                            <p className="font-semibold text-foreground text-xs">{photo.farmer_name || 'Petani'}</p>
+                            <p className="text-[10px] text-muted-foreground">ID Foto #{photo.id}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="table-cell">{photo.field_name}</td>
+
                       <td className="table-cell">
-                        <span className="inline-flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1 font-mono text-[11px] text-gray-600">
-                          <MapPin className="w-3 h-3 text-green-600" />
+                        <p className="font-medium text-foreground text-xs">{photo.field_name}</p>
+                        <p className="mt-1 inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+                          <MapPin className="w-3 h-3 text-primary" />
                           {formatCoord(photo.latitude)}, {formatCoord(photo.longitude)}
-                        </span>
+                        </p>
                       </td>
+
+                      <td className="table-cell min-w-[160px]">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                              <Users className="w-3 h-3 text-muted-foreground" />
+                              {setuju}/{threshold} Setuju
+                            </span>
+                            {tidakSetuju > 0 && (
+                              <span className="text-[10px] text-destructive font-medium">
+                                ({tidakSetuju} Tolak)
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                setuju >= threshold ? 'bg-primary' : 'bg-primary/60'
+                              }`}
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+
+                          {/* Badge Penanda Komunitas / Sistem */}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {photo.verified_by_system ? (
+                              <Badge variant="info">Diverifikasi Otomatis</Badge>
+                            ) : photo.community_recommendation === 'rekomendasi_setuju' ? (
+                              <Badge variant="success">Rekomendasi Warga</Badge>
+                            ) : photo.community_recommendation === 'perlu_ditinjau' ? (
+                              <Badge variant="danger">Perlu Ditinjau</Badge>
+                            ) : null}
+                          </div>
+                        </div>
+                      </td>
+
                       <td className="table-cell">
-                        <p className="text-xs font-medium text-gray-700">{time}</p>
-                        <p className="text-[11px] text-gray-400">{date}</p>
+                        <p className="text-xs font-medium text-foreground">{time}</p>
+                        <p className="text-[11px] text-muted-foreground">{date}</p>
                       </td>
+
                       <td className="table-cell">
-                        <span className={`badge ${meta.cls}`}>
-                          <meta.icon className="w-3 h-3" /> {meta.label}
-                        </span>
+                        <Badge variant={meta.variant} icon={meta.icon}>
+                          {meta.label}
+                        </Badge>
                       </td>
+
                       <td className="table-cell text-right">
                         {meta.key === 'menunggu' ? (
-                          <div className="inline-flex gap-2">
+                          <div className="inline-flex items-center gap-1.5">
                             <button
                               onClick={() => handleVerify(photo, 'lolos')}
                               disabled={busy}
-                              className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+                              className="btn-primary py-1 px-2.5 text-xs inline-flex items-center gap-1"
                             >
                               {busy ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -287,20 +537,33 @@ export default function Verifikasi() {
                             <button
                               onClick={() => handleVerify(photo, 'tidak_lolos')}
                               disabled={busy}
-                              className="inline-flex items-center gap-1 rounded-lg bg-white border border-gray-200 px-3 py-1.5 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-60"
+                              className="btn-secondary py-1 px-2 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"
                             >
                               <XCircle className="w-3 h-3" /> Tolak
                             </button>
                           </div>
                         ) : (
-                          <a
-                            href={photo.photo_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs font-semibold text-gray-400 hover:text-gray-600"
-                          >
-                            Lihat foto
-                          </a>
+                          <div className="inline-flex items-center gap-2">
+                            {photo.verified_by_system && (
+                              <button
+                                type="button"
+                                onClick={() => setOverridePhoto(photo)}
+                                className="btn-secondary py-1 px-2 text-xs text-destructive hover:bg-destructive/10 inline-flex items-center gap-1"
+                                title="Anulir verifikasi otomatis"
+                              >
+                                <Ban className="w-3 h-3" />
+                                Anulir
+                              </button>
+                            )}
+                            <a
+                              href={photo.photo_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs font-semibold text-primary hover:underline"
+                            >
+                              Lihat
+                            </a>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -310,17 +573,17 @@ export default function Verifikasi() {
             </tbody>
           </table>
         </div>
-
-        {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <div className="icon-tile w-12 h-12 bg-gray-100 text-gray-400">
-              <Search className="w-5 h-5" />
-            </div>
-            <p className="text-sm font-semibold text-gray-700">Tidak ada foto ditemukan</p>
-            <p className="text-xs text-gray-500">Coba ubah filter atau kata pencarian.</p>
-          </div>
-        )}
       </div>
+
+      {overridePhoto && (
+        <OverrideModal
+          photo={overridePhoto}
+          onClose={() => setOverridePhoto(null)}
+          onConfirm={handleOverrideConfirm}
+          submitting={submittingOverride}
+          error={overrideError}
+        />
+      )}
     </div>
   );
 }

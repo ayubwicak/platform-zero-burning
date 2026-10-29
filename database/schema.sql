@@ -100,8 +100,18 @@ CREATE TABLE IF NOT EXISTS incentive_claims (
   farmer_id INTEGER REFERENCES farmers(id) ON DELETE CASCADE,
   claim_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   status VARCHAR(20) DEFAULT 'diajukan',
-  category_id INTEGER REFERENCES incentive_categories(id)
+  category_id INTEGER REFERENCES incentive_categories(id),
+  reason TEXT,
+  processed_by INTEGER REFERENCES users(id),
+  processed_at TIMESTAMP
 );
+
+ALTER TABLE incentive_claims ADD COLUMN IF NOT EXISTS reason TEXT;
+ALTER TABLE incentive_claims ADD COLUMN IF NOT EXISTS processed_by INTEGER REFERENCES users(id);
+ALTER TABLE incentive_claims ADD COLUMN IF NOT EXISTS processed_at TIMESTAMP;
+
+ALTER TABLE field_photos ADD COLUMN IF NOT EXISTS community_recommendation VARCHAR(50);
+ALTER TABLE field_photos ADD COLUMN IF NOT EXISTS verified_by_system BOOLEAN DEFAULT FALSE;
 
 -- Tabel incentive_distributions (distribusi insentif)
 CREATE TABLE IF NOT EXISTS incentive_distributions (
@@ -137,6 +147,18 @@ CREATE TABLE IF NOT EXISTS email_verifications (
   expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP + INTERVAL '15 minutes'
 );
 
+-- Tabel notifications (notifikasi pengguna berbasis event)
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  data JSONB,
+  read_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index untuk performa query
 CREATE INDEX IF NOT EXISTS idx_fields_farmer_id ON fields(farmer_id);
 CREATE INDEX IF NOT EXISTS idx_field_photos_field_id ON field_photos(field_id);
@@ -148,3 +170,4 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_email_verifications_user_id ON email_verifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_email_verifications_expires_at ON email_verifications(expires_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read_at, created_at);

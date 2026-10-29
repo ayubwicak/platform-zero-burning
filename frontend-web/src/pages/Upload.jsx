@@ -21,6 +21,7 @@ import api from '../lib/api';
 import { formatArea, formatCoord, formatDateTime } from '../lib/format';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const guides = [
   'Ambil foto langsung dari kamera, bukan dari galeri.',
@@ -111,8 +112,8 @@ export default function Upload() {
     setSuccess(null);
     setError('');
 
-    if (!selected.type.startsWith('image/')) {
-      setError('File harus berupa gambar (JPG atau PNG).');
+    if (!ALLOWED_MIME_TYPES.includes(selected.type)) {
+      setError('File harus berupa gambar (JPG, PNG, atau WebP).');
       event.target.value = '';
       return;
     }
@@ -194,12 +195,19 @@ export default function Upload() {
       }
       await loadPhotos();
     } catch (err) {
-      const data = err.response?.data;
-      setError(
-        data?.distance !== undefined
-          ? `${data.error} (jarak ${data.distance} m dari titik lahan)`
-          : data?.error || 'Gagal mengunggah foto.'
-      );
+      if (err.response?.status === 429) {
+        setError(
+          err.response.data?.error ||
+            'Batas unggahan tercapai. Anda telah mencapai batas maksimal unggahan foto per jam. Silakan coba lagi beberapa saat lagi.'
+        );
+      } else {
+        const data = err.response?.data;
+        setError(
+          data?.distance !== undefined
+            ? `${data.error} (jarak ${data.distance} m dari titik lahan)`
+            : data?.error || 'Gagal mengunggah foto.'
+        );
+      }
     } finally {
       setUploading(false);
     }
@@ -219,12 +227,12 @@ export default function Upload() {
         <div className="xl:col-span-3">
           <form onSubmit={handleUpload} className="card p-5 lg:p-6 space-y-6 animate-fade-up">
             <div className="flex items-center gap-3">
-              <div className="icon-tile w-11 h-11 bg-green-100 text-green-600">
+              <div className="icon-tile w-11 h-11 bg-primary/10 text-primary">
                 <Camera className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Foto Progres Lahan</h3>
-                <p className="text-xs text-gray-500">Format JPG/PNG, maksimal 5 MB</p>
+                <h3 className="text-base font-bold text-foreground">Foto Progres Lahan</h3>
+                <p className="text-xs text-muted-foreground">Format JPG, PNG, atau WebP, maksimal 5 MB</p>
               </div>
             </div>
 
@@ -263,7 +271,7 @@ export default function Upload() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                 capture="environment"
                 onChange={handleFile}
                 className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"

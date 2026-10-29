@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
@@ -6,22 +6,29 @@ import Navbar from './Navbar';
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    document.documentElement.classList.add('admin-mode');
+    return () => {
+      document.documentElement.classList.remove('admin-mode');
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-layout min-h-screen bg-background text-foreground font-sans">
       <a href="#main-content" className="skip-link">
         Lewati ke konten utama
       </a>
       <Navbar onToggle={() => setSidebarOpen((prev) => !prev)} />
 
-      <div className="flex pt-16">
+      <div className="flex pt-[var(--header-h,4rem)]">
         {/* Sidebar Desktop */}
-        <aside className="hidden lg:flex lg:w-64 3xl:w-80 lg:flex-col bg-white border-r border-gray-200 shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
+        <aside className="hidden lg:flex w-[var(--sidebar-w,16rem)] 3xl:w-[var(--sidebar-w-wide,20rem)] lg:flex-col bg-card border-r border-border shrink-0 sticky top-[var(--header-h,4rem)] h-[calc(100vh-var(--header-h,4rem))]">
           <Sidebar onClose={() => {}} />
         </aside>
 
         {/* Sidebar Mobile */}
         <aside
-          className={`fixed top-16 bottom-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 lg:hidden ${
+          className={`fixed top-[var(--header-h,4rem)] bottom-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 lg:hidden ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
@@ -29,8 +36,8 @@ export default function Layout() {
         </aside>
 
         {/* Konten utama */}
-        <main id="main-content" className="min-w-0 flex-1 min-h-[calc(100vh-4rem)]">
-          <div className="mx-auto w-full max-w-[1920px] 3xl:max-w-[2560px] 4xl:max-w-[3400px] p-4 sm:p-6 lg:p-8 2xl:p-10 3xl:p-12">
+        <main id="main-content" className="min-w-0 flex-1 min-h-[calc(100vh-var(--header-h,4rem))]">
+          <div className="mx-auto w-full max-w-[1536px] 3xl:max-w-[1920px] p-4 sm:p-5 lg:p-6 2xl:p-8">
             <Outlet />
           </div>
         </main>
@@ -39,7 +46,7 @@ export default function Layout() {
       {/* Backdrop mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 top-16 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 top-[var(--header-h,4rem)] z-40 bg-foreground/40 backdrop-blur-xs lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

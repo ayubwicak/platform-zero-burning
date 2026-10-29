@@ -121,6 +121,7 @@ export default function Landing() {
             {!isAuthenticated && (
               <Link
                 to="/login"
+                data-testid="nav-login"
                 className="hidden text-muted-foreground transition-colors hover:text-foreground sm:inline"
               >
                 Masuk
@@ -128,6 +129,7 @@ export default function Landing() {
             )}
             <Link
               to={primaryHref}
+              data-testid="nav-register"
               className="rounded-full bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 sm:px-5"
             >
               {navPrimaryLabel}
@@ -162,6 +164,8 @@ export default function Landing() {
             {!isAuthenticated && (
               <Link
                 to="/login"
+                data-testid="nav-login-mobile"
+                aria-label="Masuk ke akun"
                 onClick={() => setMenuOpen(false)}
                 className="mt-3 flex w-full items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
               >
@@ -170,6 +174,7 @@ export default function Landing() {
             )}
             <Link
               to={primaryHref}
+              data-testid="nav-register-mobile"
               onClick={() => setMenuOpen(false)}
               className="mt-2 flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
             >

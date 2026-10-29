@@ -192,6 +192,15 @@ describe('Report & Statistics Integration Tests', () => {
         .set('Authorization', `Bearer ${farmerToken}`);
 
       expect(res.status).toBe(403);
+      expect(res.body.error).toBeDefined();
+    });
+
+    it('should reject unauthenticated export access', async () => {
+      const res = await request(app)
+        .get('/api/reports/export?format=csv');
+
+      expect(res.status).toBe(401);
+      expect(res.body.error).toBeDefined();
     });
 
     it('should include timestamp in CSV filename', async () => {

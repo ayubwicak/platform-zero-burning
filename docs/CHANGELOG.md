@@ -10,6 +10,38 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- **Fitur A (Alur Penolakan & Pembatalan Klaim Insentif):**
+  - Endpoint `POST /api/claims/:id/reject` dan `POST /api/claims/:id/cancel` dengan validasi transisi status (409 Conflict bila status invalid).
+  - Skema database diperluas dengan kolom `reason`, `processed_by`, dan `processed_at` pada tabel `incentive_claims` (status `ditolak` dan `dibatalkan`).
+  - Validasi alasan wajib dengan opsi terstandar (*Petani tidak hadir*, *Lahan bermasalah kembali*, *Data tidak sesuai*, *Stok tidak tersedia*, *Kekeliruan input*, *Lainnya*) serta catatan teks tambahan (wajib jika memilih alasan *Lainnya*).
+  - Kebijakan pembatalan klaim yang telah didistribusikan: khusus role `admin`, mengembalikan stok kategori insentif secara atomik, dan menghapus entri distribusi terkait.
+  - Pencatatan peristiwa penolakan dan pembatalan klaim ke tabel `audit_logs` secara transaksional.
+  - Antarmuka `Distribusi.jsx` dilengkapi filter status klaim (Menunggu, Ditolak, Dibatalkan, Semua), modal aksi penolakan & pembatalan dengan alasan terstandar, dan badge status semantik.
+  - Antarmuka `Klaim.jsx` menampilkan status terkini (`ditolak`/`dibatalkan`) beserta alasan penolakan/pembatalan bagi petani, serta memungkinkan pengajuan ulang klaim baru.
+- **Fitur B (Ambang Batas Otomatis Verifikasi Warga):**
+  - Konfigurasi ambang batas dinamis melalui variabel lingkungan: `VOTE_APPROVE_THRESHOLD` (default: 5), `VOTE_REJECT_THRESHOLD` (default: 3), dan `VOTE_AUTO_MODE` (`off` | `flag` | `auto`, default: `flag`).
+  - Kalkulasi suara warga terverifikasi secara valid (1 suara per akun per foto, akun aktif, bukan pemilik lahan yang sama).
+  - Mode `flag` memberikan label rekomendasi (`rekomendasi_setuju` atau `perlu_ditinjau`) pada `field_photos.community_recommendation` tanpa mengubah status foto.
+  - Mode `auto` secara otomatis memvalidasi foto berstatus `menunggu_verifikasi` menjadi `terverifikasi` (`verified_by_system = true`) apabila suara setuju memenuhi threshold, suara tolak di bawah threshold, dan radius geofencing valid (jarak $\le$ 50m). Tidak ada penolakan otomatis (foto mencurigakan ditandai `perlu_ditinjau` untuk inspeksi manusia).
+  - Endpoint `POST /api/verifications/override` untuk petugas/admin menganulir hasil verifikasi otomatis dengan catatan alasan wajib minimal 5 karakter, tercatat di Audit Log dengan aksi `verify_override`.
+  - Antarmuka `Verifikasi.jsx` menampilkan progress bar suara warga terhadap ambang batas, badge rekomendasi warga / verifikasi otomatis, filter Prioritas Warga, dan modal anulir bagi petugas/admin.
+- **Fitur C (Notifikasi Berbasis Event):**
+  - Tabel `notifications` pada database PostgreSQL dan SQLite dengan kolom `user_id`, `type`, `title`, `message`, `data`, `read_at`, dan `created_at`.
+  - Service terpusat `backend/src/utils/notificationService.js` untuk pembuatan notifikasi atomik dalam transaksi database dan pembersihan otomatis notifikasi usang (> 90 hari).
+  - Endpoint API notifikasi: `GET /api/notifications` (dengan dukungan unread filter dan limit), `GET /api/notifications/unread-count`, `PATCH /api/notifications/:id/read`, dan `POST /api/notifications/read-all`.
+  - Integrasi generator event: verifikasi resmi petugas, auto-verifikasi warga, unggahan foto baru, persetujuan klaim distribusi, penolakan klaim, dan pembatalan klaim.
+  - Panel notifikasi interaktif di `Navbar.jsx`: tombol lonceng dengan badge jumlah unread (maksimal 9+), polling ringan berkala dengan pemeriksaan `document.visibilityState` (ramah baterai & bandwidth), list item dengan ikon semantik dan format waktu relatif, tombol tandai satu/semua dibaca, navigasi cerdas sesuai tipe event, dan empty state ramah pengguna.
+- Test suite integrasi `advanced-features.integration.test.js` mencakup 11 pengujian komprehensif untuk Fitur A, B, dan C (seluruh 68 tes backend passing 100%).
+- Pengujian E2E Playwright `advanced-features.spec.js` untuk memvalidasi interaksi Navbar notifikasi, filter Distribusi, dan prioritas Verifikasi.
+
+- Rate limiter khusus upload foto (`uploadLimiter`) via `express-rate-limit` pada endpoint `POST /api/photos` dengan batas 30 unggahan per jam per pengguna (konfigurasi via `UPLOAD_RATE_LIMIT`), key generator user ID dengan fallback IP, `trust proxy`, dan penanganan status 429 ramah di frontend `Upload.jsx`.
+- Test suite integrasi `photo.integration.test.js` untuk menguji kuota rate limiting upload foto per user tanpa mempengaruhi user lain.
+- Aset visual perbandingan skala visual sebelum dan sesudah 80% pada `docs/screenshots/dashboard-scale-comparison.svg`.
+- Token layout konsisten `--header-h` (4rem) dan `--sidebar-w` (16rem / 20rem) pada root CSS.
+- Sistem batas keterbacaan teks minimum 12px aktual untuk token caption, badge, label, subtext, dan header tabel di bawah layout admin.
+- Penegakan target sentuh interaktif mobile dan tablet minimal 40px pada seluruh elemen klik dan tautan admin.
+- Komponen layout bersama `AdminLayout`, `Card`, `Button`, `Badge`, dan `StatCard` untuk standardisasi antarmuka admin pasca-login.
+- Aset visual preview redesign dashboard admin pada `docs/screenshots/dashboard-preview.svg`.
 - Komponen `BackToHome` pada halaman Login dan Register dengan target sentuh minimal 40px, data-testid, dan navigasi langsung ke beranda.
 - Pengujian E2E Playwright untuk alur navigasi `BackToHome` dan validasi pemuatan serta vertical centering halaman auth pada resolusi desktop (1920x920, 1440x900, 1366x768).
 - Proteksi keamanan backend dengan HTTP security headers via `helmet` dan rate limiting pada endpoint `/api/auth` (100 permintaan / 15 menit) via `express-rate-limit`.
@@ -23,6 +55,14 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Changed
 
+- Standardisasi antarmuka `Laporan.jsx` menggunakan `PageHeader` (dengan aksen dot ember & font Fraunces), token warna semantik (`text-foreground`, `text-muted-foreground`, `bg-muted/40`, `card`), dan kelas `.table-header`/`.table-cell` tanpa kelas warna Tailwind mentah.
+- Penyelarasan format gambar yang didukung pada `Upload.jsx` (pesan validasi, dropzone, dan atribut `accept` pada `<input type="file">` kini konsisten mendukung JPG, PNG, dan WebP sesuai backend).
+- Penegakan otorisasi role admin via middleware `authorizeRoles('admin')` pada route `/api/reports` dan `/api/reports/export` di `reportRoutes.js`.
+- Penerapan skala visual proporsional 80% (root font-size 80% / 12.8px) khusus antarmuka admin/pasca-login pada desktop (`min-width: 1024px`) via `html.admin-mode` dan `html:has(.admin-layout)` tanpa memakai CSS zoom atau transform scale, dengan isolasi penuh sehingga halaman publik (Landing, Login, Register) tetap 100% (16px).
+- Penyelarasan sistem desain dashboard admin dan seluruh halaman pasca-login dengan identitas visual publik (font serif Fraunces, latar krem hangat, palet forest & aksen terakota ember, pill navigation & button).
+- Pembaruan utility classes komponen pada `frontend-web/src/index.css` (`.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost-light`, `.card`, `.badge`, `.table-header`, `.table-cell`, `.input-field`, `.sidebar-link`).
+- Pembaruan `Layout.jsx`, `Navbar.jsx`, `Sidebar.jsx`, dan `PageHeader.jsx` agar konsisten dengan branding "Zero Burning".
+- Pembaruan visual halaman `Dashboard.jsx` (hero banner forest, stat cards seragam, dan quick actions palet terbatas).
 - Konversi `frontend-web/playwright.config.js` dari CommonJS syntax (`require`/`module.exports`) ke ES module syntax (`import`/`export default`) sesuai `"type": "module"` pada `frontend-web/package.json`.
 - Job `frontend-build` pada `.github/workflows/ci.yml` untuk memvalidasi linting dan build frontend pada pipeline CI.
 - Konfigurasi database test SQLite terisolasi (`globalSetup.js`, `globalTeardown.js`, `setupEnv.js`) pada Jest runner sehingga seluruh unit dan integration test (53 test) dapat berjalan deterministik di lingkungan CI/CD tanpa dependensi eksternal.

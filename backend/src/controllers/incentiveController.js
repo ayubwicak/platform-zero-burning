@@ -1,10 +1,55 @@
 const pool = require('../config/db');
 const { recordAudit } = require('../utils/auditLog');
+const { createNotification } = require('../utils/notificationService');
 
 const MAX_STOCK = 2147483647;
 
+const STANDARD_CLAIM_REASONS = [
+  'Petani tidak hadir',
+  'Lahan bermasalah kembali',
+  'Data tidak sesuai',
+  'Stok tidak tersedia',
+  'Kekeliruan input',
+  'Lainnya',
+];
+
 function cleanText(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function validateReasonAndNote(reason, note) {
+  const cleanReason = cleanText(reason);
+  const cleanNote = cleanText(note);
+
+  if (!cleanReason) {
+    return { valid: false, error: 'Alasan penolakan/pembatalan wajib diisi' };
+  }
+
+  if (!STANDARD_CLAIM_REASONS.includes(cleanReason)) {
+    return {
+      valid: false,
+      error: `Alasan harus salah satu dari: ${STANDARD_CLAIM_REASONS.join(', ')}`,
+    };
+  }
+
+  if (cleanNote.length > 300) {
+    return { valid: false, error: 'Catatan tambahan maksimal 300 karakter' };
+  }
+
+  if (cleanReason === 'Lainnya' && !cleanNote) {
+    return {
+      valid: false,
+      error: 'Catatan teks bebas wajib diisi jika memilih alasan Lainnya',
+    };
+  }
+
+  const finalReason = cleanNote
+    ? cleanReason === 'Lainnya'
+      ? cleanNote
+      : `${cleanReason} (${cleanNote})`
+    : cleanReason;
+
+  return { valid: true, cleanReason, cleanNote, finalReason };
 }
 
 function parseQuantity(value) {
@@ -256,11 +301,13 @@ async function listClaims(req, res, next) {
   try {
     const result = await pool.query(
       `SELECT c.*, f.name AS field_name, ic.name AS category_name,
-              d.id AS distribution_id, d.distribution_date, d.receipt_proof
+              d.id AS distribution_id, d.distribution_date, d.receipt_proof,
+              u_proc.nama AS processed_by_name
        FROM incentive_claims c
        JOIN fields f ON c.field_id = f.id
        JOIN incentive_categories ic ON c.category_id = ic.id
        LEFT JOIN incentive_distributions d ON d.claim_id = c.id
+       LEFT JOIN users u_proc ON u_proc.id = c.processed_by
        WHERE c.farmer_id = ?
        ORDER BY c.claim_date DESC
        LIMIT 50`,
@@ -273,24 +320,41 @@ async function listClaims(req, res, next) {
 }
 
 async function listPendingClaims(req, res, next) {
+  const { status } = req.query;
+  const params = [];
+  let whereClause = '';
+
+  if (status && status !== 'semua') {
+    whereClause = 'WHERE c.status = ?';
+    params.push(status);
+  } else if (!status) {
+    whereClause = "WHERE c.status = 'diajukan'";
+  }
+
   try {
     const [claimsResult, countResult] = await Promise.all([
       pool.query(
-        `SELECT c.id, c.claim_date, c.status,
+        `SELECT c.id, c.claim_date, c.status, c.reason, c.notes, c.processed_at, c.processed_by,
                 f.id AS field_id, f.name AS field_name, f.area AS field_area,
                 f.latitude, f.longitude,
                 u.nama AS farmer_name, fa.phone AS farmer_phone, fa.address AS farmer_address,
-                ic.id AS category_id, ic.name AS category_name, ic.quantity AS stock
+                ic.id AS category_id, ic.name AS category_name, ic.quantity AS stock,
+                u_proc.nama AS processed_by_name
          FROM incentive_claims c
          JOIN fields f ON f.id = c.field_id
          JOIN farmers fa ON fa.id = c.farmer_id
          JOIN users u ON u.id = fa.id_user
          JOIN incentive_categories ic ON ic.id = c.category_id
-         WHERE c.status = 'diajukan'
+         LEFT JOIN users u_proc ON u_proc.id = c.processed_by
+         ${whereClause}
          ORDER BY c.claim_date ASC
-         LIMIT 100`
+         LIMIT 100`,
+        params
       ),
-      pool.query(`SELECT COUNT(*) AS total FROM incentive_claims WHERE status = 'diajukan'`),
+      pool.query(
+        `SELECT COUNT(*) AS total FROM incentive_claims c ${whereClause}`,
+        params
+      ),
     ]);
 
     res.json({
@@ -470,8 +534,13 @@ async function recordDistribution(req, res, next) {
     const stockBefore = stockAfter + 1;
 
     await client.query(
-      `UPDATE incentive_claims SET status = 'disetujui' WHERE id = ?`,
-      [claim_id]
+      `UPDATE incentive_claims
+       SET status = 'disetujui',
+           processed_by = ?,
+           processed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [req.user.id, claim_id]
     );
 
     const result = await client.query(
@@ -497,11 +566,263 @@ async function recordDistribution(req, res, next) {
       },
     });
 
+    // Kirim notifikasi ke petani
+    const farmerUserRes = await client.query(
+      `SELECT fa.id_user FROM farmers fa WHERE fa.id = ?`,
+      [claim.rows[0].farmer_id]
+    );
+    if (farmerUserRes.rows.length > 0) {
+      await createNotification(client, {
+        userId: farmerUserRes.rows[0].id_user,
+        type: 'claim.approved',
+        title: 'Klaim Insentif Disetujui',
+        message: `Klaim insentif ${categoryAfter.rows[0].name} telah berhasil disetujui dan disalurkan.`,
+        data: {
+          claim_id: Number(claim_id),
+          category_id: categoryId,
+          category_name: categoryAfter.rows[0].name,
+          status: 'disetujui',
+        },
+      });
+    }
+
     await client.query('COMMIT');
 
     res.json({
       success: true,
       data: { ...result.rows[0], remaining_stock: stockAfter },
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    next(err);
+  } finally {
+    client.release();
+  }
+}
+
+async function rejectClaim(req, res, next) {
+  const claimId = req.params.id;
+  const { reason, note } = req.body;
+
+  const validation = validateReasonAndNote(reason, note);
+  if (!validation.valid) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const claimRes = await client.query(
+      `SELECT c.id, c.status, c.farmer_id, c.field_id, c.category_id,
+              f.name AS field_name, fa.id_user AS farmer_user_id,
+              ic.name AS category_name
+       FROM incentive_claims c
+       JOIN fields f ON f.id = c.field_id
+       JOIN farmers fa ON fa.id = c.farmer_id
+       JOIN incentive_categories ic ON ic.id = c.category_id
+       WHERE c.id = ?`,
+      [claimId]
+    );
+
+    if (claimRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Klaim tidak ditemukan' });
+    }
+
+    const claim = claimRes.rows[0];
+
+    // Aturan transisi: hanya dari status "diajukan"
+    if (claim.status !== 'diajukan') {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: `Klaim dengan status "${claim.status}" tidak dapat ditolak. Hanya klaim berstatus "diajukan" yang dapat ditolak.`,
+      });
+    }
+
+    await client.query(
+      `UPDATE incentive_claims
+       SET status = 'ditolak',
+           reason = ?,
+           notes = ?,
+           processed_by = ?,
+           processed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [validation.finalReason, validation.cleanNote || null, req.user.id, claimId]
+    );
+
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'claim.rejected',
+      entityType: 'claim',
+      entityId: Number(claimId),
+      summary: `Klaim insentif #${claimId} ditolak oleh ${req.user.nama}. Alasan: ${validation.finalReason}`,
+      metadata: {
+        claim_id: Number(claimId),
+        old_status: 'diajukan',
+        new_status: 'ditolak',
+        reason: validation.cleanReason,
+        note: validation.cleanNote,
+        final_reason: validation.finalReason,
+      },
+    });
+
+    await createNotification(client, {
+      userId: claim.farmer_user_id,
+      type: 'claim.rejected',
+      title: 'Pengajuan Klaim Ditolak',
+      message: `Pengajuan klaim insentif ${claim.category_name} untuk lahan "${claim.field_name}" ditolak. Alasan: ${validation.finalReason}`,
+      data: {
+        claim_id: Number(claimId),
+        field_id: claim.field_id,
+        category_name: claim.category_name,
+        status: 'ditolak',
+        reason: validation.finalReason,
+      },
+    });
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: 'Klaim berhasil ditolak',
+      data: {
+        id: Number(claimId),
+        status: 'ditolak',
+        reason: validation.finalReason,
+        processed_by: req.user.id,
+      },
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    next(err);
+  } finally {
+    client.release();
+  }
+}
+
+async function cancelClaim(req, res, next) {
+  const claimId = req.params.id;
+  const { reason, note } = req.body;
+
+  const validation = validateReasonAndNote(reason, note);
+  if (!validation.valid) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const claimRes = await client.query(
+      `SELECT c.id, c.status, c.farmer_id, c.field_id, c.category_id,
+              f.name AS field_name, fa.id_user AS farmer_user_id,
+              ic.name AS category_name
+       FROM incentive_claims c
+       JOIN fields f ON f.id = c.field_id
+       JOIN farmers fa ON fa.id = c.farmer_id
+       JOIN incentive_categories ic ON ic.id = c.category_id
+       WHERE c.id = ?`,
+      [claimId]
+    );
+
+    if (claimRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Klaim tidak ditemukan' });
+    }
+
+    const claim = claimRes.rows[0];
+
+    // Status yang sudah final: ditolak atau dibatalkan
+    if (claim.status === 'ditolak' || claim.status === 'dibatalkan') {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        error: `Klaim sudah berstatus "${claim.status}" dan tidak dapat dibatalkan lagi.`,
+      });
+    }
+
+    // Jika sudah disetujui / didistribusikan: aturan eksplisit hanya admin
+    let stockRestored = false;
+    if (claim.status === 'disetujui') {
+      if (req.user.role !== 'admin') {
+        await client.query('ROLLBACK');
+        return res.status(403).json({
+          error: 'Hanya administrator yang berwenang membatalkan klaim yang sudah didistribusikan',
+        });
+      }
+
+      // Kembalikan stok insentif secara atomik
+      await client.query(
+        `UPDATE incentive_categories
+         SET quantity = quantity + 1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [claim.category_id]
+      );
+      stockRestored = true;
+
+      // Hapus data distribusi terkait agar konsisten
+      await client.query(
+        `DELETE FROM incentive_distributions WHERE claim_id = ?`,
+        [claimId]
+      );
+    }
+
+    await client.query(
+      `UPDATE incentive_claims
+       SET status = 'dibatalkan',
+           reason = ?,
+           notes = ?,
+           processed_by = ?,
+           processed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [validation.finalReason, validation.cleanNote || null, req.user.id, claimId]
+    );
+
+    await recordAudit(client, {
+      actor: req.user,
+      action: 'claim.cancelled',
+      entityType: 'claim',
+      entityId: Number(claimId),
+      summary: `Klaim insentif #${claimId} dibatalkan oleh ${req.user.nama}. Alasan: ${validation.finalReason}${stockRestored ? ' (Stok dikembalikan)' : ''}`,
+      metadata: {
+        claim_id: Number(claimId),
+        old_status: claim.status,
+        new_status: 'dibatalkan',
+        reason: validation.cleanReason,
+        note: validation.cleanNote,
+        final_reason: validation.finalReason,
+        stock_restored: stockRestored,
+      },
+    });
+
+    await createNotification(client, {
+      userId: claim.farmer_user_id,
+      type: 'claim.cancelled',
+      title: 'Klaim Insentif Dibatalkan',
+      message: `Klaim insentif ${claim.category_name} untuk lahan "${claim.field_name}" telah dibatalkan. Alasan: ${validation.finalReason}`,
+      data: {
+        claim_id: Number(claimId),
+        field_id: claim.field_id,
+        category_name: claim.category_name,
+        status: 'dibatalkan',
+        reason: validation.finalReason,
+        stock_restored: stockRestored,
+      },
+    });
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: 'Klaim berhasil dibatalkan',
+      data: {
+        id: Number(claimId),
+        status: 'dibatalkan',
+        reason: validation.finalReason,
+        stock_restored: stockRestored,
+      },
     });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -520,4 +841,7 @@ module.exports = {
   listDistributions,
   createClaim,
   recordDistribution,
+  rejectClaim,
+  cancelClaim,
+  STANDARD_CLAIM_REASONS,
 };

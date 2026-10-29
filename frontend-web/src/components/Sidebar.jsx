@@ -51,8 +51,8 @@ export default function Sidebar({ onClose }) {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-4 lg:p-5">
-      <p className="px-3 mb-3 text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+    <div className="flex h-full flex-col overflow-y-auto p-4 lg:p-5 bg-card">
+      <p className="px-3.5 mb-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
         Menu Utama
       </p>
 
@@ -65,47 +65,49 @@ export default function Sidebar({ onClose }) {
               to={item.path}
               onClick={onClose}
               className={({ isActive }) =>
-                `group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                `group flex items-center gap-3 w-full min-h-[40px] px-3.5 py-2.5 text-sm rounded-full transition-all duration-200 ${
                   isActive
-                    ? 'bg-green-700 text-white shadow-md shadow-green-900/20'
-                    : 'text-gray-600 hover:bg-green-50 hover:text-green-700'
+                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm shadow-primary/20'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground font-medium'
                 }`
               }
               end
             >
-              <Icon />
-              <span>{item.name}</span>
-              <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="shrink-0">
+                <Icon />
+              </span>
+              <span className="truncate">{item.name}</span>
+              <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="mt-auto space-y-3">
+      <div className="mt-auto space-y-2.5 pt-4">
         <Link
           to="/profil"
           onClick={onClose}
-          className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 transition-colors hover:border-green-200 hover:bg-green-50/60"
+          className="flex items-center gap-3 min-h-[40px] p-3 bg-muted/40 rounded-2xl border border-border/80 transition-colors hover:bg-secondary/60"
         >
-          <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold">
+          <div className="w-9 h-9 bg-primary text-primary-foreground rounded-full flex items-center justify-center shrink-0 font-display text-sm font-bold shadow-xs">
             {initial}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900 truncate">
+            <p className="text-sm font-semibold text-foreground truncate">
               {user?.nama || 'Pengguna'}
             </p>
-            <p className="text-[11px] text-gray-500 truncate">
+            <p className="text-[11px] text-muted-foreground truncate">
               {roleLabels[user?.role] || 'Belum masuk'}
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
         </Link>
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+          className="flex items-center gap-3 w-full min-h-[40px] px-3.5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-full transition-colors"
         >
-          <LogOut className="w-5 h-5 text-red-500" />
+          <LogOut className="w-5 h-5 shrink-0" />
           <span>Keluar</span>
         </button>
       </div>

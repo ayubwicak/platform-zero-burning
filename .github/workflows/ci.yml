@@ -47,6 +47,12 @@ jobs:
     permissions:
       contents: read
 
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-test-secret
+      AUTH_RATE_LIMIT: '10000'
+      PORT: '3000'
+
     defaults:
       run:
         working-directory: frontend-web
@@ -60,7 +66,12 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: frontend-web/package-lock.json
+          cache-dependency-path: |
+            frontend-web/package-lock.json
+            backend/package-lock.json
+
+      - name: Install backend dependencies for E2E
+        run: npm --prefix ../backend ci
 
       - name: Install frontend dependencies
         run: npm ci

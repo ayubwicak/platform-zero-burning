@@ -7,6 +7,9 @@
   --font-display: 'Fraunces', Georgia, serif;
   --font-sans: 'Manrope', system-ui, sans-serif;
   --radius: 0.75rem;
+  --header-h: 4rem;
+  --sidebar-w: 16rem;
+  --sidebar-w-wide: 20rem;
   --background: 250 246 238; /* oklch(0.975 0.012 85) */
   --foreground: 21 35 24; /* oklch(0.24 0.03 150) */
   --card: 254 251 246; /* oklch(0.99 0.008 85) */
@@ -30,6 +33,10 @@
   --border: 220 215 201; /* oklch(0.88 0.02 90) */
   --input: 220 215 201;
   --ring: 36 77 46;
+  --motion-duration-hero: 0.8s;
+  --motion-duration-form: 0.5s;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-distance: 16px;
 }
 
 @layer base {
@@ -55,7 +62,9 @@
   }
   .public-landing h1,
   .public-landing h2,
-  .public-landing h3 {
+  .public-landing h3,
+  .font-display-heading,
+  .page-title {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -77,28 +86,28 @@
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    @apply bg-border rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    @apply bg-muted-foreground/40;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-md shadow-green-900/20 hover:shadow-lg hover:shadow-green-900/25 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+    @apply inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/25 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl font-semibold text-sm border border-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300;
+    @apply inline-flex items-center justify-center gap-2 bg-card hover:bg-secondary text-foreground px-5 py-2.5 rounded-full font-semibold text-sm border border-border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring/40 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-md shadow-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 shadow-md shadow-destructive/20 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-ghost-light {
-    @apply inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-semibold text-sm border border-white/30 backdrop-blur-sm transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-full font-semibold text-sm border border-white/25 backdrop-blur-sm transition-all duration-200;
   }
   .input-field {
-    @apply w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-green-500/40 focus:border-green-500 outline-none transition-all duration-200;
+    @apply w-full px-4 py-2.5 border border-input rounded-xl bg-card text-sm text-foreground placeholder:text-muted-foreground/70 focus:ring-2 focus:ring-ring/20 focus:border-primary outline-none transition-all duration-200;
   }
   .public-field {
     @apply w-full rounded-xl border border-input bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-ring/20;
@@ -107,37 +116,37 @@
     @apply inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0;
   }
   .card {
-    @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
+    @apply bg-card rounded-2xl border border-border/80 shadow-sm;
   }
   .card-hover {
-    @apply hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300;
+    @apply hover:shadow-md hover:border-primary/30 transition-all duration-200;
   }
   .table-header {
-    @apply bg-gray-50/80 px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100;
+    @apply bg-muted/60 px-5 py-3.5 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border;
   }
   .table-cell {
-    @apply px-5 py-4 border-b border-gray-50 text-sm text-gray-700 align-middle;
+    @apply px-5 py-4 border-b border-border/60 text-sm text-foreground align-middle;
   }
   .badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider;
   }
   .badge-success {
-    @apply bg-green-50 text-green-700 ring-1 ring-inset ring-green-200;
+    @apply bg-primary/10 text-primary ring-1 ring-inset ring-primary/20;
   }
   .badge-warning {
-    @apply bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200;
+    @apply bg-ember/10 text-ember ring-1 ring-inset ring-ember/25;
   }
   .badge-danger {
-    @apply bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200;
+    @apply bg-destructive/10 text-destructive ring-1 ring-inset ring-destructive/20;
   }
   .badge-info {
-    @apply bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200;
+    @apply bg-muted text-muted-foreground ring-1 ring-inset ring-border;
   }
   .chip {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-gray-200 bg-white text-gray-600 transition-colors cursor-pointer hover:border-green-300 hover:text-green-700;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-card text-muted-foreground transition-colors cursor-pointer hover:border-primary/40 hover:text-foreground;
   }
   .chip-active {
-    @apply bg-green-700 text-white border-green-700 hover:text-white shadow-sm shadow-green-200;
+    @apply bg-primary text-primary-foreground border-primary hover:text-primary-foreground shadow-sm shadow-primary/20;
   }
   .icon-tile {
     @apply flex items-center justify-center rounded-xl;
@@ -146,10 +155,10 @@
     @apply mx-auto w-full max-w-[1600px] 2xl:max-w-[2000px] 3xl:max-w-[2600px] 4xl:max-w-[3400px];
   }
   .skip-link {
-    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-green-800 focus:shadow-lg focus:ring-2 focus:ring-green-600;
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg focus:ring-2 focus:ring-ring;
   }
   .sidebar-link {
-    @apply group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200;
+    @apply group flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium rounded-full transition-all duration-200;
   }
 }
 
@@ -168,7 +177,7 @@
   .delay-300 { animation-delay: 0.3s; }
   .delay-400 { animation-delay: 0.4s; }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-forest;
   }
   .bg-dots {
     background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px);
@@ -407,6 +416,101 @@
   }
 }
 
+@keyframes authRise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-distance, 16px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes authFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-hero-rise {
+  animation: authRise var(--motion-duration-hero, 0.8s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+}
+
+.animate-form-rise {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+}
+
+/*
+ * Auth right panel stagger groups:
+ * Group 1: Back to home and mobile brand (delay 0ms)
+ * Group 2: Badge, title, subtitle, and alerts (delay 50ms)
+ * Group 3: Form fields & checkboxes (delay 100ms)
+ * Group 4: Submit button & demo helper (delay 150ms)
+ * Group 5: Footer links and panel note (delay 200ms)
+ */
+.auth-panel .auth-back-home,
+.auth-panel .auth-mobile-brand {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 0ms;
+}
+
+.auth-panel .auth-card > p:first-of-type,
+.auth-panel .auth-title,
+.auth-panel .auth-subtitle,
+.auth-panel [role="alert"],
+.auth-panel [role="status"] {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 50ms;
+}
+
+.auth-panel .auth-form > div,
+.auth-panel .auth-form > label {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 100ms;
+}
+
+.auth-panel .auth-form .public-submit,
+.auth-panel .auth-hide-short {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 150ms;
+}
+
+.auth-panel .auth-footer,
+.auth-panel .auth-panel-note {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-rise,
+  .animate-form-rise,
+  .auth-hero-reveal,
+  .auth-reveal,
+  .animate-rise,
+  .auth-panel .auth-back-home,
+  .auth-panel .auth-mobile-brand,
+  .auth-panel .auth-card > p:first-of-type,
+  .auth-panel .auth-title,
+  .auth-panel .auth-subtitle,
+  .auth-panel [role="alert"],
+  .auth-panel [role="status"],
+  .auth-panel .auth-form > div,
+  .auth-panel .auth-form > label,
+  .auth-panel .auth-form .public-submit,
+  .auth-panel .auth-hide-short,
+  .auth-panel .auth-footer,
+  .auth-panel .auth-panel-note {
+    animation-name: authFade !important;
+    animation-delay: 0ms !important;
+    animation-duration: 0.15s !important;
+    transform: none !important;
+  }
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -426,4 +530,59 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-14px); }
+}
+
+/*
+ * Admin Scale & Typography System:
+ * Menerapkan skala visual 80% (12.8px) proporsional khusus untuk seluruh halaman setelah login
+ * pada viewport desktop (min-width: 1024px) tanpa CSS zoom atau transform scale.
+ * Halaman publik (Landing, Login, Register) tidak terpengaruh (tetap 100% / 16px).
+ * Di mobile/tablet (< 1024px), skala dikembalikan ke 100% dengan touch target minimal 40px.
+ */
+@media (min-width: 1024px) {
+  html.admin-mode,
+  html:has(.admin-layout) {
+    font-size: 80%; /* 16px -> 12.8px */
+  }
+
+  /*
+   * Penegakan batas teks terkecil: caption, badge, label, subtext, header tabel
+   * tidak boleh di bawah 12px aktual.
+   */
+  html.admin-mode .text-\[10px\],
+  html:has(.admin-layout) .text-\[10px\],
+  html.admin-mode .text-\[11px\],
+  html:has(.admin-layout) .text-\[11px\],
+  html.admin-mode .text-xs,
+  html:has(.admin-layout) .text-xs,
+  html.admin-mode .badge,
+  html:has(.admin-layout) .badge,
+  html.admin-mode .table-header,
+  html:has(.admin-layout) .table-header,
+  html.admin-mode .chip,
+  html:has(.admin-layout) .chip {
+    font-size: 12px;
+  }
+
+  /*
+   * Penyelarasan .text-sm ke 12.5px agar tidak di bawah 12px aktual dan menjaga hierarki visual
+   */
+  html.admin-mode .text-sm,
+  html:has(.admin-layout) .text-sm {
+    font-size: 12.5px;
+    line-height: 1.35rem;
+  }
+}
+
+/* Penegakan area sentuh interaktif mobile minimal 40px */
+@media (max-width: 1023px) {
+  .admin-layout button,
+  .admin-layout .sidebar-link,
+  .admin-layout .btn-primary,
+  .admin-layout .btn-secondary,
+  .admin-layout .btn-danger,
+  .admin-layout .btn-ghost-light,
+  .admin-layout a[role="button"] {
+    min-height: 40px;
+  }
 }

@@ -175,6 +175,19 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_incentive_distributions_farmer ON incentive_distributions(farmer_id);
   CREATE INDEX IF NOT EXISTS idx_community_verifications_photo ON community_verifications(photo_id);
   CREATE INDEX IF NOT EXISTS idx_official_verifications_photo ON official_verifications(photo_id);
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    data TEXT,
+    read_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read_at, created_at);
 `);
 
 // Migration helper: tambahkan kolom yang belum ada pada database lama
@@ -200,6 +213,13 @@ ensureColumn('audit_logs', 'actor_role', 'VARCHAR(20)');
 ensureColumn('audit_logs', 'entity_type', 'TEXT');
 ensureColumn('audit_logs', 'summary', 'TEXT');
 ensureColumn('audit_logs', 'metadata', 'TEXT');
+
+ensureColumn('incentive_claims', 'reason', 'TEXT');
+ensureColumn('incentive_claims', 'processed_by', 'INTEGER REFERENCES users(id)');
+ensureColumn('incentive_claims', 'processed_at', 'TIMESTAMP');
+
+ensureColumn('field_photos', 'community_recommendation', 'VARCHAR(50)');
+ensureColumn('field_photos', 'verified_by_system', 'BOOLEAN DEFAULT FALSE');
 
 // Insert admin user
 const adminPassword = bcryptjs.hashSync('admin123', 10);
