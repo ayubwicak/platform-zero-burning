@@ -33,6 +33,10 @@
   --border: 220 215 201; /* oklch(0.88 0.02 90) */
   --input: 220 215 201;
   --ring: 36 77 46;
+  --motion-duration-hero: 0.8s;
+  --motion-duration-form: 0.5s;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --motion-distance: 16px;
 }
 
 @layer base {
@@ -409,6 +413,101 @@
 
   .auth-shell .auth-hide-short {
     display: none;
+  }
+}
+
+@keyframes authRise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-distance, 16px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes authFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-hero-rise {
+  animation: authRise var(--motion-duration-hero, 0.8s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+}
+
+.animate-form-rise {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+}
+
+/*
+ * Auth right panel stagger groups:
+ * Group 1: Back to home and mobile brand (delay 0ms)
+ * Group 2: Badge, title, subtitle, and alerts (delay 50ms)
+ * Group 3: Form fields & checkboxes (delay 100ms)
+ * Group 4: Submit button & demo helper (delay 150ms)
+ * Group 5: Footer links and panel note (delay 200ms)
+ */
+.auth-panel .auth-back-home,
+.auth-panel .auth-mobile-brand {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 0ms;
+}
+
+.auth-panel .auth-card > p:first-of-type,
+.auth-panel .auth-title,
+.auth-panel .auth-subtitle,
+.auth-panel [role="alert"],
+.auth-panel [role="status"] {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 50ms;
+}
+
+.auth-panel .auth-form > div,
+.auth-panel .auth-form > label {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 100ms;
+}
+
+.auth-panel .auth-form .public-submit,
+.auth-panel .auth-hide-short {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 150ms;
+}
+
+.auth-panel .auth-footer,
+.auth-panel .auth-panel-note {
+  animation: authRise var(--motion-duration-form, 0.5s) var(--motion-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) both;
+  animation-delay: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-rise,
+  .animate-form-rise,
+  .auth-hero-reveal,
+  .auth-reveal,
+  .animate-rise,
+  .auth-panel .auth-back-home,
+  .auth-panel .auth-mobile-brand,
+  .auth-panel .auth-card > p:first-of-type,
+  .auth-panel .auth-title,
+  .auth-panel .auth-subtitle,
+  .auth-panel [role="alert"],
+  .auth-panel [role="status"],
+  .auth-panel .auth-form > div,
+  .auth-panel .auth-form > label,
+  .auth-panel .auth-form .public-submit,
+  .auth-panel .auth-hide-short,
+  .auth-panel .auth-footer,
+  .auth-panel .auth-panel-note {
+    animation-name: authFade !important;
+    animation-delay: 0ms !important;
+    animation-duration: 0.15s !important;
+    transform: none !important;
   }
 }
 

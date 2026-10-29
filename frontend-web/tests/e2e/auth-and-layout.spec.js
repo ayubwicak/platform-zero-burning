@@ -8,9 +8,45 @@ test.describe('Landing Page', () => {
     await expect(page).toHaveTitle(/Zero Burning/);
   });
 
-  test('should navigate to login page from landing', async ({ page }) => {
+  test('should navigate to login page from landing and fill form', async ({ page }) => {
     await openLoginFromLanding(page);
     await expect(page).toHaveURL('/login');
+
+    const emailInput = page.locator('input[type="email"]');
+    const passwordInput = page.locator('input[type="password"]');
+    const submitButton = page.getByRole('button', { name: /Masuk/ });
+    const backToHome = page.getByTestId('back-to-home');
+
+    // Inputs should be immediately visible and interactable without waiting
+    await emailInput.fill('petani@contoh.com');
+    await passwordInput.fill('password123');
+
+    await expect(emailInput).toHaveValue('petani@contoh.com');
+    await expect(passwordInput).toHaveValue('password123');
+    await expect(submitButton).toBeVisible();
+    await expect(backToHome).toBeVisible();
+  });
+
+  test('should navigate to register page from landing and fill form', async ({ page }) => {
+    await openRegisterFromLanding(page);
+    await expect(page).toHaveURL('/register');
+
+    const namaInput = page.locator('input[name="nama"]');
+    const emailInput = page.locator('input[name="email"]');
+    const nikInput = page.locator('input[name="nik"]');
+    const submitButton = page.getByRole('button', { name: /Daftar sebagai petani/ });
+    const backToHome = page.getByTestId('back-to-home');
+
+    // Inputs should be immediately fillable
+    await namaInput.fill('Petani Uji');
+    await emailInput.fill('petani.uji@contoh.com');
+    await nikInput.fill('1234567890123456');
+
+    await expect(namaInput).toHaveValue('Petani Uji');
+    await expect(emailInput).toHaveValue('petani.uji@contoh.com');
+    await expect(nikInput).toHaveValue('1234567890123456');
+    await expect(submitButton).toBeVisible();
+    await expect(backToHome).toBeVisible();
   });
 });
 
@@ -26,6 +62,19 @@ test.describe('Auth Pages', () => {
     await page.goto('/register');
     await expect(page.locator('input[name="nik"]')).toBeVisible();
     await expect(page.locator('input[name="confirmPassword"]')).toBeVisible();
+  });
+
+  test('should navigate smoothly between login and register without page errors', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+
+    await page.getByRole('link', { name: /Daftar sebagai petani/ }).click();
+    await expect(page).toHaveURL('/register');
+    await expect(page.locator('input[name="nama"]')).toBeVisible();
+
+    await page.getByRole('link', { name: /Masuk di sini/ }).click();
+    await expect(page).toHaveURL('/login');
+    await expect(page.locator('input[type="email"]')).toBeVisible();
   });
 
   for (const path of ['/login', '/register']) {
@@ -71,10 +120,20 @@ test.describe('Auth Desktop Fit', () => {
 
   for (const path of ['/login', '/register']) {
     test(`${path} should fit and stay vertically centered`, async ({ page }) => {
+      // Respect prefers-reduced-motion to avoid animation transform during strict metric measurement
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+
       for (const viewport of desktopViewports) {
         await page.setViewportSize(viewport);
         await page.goto(path);
-        await page.evaluate(() => document.fonts.ready);
+
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          const anims = document.getAnimations();
+          if (anims.length > 0) {
+            await Promise.all(anims.map((a) => a.finished));
+          }
+        });
 
         const metrics = await page.evaluate(() => {
           const panel = document.querySelector('.auth-panel');
@@ -148,4 +207,17 @@ async function openLoginFromLanding(page) {
   }
 
   await page.getByTestId('nav-login').click();
+}
+
+async function openRegisterFromLanding(page) {
+  await page.goto('/');
+
+  const mobileMenuButton = page.getByRole('button', { name: 'Buka menu' });
+  if (await mobileMenuButton.isVisible()) {
+    await mobileMenuButton.click();
+    await page.getByTestId('nav-register-mobile').click();
+    return;
+  }
+
+  await page.getByTestId('nav-register').click();
 }
