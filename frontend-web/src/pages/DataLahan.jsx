@@ -7,7 +7,6 @@ import {
   Loader2,
   MapPin,
   Phone,
-  RefreshCw,
   Ruler,
   Search,
   ShieldCheck,
@@ -90,6 +89,13 @@ export default function DataLahan() {
 
   useEffect(() => {
     loadFields();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadFields();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadFields]);
 
   const counts = useMemo(() => {
@@ -168,21 +174,6 @@ export default function DataLahan() {
         eyebrow="Pemantauan Lahan"
         title="Data Lahan Petani"
         subtitle="Pantau seluruh lahan aktif, data pemilik, dan progres verifikasi foto petani."
-        action={
-          <button
-            onClick={loadFields}
-            className="btn-secondary"
-            disabled={loading}
-            aria-label="Segarkan data lahan"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">Segarkan</span>
-          </button>
-        }
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 3xl:grid-cols-4 gap-3 sm:gap-4">
           {stats.map((stat) => (

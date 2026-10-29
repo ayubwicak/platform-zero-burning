@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Plus,
   MapPin,
-  RefreshCw,
   Sprout,
   Ruler,
   Leaf,
@@ -74,6 +73,13 @@ export default function Fields() {
 
   useEffect(() => {
     loadFields();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadFields();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadFields]);
 
   useEffect(() => {
@@ -237,19 +243,9 @@ export default function Fields() {
         title="Lahan Saya"
         subtitle="Kelola dan pantau lahan pertanian zero burning Anda dalam satu tampilan."
         action={
-          <>
-            <button
-              onClick={loadFields}
-              className="btn-secondary"
-              aria-label="Segarkan daftar lahan"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span className="hidden sm:inline">Segarkan</span>
-            </button>
-            <button onClick={openModal} className="btn-primary">
-              <Plus className="w-4 h-4" /> Tambah Lahan
-            </button>
-          </>
+          <button onClick={openModal} className="btn-primary">
+            <Plus className="w-4 h-4" /> Tambah Lahan
+          </button>
         }
       >
         <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-xl">

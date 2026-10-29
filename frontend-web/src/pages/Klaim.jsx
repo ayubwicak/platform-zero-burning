@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Wheat,
@@ -14,11 +14,11 @@ import {
   PackageCheck,
   Loader2,
   AlertCircle,
-  RefreshCw,
   XCircle,
   Ban,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import Select from '../components/ui/Select';
 import api from '../lib/api';
 import { formatArea, formatCoord } from '../lib/format';
 
@@ -98,6 +98,13 @@ export default function Klaim() {
 
   useEffect(() => {
     loadData();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadData]);
 
   useEffect(() => {
@@ -123,6 +130,13 @@ export default function Klaim() {
     categories.find((category) => String(category.id) === String(selectedCategoryId)) || null;
   const selectedField =
     fields.find((field) => String(field.id) === String(selectedFieldId)) || null;
+  const fieldOptions = useMemo(() => {
+    return fields.map((field) => ({
+      value: String(field.id),
+      label: field.name,
+      description: formatArea(field.area),
+    }));
+  }, [fields]);
   const selectedVisual = selectedCategory ? visualFor(selectedCategory.name) : null;
   const selectedStock = Number(selectedCategory?.quantity) || 0;
   const selectedFieldVerified = Number(selectedField?.verified_photo_count) > 0;
@@ -161,12 +175,6 @@ export default function Klaim() {
         eyebrow="Bantuan Petani"
         title="Klaim Insentif"
         subtitle="Ajukan bantuan benih, pupuk, atau alat setelah lahan terverifikasi zero burning."
-        action={
-          <button onClick={loadData} disabled={loading} className="btn-secondary">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            Segarkan
-          </button>
-        }
       />
 
       <div className="mt-6 card p-4 lg:p-5 animate-fade-up">
@@ -374,23 +382,23 @@ export default function Klaim() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lahan</label>
+                  <label htmlFor="klaim-field-select" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Lahan
+                  </label>
                   {fields.length > 0 ? (
-                    <select
-                      className="input-field"
+                    <Select
+                      id="klaim-field-select"
+                      aria-label="Pilih Lahan untuk Klaim"
                       value={selectedFieldId}
-                      onChange={(event) => {
-                        setSelectedFieldId(event.target.value);
+                      onChange={(val) => {
+                        setSelectedFieldId(val);
                         setFormError('');
                         setNotice('');
                       }}
-                    >
-                      {fields.map((field) => (
-                        <option key={field.id} value={field.id}>
-                          {field.name} — {formatArea(field.area)}
-                        </option>
-                      ))}
-                    </select>
+                      options={fieldOptions}
+                      placeholder="Pilih lahan..."
+                      searchable={fields.length > 5}
+                    />
                   ) : (
                     <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
                       Belum ada lahan.{' '}

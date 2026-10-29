@@ -6,7 +6,6 @@ import {
   ImageOff,
   Loader2,
   MapPin,
-  RefreshCw,
   ShieldCheck,
   ThumbsDown,
   ThumbsUp,
@@ -60,6 +59,13 @@ export default function VerifikasiKomunitas() {
 
   useEffect(() => {
     loadPhotos();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadPhotos();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadPhotos]);
 
   useEffect(() => {
@@ -103,16 +109,6 @@ export default function VerifikasiKomunitas() {
         eyebrow="Verifikasi Sesama Petani"
         title="Verifikasi Komunitas"
         subtitle="Bantu nilai foto progres petani lain. Suara komunitas menjadi pertimbangan sebelum verifikasi petugas."
-        action={
-          <button onClick={() => loadPhotos()} disabled={loading} className="btn-secondary">
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Segarkan
-          </button>
-        }
       >
         <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
           {[

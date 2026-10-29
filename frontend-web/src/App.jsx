@@ -19,6 +19,7 @@ import Katalog from './pages/Katalog';
 import Pengguna from './pages/Pengguna';
 import AuditLog from './pages/AuditLog';
 import Laporan from './pages/Laporan';
+import SelectDemo from './pages/SelectDemo';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/test-select" element={<SelectDemo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />

@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
-  RefreshCw,
   Plus,
   Pencil,
   X,
@@ -261,6 +260,13 @@ export default function Katalog() {
 
   useEffect(() => {
     load();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        load();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [load]);
 
   useEffect(() => {
@@ -314,28 +320,14 @@ export default function Katalog() {
             : 'Daftar bantuan benih, pupuk, dan alat yang tersedia untuk petani terverifikasi.'
         }
         action={
-          <div className="flex flex-wrap gap-2">
+          isAdmin ? (
             <button
-              onClick={load}
-              disabled={loading}
-              className="btn-secondary whitespace-nowrap"
+              onClick={() => setEditor({ mode: 'create', item: null })}
+              className="btn-primary whitespace-nowrap"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              Segarkan
+              <Plus className="w-4 h-4" /> Tambah Kategori
             </button>
-            {isAdmin && (
-              <button
-                onClick={() => setEditor({ mode: 'create', item: null })}
-                className="btn-primary whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4" /> Tambah Kategori
-              </button>
-            )}
-          </div>
+          ) : null
         }
       >
         {isAdmin && (
