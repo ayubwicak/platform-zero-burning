@@ -27,7 +27,8 @@ export default defineConfig({
 
   webServer: [
     {
-      command: 'npm --prefix ../backend run setup:sqlite && npm --prefix ../backend start',
+      command: 'npm run start:e2e',
+      cwd: '../backend',
       url: 'http://localhost:3000/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,

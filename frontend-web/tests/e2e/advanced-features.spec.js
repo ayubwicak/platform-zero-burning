@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 async function loginAsAdmin(page, request) {
-  const res = await request.post('http://localhost:3000/api/auth/login', {
+  const res = await request.post('/api/auth/login', {
     data: {
       email: 'admin@zeroburning.id',
       password: 'admin123',
