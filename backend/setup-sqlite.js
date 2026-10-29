@@ -273,6 +273,43 @@ try {
   }
 }
 
+// Insert demo officer user
+const officerPassword = bcryptjs.hashSync('Petugas123!', 10);
+try {
+  const officerUser = db.prepare(`
+    INSERT INTO users (nama, email, nik, phone, address, password, role, email_verified, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    'Bambang Wijaya, S.P.',
+    'petugas@contoh.com',
+    '3404010202850002',
+    '081234567891',
+    'Dinas Pertanian dan Ketahanan Pangan D.I. Yogyakarta',
+    officerPassword,
+    'petugas',
+    1,
+    1
+  );
+
+  db.prepare(`
+    INSERT INTO officers (id_user, nip, position, unit, officer_type)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(
+    officerUser.lastInsertRowid,
+    '198502022010011005',
+    'Verifikator Lapangan',
+    'Seksi Pengendalian Kebakaran Lahan',
+    'verifikator'
+  );
+  console.log('✓ Demo officer user created');
+} catch (err) {
+  if (err.message.includes('UNIQUE')) {
+    console.log('✓ Demo officer user already exists');
+  } else {
+    console.error('Officer user error:', err.message);
+  }
+}
+
 // Pastikan setiap user petani punya profil farmers
 db.exec(`
   INSERT INTO farmers (id_user, nik, phone, address)
@@ -280,6 +317,15 @@ db.exec(`
   FROM users u
   WHERE u.role = 'petani'
     AND NOT EXISTS (SELECT 1 FROM farmers f WHERE f.id_user = u.id)
+`);
+
+// Pastikan setiap user petugas punya profil officers
+db.exec(`
+  INSERT INTO officers (id_user, nip, position, unit, officer_type)
+  SELECT u.id, '198502022010011005', 'Verifikator Lapangan', 'Seksi Pengendalian Kebakaran Lahan', 'verifikator'
+  FROM users u
+  WHERE u.role = 'petugas'
+    AND NOT EXISTS (SELECT 1 FROM officers o WHERE o.id_user = u.id)
 `);
 
 // Sample kategori insentif (hanya jika belum ada)
@@ -306,7 +352,8 @@ console.log('✓ SQLite database setup complete');
 console.log('Database: zero_burning.db');
 console.log('');
 console.log('Login credentials:');
-console.log('  Admin: admin@zeroburning.id / admin123');
-console.log('  Test:  otp-test@test.com / petani123');
+console.log('  Admin:   admin@zeroburning.id / admin123');
+console.log('  Petugas: petugas@contoh.com / Petugas123!');
+console.log('  Test:    otp-test@test.com / petani123');
 
 db.close();
