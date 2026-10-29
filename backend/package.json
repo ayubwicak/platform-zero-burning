@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint src/",
-    "test": "jest --detectOpenHandles --passWithNoTests"
+    "test": "jest --detectOpenHandles --passWithNoTests",
+    "seed:farmer": "node scripts/seed-farmer.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
