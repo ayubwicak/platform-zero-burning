@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "lint": "eslint src/",
     "test": "jest --detectOpenHandles --passWithNoTests",
-    "seed:farmer": "node scripts/seed-farmer.js"
+    "seed:farmer": "node scripts/seed-farmer.js",
+    "setup:sqlite": "node setup-sqlite.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
