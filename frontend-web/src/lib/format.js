@@ -4,6 +4,18 @@ export function formatArea(value) {
   return `${number.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
 }
 
+export function formatFileSize(bytes) {
+  const size = Number(bytes);
+  if (!Number.isFinite(size) || size < 0) return '0 B';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) {
+    const kb = (size / 1024).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+    return `${kb} KB`;
+  }
+  const mb = (size / (1024 * 1024)).toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+  return `${mb} MB`;
+}
+
 export function formatCoord(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number.toFixed(5) : '-';
