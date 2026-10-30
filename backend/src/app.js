@@ -14,6 +14,7 @@ const userRoutes = require('./routes/userRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 const { rejectClaim, cancelClaim } = require('./controllers/incentiveController');
 const { authenticateToken, authorizeRoles } = require('./middleware/authMiddleware');
 
@@ -66,6 +67,7 @@ app.use('/api/incentives', incentiveRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/public', publicRoutes);
 app.use(reportRoutes);
 
 // Direct claim actions compatibility
