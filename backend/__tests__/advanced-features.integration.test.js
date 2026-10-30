@@ -21,6 +21,14 @@ const VALID_JPEG = Buffer.from([
   0x00, 0xFF, 0xD9,
 ]);
 
+let photoCounter = 0;
+function createUniqueValidJpeg() {
+  photoCounter += 1;
+  // Sisipkan payload counter sebelum EOI (0xFF, 0xD9) atau append byte counter deterministik
+  // Magic bytes JPEG tetap valid karena diawali 0xFF 0xD8 0xFF
+  return Buffer.concat([VALID_JPEG, Buffer.from(`_unique_photo_${photoCounter}_${Date.now()}`)]);
+}
+
 async function cleanupData() {
   await pool.query(
     `DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE email IN (?, ?, ?, ?))`,
@@ -216,7 +224,12 @@ describe('Advanced Features A, B, C Integration Tests', () => {
       .field('field_id', field1Id)
       .field('latitude', -6.2088)
       .field('longitude', 106.8456)
-      .attach('foto', VALID_JPEG, 'adv-photo1.jpg');
+      .attach('foto', createUniqueValidJpeg(), 'adv-photo1.jpg');
+    if (pRes.status !== 201) {
+      throw new Error(`Upload foto gagal (status ${pRes.status}): ${JSON.stringify(pRes.body)}`);
+    }
+    expect(pRes.status).toBe(201);
+    expect(pRes.body.data).toBeDefined();
     photo1Id = pRes.body.data.id;
   });
 
@@ -355,13 +368,20 @@ describe('Advanced Features A, B, C Integration Tests', () => {
     let testPhotoId;
 
     beforeEach(async () => {
+      const uniqueBuf = createUniqueValidJpeg();
       const pRes = await request(app)
         .post('/api/photos')
         .set('Authorization', `Bearer ${farmer1Token}`)
         .field('field_id', field1Id)
         .field('latitude', -6.2088)
         .field('longitude', 106.8456)
-        .attach('foto', Buffer.concat([VALID_JPEG, Buffer.from([Math.floor(Math.random() * 255)])]), 'sample-vote.jpg');
+        .attach('foto', uniqueBuf, 'sample-vote.jpg');
+
+      if (pRes.status !== 201) {
+        throw new Error(`Upload foto gagal (status ${pRes.status}): ${JSON.stringify(pRes.body)}`);
+      }
+      expect(pRes.status).toBe(201);
+      expect(pRes.body.data).toBeDefined();
       testPhotoId = pRes.body.data.id;
     });
 
