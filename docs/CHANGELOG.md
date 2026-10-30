@@ -10,6 +10,42 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- **Penyempurnaan Landing Page Publik `/` (Bagian A - E):**
+  - **Bagian A (Kejujuran Konten & Dampak Nyata):**
+    - File data terpusat `frontend-web/src/content/testimonials.js` dengan flag `verified: boolean`. Blok "Suara dari Lapangan" kini hanya dirender bila ada entri yang bernilai `verified: true`.
+    - Kartu foto hero diberi label jelas *"Contoh ilustrasi"* untuk menjaga integritas data publik.
+    - Endpoint publik `GET /api/public/stats` (bebas autentikasi, rate limit 300 req/15m, in-memory cache 5 menit dengan header `Cache-Control: public, max-age=300`) yang hanya mengembalikan agregat numerik (*total_farmers*, *total_fields*, *verified_fields*, *verified_area_ha*, *distributed_incentives*) tanpa mengekspos PII, nama, maupun koordinat spasial.
+    - Strip statistik dampak dinamis pada landing page dengan skeleton loading, fallback tersembunyi saat offline, dan pesan jujur (*"Program baru dimulai. Jadilah petani pertama..."*) saat sistem masih kosong.
+    - Komponen `AnimatedCounter.jsx` yang memformat angka pemisah ribuan standar Indonesia (`Intl.NumberFormat('id-ID')`) dan menghormati preferensi pengguna `prefers-reduced-motion`.
+    - Test suite backend `backend/__tests__/public-stats.test.js` untuk memvalidasi keamanan agregasi data, header caching, dan penanganan nilai kosong.
+  - **Bagian B (Pusat FAQ & Jalur Bantuan):**
+    - File data `frontend-web/src/content/faq.js` memuat 11 pertanyaan terstruktur dalam 4 kategori (*Pendaftaran*, *Foto & Verifikasi*, *Insentif*, *Data & Keamanan*) dengan bahasa sederhana yang ramah petani dan penjelasan istilah teknis.
+    - Komponen accordion FAQ yang accessible (`aria-expanded`, `aria-controls`, `id`, navigasi keyboard), fitur pencarian teks instan sisi klien, filter kategori interaktif, serta tombol tanggapan *"Apakah ini membantu? Ya/Tidak"* tanpa menyimpan data pribadi.
+    - Kartu jalur bantuan langsung WhatsApp (`https://wa.me/...`) dan Email (`mailto:...`) yang terhubung dinamis ke environment variable (`VITE_CONTACT_WHATSAPP`, `VITE_CONTACT_EMAIL`) dengan conditional rendering otomatis bila variabel tidak dikonfigurasi.
+    - Structured data schema.org `FAQPage` via JSON-LD script untuk optimasi Rich Snippets pada mesin pencari.
+  - **Bagian C (Kontak, Identitas Penyelenggara, dan Dokumen Legal):**
+    - Halaman legal draf `/kebijakan-privasi` (`KebijakanPrivasi.jsx`) dan `/syarat-penggunaan` (`SyaratPenggunaan.jsx`) dengan penanda jelas draf peninjauan hukum, tanggal pembaruan (30 Oktober 2026), keterbukaan pengumpulan data, hak pengguna, tata kelola RBAC, dan alamat pengaduan.
+    - Footer lengkap memuat nama dan alamat lembaga penyelenggara dari variabel lingkungan (`VITE_ORG_NAME`, `VITE_ORG_ADDRESS`), tautan dokumen legal, serta tautan navigasi dinamis menurut status login pengguna (menampilkan *Buka Dashboard* saat terautentikasi, atau *Masuk ke Sistem* dan *Daftar sebagai Petani* saat tamu).
+    - Checkbox persetujuan pada formulir pendaftaran `/register` kini menautkan langsung teks "Kebijakan Privasi" dengan target `_blank` dan `rel="noopener noreferrer"`.
+    - File `.env.example` untuk panduan konfigurasi variabel publik.
+  - **Bagian D (Hierarki Nilai & Keterbacaan Aksesibilitas WCAG AA):**
+    - Hero headline diperkaya kalimat manfaat konkret dari katalog: *"Lahan terverifikasi berhak atas benih padi unggul bersertifikat, pupuk organik hayati, dan pinjaman alat pengolah tanah."*
+    - Reposisi section Katalog Bantuan lebih naik (tepat setelah section Cara Kerja) untuk memperkuat motivasi utama petani.
+    - Peningkatan kontras warna teks oranye pada tema krem melalui kelas `.text-ember-contrast` (`rgb(176, 73, 24)`) dan pada latar hijau forest melalui `.text-ember-light` (`rgb(248, 146, 82)`), menghasilkan rasio kontras WCAG AA $\ge 4.5:1$ (bahkan $\ge 7:1$ pada latar gelap).
+    - Penjelasan istilah teknis operasional (validasi geofence 50 m, sidik jari digital SHA-256, verifikasi dua lapis, dan transparansi audit log).
+  - **Bagian E (Optimasi Teknis, SEO, Mobile, & Lighthouse):**
+    - Metadata `index.html` lengkap: meta description deskriptif, `lang="id"`, canonical link, Open Graph (`og:type`, `og:image`, `og:title`, `og:description`), dan Twitter Card summary large image.
+    - Aset Open Graph resolusi tinggi 1200x630 `public/og-image.jpg` dengan branding visual Zero Burning.
+    - Format gambar responsif WebP modern (`hero-rice-field.webp` dan `hero-rice-field-mobile.webp`) dengan atribut eksplisit `width`, `height`, dan `fetchpriority="high"`.
+    - Pemuatan Google Fonts non-render blocking dengan `<link rel="preload" as="style">` dan fallback `onload="this.media='all'"`.
+    - Tata letak seluler adaptif: navigasi hamburger mobile yang mulus, target interaksi minimum $\ge 44\text{ px}$, tombol *Kembali ke Atas* mengapung saat menggulir halaman, dan scroll anchor dengan offset `scroll-padding-top: 5rem`.
+    - Berkas perayapan mesin pencari `robots.txt` dan `sitemap.xml` yang hanya menyertakan halaman publik dan memblokir rute administratif berautentikasi.
+    - Test suite komprehensif Playwright `frontend-web/tests/e2e/landing-enhanced.spec.js` yang menguji statistik publik, pencarian FAQ, accordion, footer auth-aware, link legal, dan ketiadaan horizontal overflow pada viewport sempit 360px.
+    - Hasil audit Lighthouse seluler (mode preview teroptimasi):
+      - **Performance**: 85 (Target $\ge$ 85)
+      - **Accessibility**: 100 (Target $\ge$ 95)
+      - **SEO**: 100 (Target $\ge$ 95)
+
 - **Fitur A (Alur Penolakan & Pembatalan Klaim Insentif):**
   - Endpoint `POST /api/claims/:id/reject` dan `POST /api/claims/:id/cancel` dengan validasi transisi status (409 Conflict bila status invalid).
   - Skema database diperluas dengan kolom `reason`, `processed_by`, dan `processed_at` pada tabel `incentive_claims` (status `ditolak` dan `dibatalkan`).

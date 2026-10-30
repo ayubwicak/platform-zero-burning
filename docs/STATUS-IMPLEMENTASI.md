@@ -2,8 +2,8 @@
 
 | Atribut | Nilai |
 |---|---|
-| Diperbarui | 28 Oktober 2026 |
-| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, penyempurnaan alur klaim & voting warga, notifikasi real-time, dan CI pipeline |
+| Diperbarui | 30 Oktober 2026 |
+| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, penyempurnaan alur klaim & voting warga, notifikasi real-time, penyempurnaan landing page publik A-E (SEO, WCAG AA, transparansi dampak, legalitas, FAQ terstruktur), dan CI pipeline |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
 Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan yang memengaruhi status modul (wajib dalam PR yang sama).
@@ -137,3 +137,4 @@ npm run dev
 | 22 Okt 2026 | Data Lahan untuk petugas/admin: `/data-lahan` read-only dengan pemilik/kontak, koordinat, filter status, pencarian, dan progres foto; `GET /api/fields` menjadi role-aware tanpa membuka mutasi lahan |
 | 22 Okt 2026 | Audit log admin: pencatatan perubahan role/status akun, kategori, dan stok (termasuk distribusi); endpoint `GET /api/audit-logs` dengan filter/pagination dan halaman `/audit-log` read-only |
 | 28 Okt 2026 | Fitur A, B, C lanjutan selesai: alur penolakan & pembatalan klaim dengan pengembalian stok atomik, verifikasi warga dengan ambang batas dinamis & mode auto-verifikasi serta override petugas, dan sistem notifikasi pengguna berbasis event dengan popover interaktif pada Navbar; 11 test integrasi baru lulus 100% (total 68 passing). |
+| 30 Okt 2026 | Penyempurnaan menyeluruh landing page publik `/` (bagian A-E): endpoint agregat publik `GET /api/public/stats` (cache 5 menit, no-PII), strip dampak dinamis + pesan jujur dan `AnimatedCounter`, kartu ilustrasi hero, sistem testimoni berbasis flag `verified`, FAQ terstruktur 11 butir dengan pencarian & accordion accessible + JSON-LD `FAQPage`, halaman legal draf `/kebijakan-privasi` dan `/syarat-penggunaan`, footer identitas & kontak dari variabel lingkungan, reposisi katalog bantuan, peningkatan kontras teks WCAG AA (`.text-ember-contrast` & `.text-ember-light`), gambar responsif WebP + `og-image.jpg` 1200x630, `robots.txt`, `sitemap.xml`, tombol kembali ke atas, dan navigasi anchor sticky. Skor Lighthouse mobile: Performance 85, Accessibility 100, SEO 100. 80 backend tests & 82 E2E Playwright tests passing 100%. |

@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /kebijakan-privasi
+Allow: /syarat-penggunaan
+Allow: /login
+Allow: /register
+Disallow: /dashboard
+Disallow: /fields
+Disallow: /upload
+Disallow: /verifikasi
+Disallow: /verifikasi-komunitas
+Disallow: /distribusi
+Disallow: /klaim
+Disallow: /katalog
+Disallow: /pengguna
+Disallow: /audit-log
+Disallow: /laporan
+Disallow: /profil
+Disallow: /api/
+
+Sitemap: https://zeroburning.id/sitemap.xml
