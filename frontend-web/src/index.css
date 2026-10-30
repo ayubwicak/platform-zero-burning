@@ -43,6 +43,7 @@
   html {
     font-family: var(--font-sans);
     scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
   }
@@ -509,6 +510,18 @@
     animation-duration: 0.15s !important;
     transform: none !important;
   }
+}
+
+.text-ember-contrast {
+  color: rgb(176, 73, 24); /* High contrast terracotta (>= 4.5:1 on light cream background) */
+}
+
+.bg-ember-contrast {
+  background-color: rgb(171, 68, 21); /* High contrast terracotta for button background */
+}
+
+.text-ember-light {
+  color: rgb(248, 146, 82); /* High contrast terracotta (>= 7:1 on dark forest background) */
 }
 
 @keyframes fadeUp {
