@@ -106,26 +106,36 @@ export default function Upload() {
   useEffect(() => {
     let active = true;
 
-    api
-      .get('/fields')
-      .then((response) => {
+    async function fetchFields(retryCount = 1) {
+      try {
+        const response = await api.get('/fields');
         if (!active) return;
         const data = response.data.data || [];
         setFields(data);
         if (data.length > 0) {
           setFieldId(String(data[0].id));
         }
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err.response?.data?.error || 'Gagal memuat daftar lahan.');
+      } catch (err) {
+        if (retryCount > 0 && !err.response) {
+          await new Promise((r) => setTimeout(r, 600));
+          return fetchFields(retryCount - 1);
         }
-      })
-      .finally(() => {
+        if (active) {
+          const message =
+            err.response?.data?.error ||
+            (!err.response
+              ? 'Tidak dapat terhubung ke server. Periksa koneksi atau jalankan backend.'
+              : 'Gagal memuat daftar lahan.');
+          setError(message);
+        }
+      } finally {
         if (active) {
           setFieldsLoading(false);
         }
-      });
+      }
+    }
+
+    fetchFields();
 
     return () => {
       active = false;
