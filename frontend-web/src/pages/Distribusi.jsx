@@ -313,6 +313,7 @@ function ClaimActionModal({ claim, type, onClose, onConfirm, submitting, error }
               type="submit"
               disabled={submitting || (reason === 'Lainnya' && !note.trim())}
               className="btn-danger flex-1"
+              aria-label={isReject ? 'Konfirmasi Penolakan' : 'Konfirmasi Pembatalan'}
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

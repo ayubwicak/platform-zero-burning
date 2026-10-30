@@ -620,7 +620,7 @@ export default function Upload() {
                         type="button"
                         onClick={handleCancelUpload}
                         className="col-span-2 w-full sm:w-auto h-11 sm:h-10 px-4 inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-card hover:bg-secondary text-foreground text-xs font-semibold shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        aria-label="Batalkan proses unggah"
+                        aria-label="Batalkan"
                       >
                         <XCircle className="w-4 h-4 text-muted-foreground" />
                         <span>Batalkan</span>
@@ -770,14 +770,20 @@ export default function Upload() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 animate-fade-in">
+              <div
+                data-testid="file-error"
+                className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-700 animate-fade-in"
+              >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             {notice && (
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800 animate-fade-in">
+              <div
+                data-testid="upload-notice"
+                className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800 animate-fade-in"
+              >
                 <Info className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{notice}</span>
               </div>

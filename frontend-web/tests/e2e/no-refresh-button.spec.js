@@ -43,6 +43,32 @@ test.describe('Penyembunyian Tombol Segarkan & Pembaruan Otomatis Data', () => {
     page,
     request,
   }) => {
+    // Pastikan terdapat data klaim berstatus diajukan
+    const farmerRes = await request.post('/api/auth/login', {
+      data: { email: 'petani@contoh.com', password: 'Petani123!' },
+    });
+    const farmerData = await farmerRes.json();
+    if (farmerData.token) {
+      const fToken = farmerData.token;
+      const fieldsRes = await request.get('/api/fields', {
+        headers: { Authorization: `Bearer ${fToken}` },
+      });
+      const fBody = await fieldsRes.json();
+      const fields = fBody.data || fBody;
+      const catRes = await request.get('/api/incentives/categories', {
+        headers: { Authorization: `Bearer ${fToken}` },
+      });
+      const cBody = await catRes.json();
+      const categories = cBody.data || cBody;
+
+      if (Array.isArray(fields) && fields.length > 0 && Array.isArray(categories) && categories.length > 0) {
+        await request.post('/api/incentives/claims', {
+          headers: { Authorization: `Bearer ${fToken}` },
+          data: { field_id: fields[0].id, category_id: categories[0].id },
+        });
+      }
+    }
+
     await loginAsAdmin(page, request);
     await page.goto('/distribusi');
     await expect(page.getByRole('heading', { name: 'Distribusi Insentif' })).toBeVisible();
@@ -60,18 +86,18 @@ test.describe('Penyembunyian Tombol Segarkan & Pembaruan Otomatis Data', () => {
       await expect(modal).toBeVisible();
 
       // Pilih alasan penolakan
-      const reasonSelect = modal.getByRole('combobox', { name: /Alasan Penolakan/i });
+      const reasonSelect = modal.getByRole('combobox', { name: /Alasan/i });
       await reasonSelect.click();
-      const listbox = page.getByRole('listbox', { name: /Alasan Penolakan/i });
+      const listbox = page.getByRole('listbox', { name: /Alasan/i });
       await listbox.getByRole('option').first().click();
 
       // Konfirmasi tolak
-      const confirmBtn = modal.getByRole('button', { name: /Konfirmasi Penolakan/i });
+      const confirmBtn = modal.getByRole('button', { name: /Konfirmasi Penolakan|Tolak Klaim/i });
       await confirmBtn.click();
 
       // Modal tertutup dan status klaim otomatis terbarui di antrean
       await expect(modal).not.toBeVisible();
-      await expect(page.locator('text=Klaim berhasil ditolak')).toBeVisible();
+      await expect(page.getByText(/Klaim.*berhasil ditolak/i)).toBeVisible();
     }
   });
 });

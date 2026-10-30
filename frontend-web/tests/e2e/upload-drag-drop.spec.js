@@ -47,8 +47,8 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
     await expect(previewImg).toBeVisible();
 
     // Nama file dan metadata (ukuran · format · resolusi)
-    await expect(page.locator('text=lahan-padi.jpg')).toBeVisible();
-    await expect(page.locator('text=/JPG/')).toBeVisible();
+    await expect(page.getByText('lahan-padi.jpg', { exact: true })).toBeVisible();
+    await expect(page.getByText(/· JPG/i)).toBeVisible();
 
     // Tombol aksi "Ganti foto" dan "Hapus" terlihat
     const replaceBtn = page.getByRole('button', { name: 'Ganti foto', exact: true });
@@ -131,7 +131,7 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
     });
 
     // Harus menampilkan pesan error format
-    await expect(page.locator('text=gambar-gerak.gif: format tidak didukung')).toBeVisible();
+    await expect(page.getByTestId('file-error')).toContainText('gambar-gerak.gif: format tidak didukung');
 
     // 2. Ukuran melebihi 5 MB
     const largeBuffer = Buffer.alloc(5.5 * 1024 * 1024);
@@ -141,7 +141,7 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
       buffer: largeBuffer,
     });
 
-    await expect(page.locator('text=foto-raksasa.jpg: melebihi batas 5 MB')).toBeVisible();
+    await expect(page.getByTestId('file-error')).toContainText('foto-raksasa.jpg: melebihi batas 5 MB');
   });
 
   test('Drag and drop simulasi: drop file ke area dropzone', async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
 
     // Pratinjau harus muncul
     await expect(page.getByAltText('Pratinjau foto progres lahan: seret-lahan.png', { exact: true })).toBeVisible();
-    await expect(page.locator('text=seret-lahan.png')).toBeVisible();
+    await expect(page.getByText('seret-lahan.png', { exact: true })).toBeVisible();
   });
 
   test('Pembatalan upload yang sedang berjalan (AbortController)', async ({ page }) => {
@@ -177,6 +177,19 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
     });
 
     await expect(page.getByAltText('Pratinjau foto progres lahan: lahan-uji-batal.jpg', { exact: true })).toBeVisible();
+
+    // Pastikan lahan terpilih melalui Select kustom
+    const fieldTrigger = page.getByRole('combobox', { name: 'Pilih Lahan' });
+    await expect(fieldTrigger).toBeVisible();
+    await fieldTrigger.click();
+    const fieldListbox = page.getByRole('listbox', { name: 'Pilih Lahan' });
+    await expect(fieldListbox).toBeVisible();
+    const optionSleman = fieldListbox.getByRole('option', { name: /Sawah Berkah Sleman/i });
+    if ((await optionSleman.count()) > 0) {
+      await optionSleman.click();
+    } else {
+      await fieldListbox.getByRole('option').first().click();
+    }
 
     // Mock geolocation agar tombol submit dapat ditekan
     await page.evaluate(() => {
@@ -193,10 +206,19 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
     await page.getByRole('button', { name: /Ambil lokasi saat ini/i }).click();
     await expect(page.locator('text=-7.71560, 110.35560')).toBeVisible();
 
-    // Tunda respons endpoint POST /api/photos
+    // Mock POST /api/photos dengan promise gate agar state "mengunggah" bertahan sampai tombol Batalkan diklik
+    let releaseUpload;
+    const uploadGate = new Promise((resolve) => {
+      releaseUpload = resolve;
+    });
+
     await page.route('**/api/photos', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await route.continue();
+      if (route.request().method() === 'POST') {
+        await uploadGate;
+        await route.abort('abort').catch(() => {});
+      } else {
+        await route.continue();
+      }
     });
 
     // Klik tombol Kirim Foto Progres
@@ -211,8 +233,12 @@ test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Ak
     // Klik tombol Batalkan
     await cancelBtn.click();
 
+    // Lepaskan promise gate
+    releaseUpload();
+
     // Harus menampilkan notice "Unggahan dibatalkan" dan bukan error merah generik
-    await expect(page.locator('text=Unggahan dibatalkan.')).toBeVisible();
+    await expect(page.getByTestId('upload-notice')).toContainText('Unggahan dibatalkan.');
+    await expect(page.getByRole('status')).toContainText('Unggahan dibatalkan.');
 
     // File tetap berada di pratinjau sehingga pengguna bisa mencoba lagi atau menghapus
     await expect(page.getByAltText('Pratinjau foto progres lahan: lahan-uji-batal.jpg', { exact: true })).toBeVisible();
