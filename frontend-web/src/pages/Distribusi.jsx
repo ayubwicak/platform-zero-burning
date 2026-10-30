@@ -72,7 +72,7 @@ function ReceiptValue({ value }) {
 function DistributionModal({ claim, receipt, setReceipt, onClose, onConfirm, submitting, error }) {
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape' && !submitting) onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
@@ -209,7 +209,7 @@ function ClaimActionModal({ claim, type, onClose, onConfirm, submitting, error }
 
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape' && !submitting) onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);

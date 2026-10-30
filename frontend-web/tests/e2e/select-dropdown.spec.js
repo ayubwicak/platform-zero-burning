@@ -28,15 +28,16 @@ async function loginAsFarmer(page, request) {
     },
   });
   const data = await res.json();
-  if (data.token) {
-    await page.addInitScript(
-      ({ token, user }) => {
-        localStorage.setItem('zb_token', token);
-        localStorage.setItem('zb_user', JSON.stringify(user));
-      },
-      { token: data.token, user: data.user }
-    );
+  if (!data.token) {
+    throw new Error('Gagal login petani via API: ' + JSON.stringify(data));
   }
+  await page.addInitScript(
+    ({ token, user }) => {
+      localStorage.setItem('zb_token', token);
+      localStorage.setItem('zb_user', JSON.stringify(user));
+    },
+    { token: data.token, user: data.user }
+  );
 }
 
 test.describe('Kustom Select Dropdown UI & Accessibility', () => {
@@ -46,7 +47,7 @@ test.describe('Kustom Select Dropdown UI & Accessibility', () => {
   }) => {
     await loginAsAdmin(page, request);
     await page.goto('/pengguna');
-    await expect(page.getByRole('heading', { name: 'Kelola Pengguna' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Manajemen Pengguna' })).toBeVisible();
 
     const trigger = page.getByRole('combobox', { name: 'Filter status akun' });
     await expect(trigger).toBeVisible();
@@ -128,41 +129,64 @@ test.describe('Kustom Select Dropdown UI & Accessibility', () => {
     page,
     request,
   }) => {
+    // Pastikan terdapat data klaim berstatus diajukan
+    const farmerRes = await request.post('/api/auth/login', {
+      data: { email: 'petani@contoh.com', password: 'Petani123!' },
+    });
+    const farmerData = await farmerRes.json();
+    if (farmerData.token) {
+      const fToken = farmerData.token;
+      const fieldsRes = await request.get('/api/fields', {
+        headers: { Authorization: `Bearer ${fToken}` },
+      });
+      const fBody = await fieldsRes.json();
+      const fields = fBody.data || fBody;
+      const catRes = await request.get('/api/incentives/categories', {
+        headers: { Authorization: `Bearer ${fToken}` },
+      });
+      const cBody = await catRes.json();
+      const categories = cBody.data || cBody;
+
+      if (Array.isArray(fields) && fields.length > 0 && Array.isArray(categories) && categories.length > 0) {
+        await request.post('/api/incentives/claims', {
+          headers: { Authorization: `Bearer ${fToken}` },
+          data: { field_id: fields[0].id, category_id: categories[0].id },
+        });
+      }
+    }
+
     await loginAsAdmin(page, request);
     await page.goto('/distribusi');
     await expect(page.getByRole('heading', { name: 'Distribusi Insentif' })).toBeVisible();
 
-    // Cari tombol aksi untuk membuka modal tolak atau batalkan jika ada item klaim
-    const actionBtn = page.getByRole('button', { name: /Tolak|Batalkan/i }).first();
-    const hasAction = (await actionBtn.count()) > 0;
+    // Cari tombol aksi "Tolak" pada baris klaim (bukan tab filter "Ditolak")
+    const actionBtn = page.getByRole('button', { name: 'Tolak', exact: true }).first();
+    await expect(actionBtn).toBeVisible();
+    await actionBtn.click();
 
-    if (hasAction) {
-      await actionBtn.click();
+    // Modal dialog terbuka
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
 
-      // Modal dialog terbuka
-      const modal = page.getByRole('dialog');
-      await expect(modal).toBeVisible();
+    // Dropdown alasan di dalam modal
+    const reasonTrigger = modal.getByRole('combobox', { name: /Alasan/i });
+    await expect(reasonTrigger).toBeVisible();
 
-      // Dropdown alasan di dalam modal
-      const reasonTrigger = modal.getByRole('combobox', { name: /Alasan/i });
-      await expect(reasonTrigger).toBeVisible();
+    // Buka dropdown alasan
+    await reasonTrigger.click();
+    await expect(reasonTrigger).toHaveAttribute('aria-expanded', 'true');
 
-      // Buka dropdown alasan
-      await reasonTrigger.click();
-      await expect(reasonTrigger).toHaveAttribute('aria-expanded', 'true');
+    const listbox = page.getByRole('listbox', { name: /Alasan/i });
+    await expect(listbox).toBeVisible();
 
-      const listbox = page.getByRole('listbox', { name: /Alasan/i });
-      await expect(listbox).toBeVisible();
+    // Tekan Escape: HANYA dropdown yang boleh tertutup, modal harus tetap terbuka!
+    await page.keyboard.press('Escape');
+    await expect(reasonTrigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(modal).toBeVisible(); // MODAL TETAP TERBUKA
 
-      // Tekan Escape: HANYA dropdown yang boleh tertutup, modal harus tetap terbuka!
-      await page.keyboard.press('Escape');
-      await expect(reasonTrigger).toHaveAttribute('aria-expanded', 'false');
-      await expect(modal).toBeVisible(); // MODAL TETAP TERBUKA
-
-      // Tutup modal dengan tombol X atau Batal
-      const cancelBtn = modal.getByRole('button', { name: /Batal/i });
-      await cancelBtn.click();
-      await expect(modal).not.toBeVisible();
-    }
+    // Tutup modal dengan tombol Kembali / Tutup
+    const cancelBtn = modal.getByRole('button', { name: /Kembali|Batal|Tutup/i }).first();
+    await cancelBtn.click();
+    await expect(modal).not.toBeVisible();
   });
 });

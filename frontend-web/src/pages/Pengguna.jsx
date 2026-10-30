@@ -113,7 +113,7 @@ function RolePicker({ value, onChange }) {
 function ModalShell({ title, subtitle, icon: Icon, onClose, children }) {
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);

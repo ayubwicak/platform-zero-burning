@@ -12,15 +12,16 @@ async function loginAsFarmer(page, request) {
     },
   });
   const data = await res.json();
-  if (data.token) {
-    await page.addInitScript(
-      ({ token, user }) => {
-        localStorage.setItem('zb_token', token);
-        localStorage.setItem('zb_user', JSON.stringify(user));
-      },
-      { token: data.token, user: data.user }
-    );
+  if (!data.token) {
+    throw new Error('Gagal login farmer via API: ' + JSON.stringify(data));
   }
+  await page.addInitScript(
+    ({ token, user }) => {
+      localStorage.setItem('zb_token', token);
+      localStorage.setItem('zb_user', JSON.stringify(user));
+    },
+    { token: data.token, user: data.user }
+  );
 }
 
 test.describe('Fitur Unggah Foto: Tampilan Pratinjau, Metadata, Lightbox, dan Aksi', () => {

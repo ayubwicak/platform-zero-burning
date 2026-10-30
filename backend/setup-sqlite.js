@@ -348,6 +348,113 @@ if (categoryCount === 0) {
   console.log('✓ Sample incentive categories created');
 }
 
+// Insert demo farmer user (petani@contoh.com) untuk e2e test & demo (non-production)
+if (process.env.NODE_ENV !== 'production') {
+  const defaultCategory = db.prepare('SELECT id FROM incentive_categories LIMIT 1').get();
+  const categoryId = defaultCategory ? defaultCategory.id : 1;
+  const farmerPassword = bcryptjs.hashSync('Petani123!', 10);
+  try {
+    const farmerUser = db.prepare(`
+      INSERT INTO users (nama, email, nik, phone, address, password, role, email_verified, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      'Budi Santoso',
+      'petani@contoh.com',
+      '3404010101900001',
+      '081234567890',
+      'Sleman, Yogyakarta',
+      farmerPassword,
+      'petani',
+      1,
+      1
+    );
+
+    const fRes = db.prepare(`
+      INSERT INTO farmers (id_user, nik, phone, address, verification_status)
+      VALUES (?, ?, ?, ?, 'verified')
+    `).run(
+      farmerUser.lastInsertRowid,
+      '3404010101900001',
+      '081234567890',
+      'Sleman, Yogyakarta'
+    );
+    const farmerId = fRes.lastInsertRowid;
+
+    const fldRes = db.prepare(`
+      INSERT INTO fields (id_user, id_farmer, name, area, category, crop_type, latitude, longitude, address, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      farmerUser.lastInsertRowid,
+      farmerId,
+      'Sawah Berkah Sleman',
+      2500,
+      'Padi',
+      'Padi Organik',
+      -7.7156,
+      110.3556,
+      'Jl. Magelang KM 10, Tridadi, Sleman, D.I. Yogyakarta',
+      'active'
+    );
+    const fieldId = fldRes.lastInsertRowid;
+
+    db.prepare(`
+      INSERT INTO field_photos (field_id, photo_url, photo_hash, latitude, longitude, distance_from_center, verification_status)
+      VALUES (?, ?, ?, ?, ?, ?, 'terverifikasi')
+    `).run(
+      fieldId,
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef',
+      'hash_sample_photo_zero_burning_001',
+      -7.7156,
+      110.3556,
+      0
+    );
+
+    if (categoryId) {
+      db.prepare(`
+        INSERT INTO incentive_claims (field_id, farmer_id, category_id, status)
+        VALUES (?, ?, ?, 'diajukan')
+      `).run(
+        fieldId,
+        farmerId,
+        categoryId
+      );
+    }
+
+    console.log('✓ Demo farmer user, field, photo, & claim created');
+  } catch (err) {
+    if (err.message.includes('UNIQUE')) {
+      console.log('✓ Demo farmer user already exists');
+    } else {
+      console.error('Farmer user error:', err.message);
+    }
+  }
+
+  // Idempotent sync untuk user petani jika sudah ada sebelumnya
+  const existingFarmer = db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get('petani@contoh.com');
+  if (existingFarmer) {
+    let fRecord = db.prepare('SELECT id FROM farmers WHERE id_user = ?').get(existingFarmer.id);
+    if (!fRecord) {
+      const ins = db.prepare("INSERT INTO farmers (id_user, nik, phone, address, verification_status) VALUES (?, '3404010101900001', '081234567890', 'Sleman, Yogyakarta', 'verified')").run(existingFarmer.id);
+      fRecord = { id: ins.lastInsertRowid };
+    }
+    let fldRecord = db.prepare('SELECT id FROM fields WHERE id_farmer = ?').get(fRecord.id);
+    if (!fldRecord) {
+      const insFld = db.prepare("INSERT INTO fields (id_user, id_farmer, name, area, category, crop_type, latitude, longitude, address, status) VALUES (?, ?, 'Sawah Berkah Sleman', 2500, 'Padi', 'Padi Organik', -7.7156, 110.3556, 'Jl. Magelang KM 10, Tridadi, Sleman, D.I. Yogyakarta', 'active')").run(existingFarmer.id, fRecord.id);
+      fldRecord = { id: insFld.lastInsertRowid };
+    }
+    let photoRecord = db.prepare('SELECT id FROM field_photos WHERE field_id = ?').get(fldRecord.id);
+    if (!photoRecord) {
+      db.prepare("INSERT INTO field_photos (field_id, photo_url, photo_hash, latitude, longitude, distance_from_center, verification_status) VALUES (?, 'https://images.unsplash.com/photo-1500382017468-9049fed747ef', 'hash_sample_photo_zero_burning_001', -7.7156, 110.3556, 0, 'terverifikasi')").run(fldRecord.id);
+    }
+    if (categoryId) {
+      let claimRecord = db.prepare("SELECT id FROM incentive_claims WHERE field_id = ? AND status = 'diajukan'").get(fldRecord.id);
+      if (!claimRecord) {
+        db.prepare("INSERT INTO incentive_claims (field_id, farmer_id, category_id, status) VALUES (?, ?, ?, 'diajukan')").run(fldRecord.id, fRecord.id, categoryId);
+      }
+    }
+  }
+}
+
 console.log('✓ SQLite database setup complete');
 console.log('Database: zero_burning.db');
 console.log('');

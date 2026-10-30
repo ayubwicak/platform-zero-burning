@@ -241,6 +241,7 @@ export default function Select({
         if (isOpen) {
           e.preventDefault();
           e.stopPropagation(); // Cegah modal induk tertutup
+          e.nativeEvent?.stopImmediatePropagation?.();
           closeMenu();
         }
         break;
@@ -306,6 +307,7 @@ export default function Select({
       case 'Escape':
         e.preventDefault();
         e.stopPropagation(); // Jangan tutup modal induk
+        e.nativeEvent?.stopImmediatePropagation?.();
         closeMenu();
         break;
 
@@ -351,11 +353,12 @@ export default function Select({
         id={selectId}
         role="combobox"
         aria-haspopup="listbox"
-        aria-expanded={isOpen}
+        aria-expanded={isOpen ? 'true' : 'false'}
         aria-controls={listboxId}
         aria-activedescendant={activeDescendantId}
         aria-labelledby={ariaLabelledBy}
         aria-label={ariaLabel}
+        aria-disabled={disabled ? 'true' : 'false'}
         disabled={disabled}
         onClick={toggleMenu}
         onKeyDown={handleTriggerKeyDown}

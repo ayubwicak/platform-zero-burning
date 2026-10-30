@@ -52,7 +52,7 @@ function CategoryModal({ mode, item, onClose, onSaved }) {
 
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape' && !saving) onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented && !saving) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);

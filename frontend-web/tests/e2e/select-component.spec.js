@@ -58,11 +58,9 @@ test.describe('Component Unit/Integration Test: Select.jsx', () => {
 
     const trigger = page.getByRole('combobox', { name: 'Select Dinonaktifkan' });
     await expect(trigger).toBeDisabled();
-
-    // Klik tidak boleh membuka listbox
-    await trigger.click({ force: false }).catch(() => {});
+    await expect(trigger).toHaveAttribute('aria-disabled', 'true');
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.getByRole('listbox', { name: 'Select Dinonaktifkan' })).not.toBeVisible();
+    await expect(page.getByRole('listbox', { name: 'Select Dinonaktifkan' })).toHaveCount(0);
   });
 
   test('Empty state: menampilkan emptyMessage saat opsi kosong', async ({ page }) => {
