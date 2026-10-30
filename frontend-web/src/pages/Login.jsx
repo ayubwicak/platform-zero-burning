@@ -147,11 +147,44 @@ export default function Login() {
       </form>
 
       {import.meta.env.DEV && (
-        <div className="auth-hide-short mt-5 flex items-start gap-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-xs">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <div>
-            <p className="font-semibold text-foreground">Akun admin demo</p>
-            <p className="mt-0.5 font-mono text-muted-foreground">admin@zeroburning.id / admin123</p>
+        <div className="auth-hide-short mt-5 space-y-2">
+          <div className="flex items-start justify-between gap-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-2.5 text-xs">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <p className="font-semibold text-foreground">Akun Petugas Demo</p>
+                <p className="mt-0.5 font-mono text-muted-foreground">petugas@contoh.com / Petugas123!</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('petugas@contoh.com');
+                setPassword('Petugas123!');
+              }}
+              className="text-[11px] font-semibold text-primary hover:underline shrink-0"
+            >
+              Gunakan
+            </button>
+          </div>
+          <div className="flex items-start justify-between gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="font-semibold text-foreground">Akun Admin Demo</p>
+                <p className="mt-0.5 font-mono text-muted-foreground">admin@zeroburning.id / admin123</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@zeroburning.id');
+                setPassword('admin123');
+              }}
+              className="text-[11px] font-semibold text-primary hover:underline shrink-0"
+            >
+              Gunakan
+            </button>
           </div>
         </div>
       )}

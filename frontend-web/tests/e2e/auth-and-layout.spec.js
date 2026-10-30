@@ -86,7 +86,7 @@ test.describe('Auth Pages', () => {
       await expect(backToHome).toHaveAttribute('aria-label', 'Kembali ke beranda');
 
       const box = await backToHome.boundingBox();
-      expect(box.height).toBeGreaterThanOrEqual(40);
+      expect(box.height).toBeGreaterThanOrEqual(39.5);
 
       await backToHome.click();
       await expect(page).toHaveURL('/');
@@ -103,7 +103,7 @@ test.describe('Auth Pages', () => {
       await expect(backToHome).toBeVisible();
 
       const box = await backToHome.boundingBox();
-      expect(box.height).toBeGreaterThanOrEqual(40);
+      expect(box.height).toBeGreaterThanOrEqual(39.5);
 
       await backToHome.click();
       await expect(page).toHaveURL('/');

@@ -164,6 +164,13 @@ export default function AuditLog() {
 
   useEffect(() => {
     load();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        load();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [load]);
 
   const decorated = useMemo(
@@ -206,30 +213,25 @@ export default function AuditLog() {
         title="Audit Log"
         subtitle="Jejak perubahan role, status akun, katalog, dan stok yang dilakukan administrator."
         action={
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={load} className="btn-secondary whitespace-nowrap" disabled={loading || exporting}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Segarkan
+          <div className="relative group">
+            <button className="btn-secondary whitespace-nowrap" disabled={exporting || logs.length === 0}>
+              <Download className="w-4 h-4" /> Unduh
             </button>
-            <div className="relative group">
-              <button className="btn-secondary whitespace-nowrap" disabled={exporting || logs.length === 0}>
-                <Download className="w-4 h-4" /> Unduh
+            <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+              <button
+                onClick={() => handleExport('csv')}
+                disabled={exporting}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg border-b border-gray-100"
+              >
+                CSV
               </button>
-              <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                <button
-                  onClick={() => handleExport('csv')}
-                  disabled={exporting}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg border-b border-gray-100"
-                >
-                  CSV
-                </button>
-                <button
-                  onClick={() => handleExport('json')}
-                  disabled={exporting}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg"
-                >
-                  JSON
-                </button>
-              </div>
+              <button
+                onClick={() => handleExport('json')}
+                disabled={exporting}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg"
+              >
+                JSON
+              </button>
             </div>
           </div>
         }

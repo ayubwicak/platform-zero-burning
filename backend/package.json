@@ -9,6 +9,7 @@
     "lint": "eslint src/",
     "test": "jest --detectOpenHandles --passWithNoTests",
     "seed:farmer": "node scripts/seed-farmer.js",
+    "seed:officer": "node scripts/seed-officer.js",
     "setup:sqlite": "node setup-sqlite.js",
     "start:e2e": "node setup-sqlite.js && node src/server.js"
   },

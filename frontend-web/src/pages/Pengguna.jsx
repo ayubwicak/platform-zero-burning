@@ -15,6 +15,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import Select from '../components/ui/Select';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 
@@ -112,7 +113,7 @@ function RolePicker({ value, onChange }) {
 function ModalShell({ title, subtitle, icon: Icon, onClose, children }) {
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
@@ -208,6 +209,13 @@ export default function Pengguna() {
 
   useEffect(() => {
     loadUsers();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadUsers();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   useEffect(() => {
@@ -226,6 +234,15 @@ export default function Pengguna() {
       nonaktif: users.filter((item) => !item.is_active).length,
     }),
     [users]
+  );
+
+  const statusOptions = useMemo(
+    () => [
+      { value: 'semua', label: 'Semua status' },
+      { value: 'aktif', label: `Aktif (${counts.aktif})` },
+      { value: 'nonaktif', label: `Nonaktif (${counts.nonaktif})` },
+    ],
+    [counts.aktif, counts.nonaktif]
   );
 
   const filtered = useMemo(
@@ -371,18 +388,9 @@ export default function Pengguna() {
         title="Manajemen Pengguna"
         subtitle="Kelola akun, tentukan role, dan nonaktifkan akses tanpa menghapus data pengguna."
         action={
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={loadUsers}
-              className="btn-secondary whitespace-nowrap"
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Segarkan
-            </button>
-            <button onClick={openCreate} className="btn-primary whitespace-nowrap">
-              <Plus className="w-4 h-4" /> Tambah Pengguna
-            </button>
-          </div>
+          <button onClick={openCreate} className="btn-primary whitespace-nowrap">
+            <Plus className="w-4 h-4" /> Tambah Pengguna
+          </button>
         }
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -439,16 +447,15 @@ export default function Pengguna() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="input-field w-full sm:w-44"
+          <Select
+            id="user-status-filter"
             aria-label="Filter status akun"
-          >
-            <option value="semua">Semua status</option>
-            <option value="aktif">Aktif ({counts.aktif})</option>
-            <option value="nonaktif">Nonaktif ({counts.nonaktif})</option>
-          </select>
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            options={statusOptions}
+            size="sm"
+            className="w-full sm:w-44"
+          />
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input

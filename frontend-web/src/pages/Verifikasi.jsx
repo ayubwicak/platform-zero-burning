@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Eye,
-  RefreshCw,
   Search,
   CheckCircle2,
   XCircle,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import Badge from '../components/Badge';
+import Select from '../components/ui/Select';
 import api from '../lib/api';
 import { formatCoord } from '../lib/format';
 
@@ -31,6 +31,11 @@ const tabs = [
   { key: 'menunggu', label: 'Menunggu' },
   { key: 'terverifikasi', label: 'Terverifikasi' },
   { key: 'ditolak', label: 'Ditolak' },
+];
+
+const OVERRIDE_STATUS_OPTIONS = [
+  { value: 'tidak_lolos', label: 'Tolak (Tidak Lolos Verifikasi)' },
+  { value: 'lolos', label: 'Setujui (Lolos Verifikasi Resmi)' },
 ];
 
 function initials(name) {
@@ -59,7 +64,7 @@ function OverrideModal({ photo, onClose, onConfirm, submitting, error }) {
 
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape' && !submitting) onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
@@ -117,18 +122,17 @@ function OverrideModal({ photo, onClose, onConfirm, submitting, error }) {
           </p>
 
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
+            <label htmlFor="override-status-select" className="block text-xs font-semibold text-foreground mb-1.5">
               Status Baru <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
+              id="override-status-select"
+              aria-label="Status Baru"
               value={overrideStatus}
-              onChange={(e) => setOverrideStatus(e.target.value)}
-              className="input-field text-sm"
+              onChange={(val) => setOverrideStatus(val)}
+              options={OVERRIDE_STATUS_OPTIONS}
               disabled={submitting}
-            >
-              <option value="tidak_lolos">Tolak (Tidak Lolos Verifikasi)</option>
-              <option value="lolos">Setujui (Lolos Verifikasi Resmi)</option>
-            </select>
+            />
           </div>
 
           <div>
@@ -218,6 +222,13 @@ export default function Verifikasi() {
 
   useEffect(() => {
     loadPhotos();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadPhotos();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadPhotos]);
 
   useEffect(() => {
@@ -289,16 +300,6 @@ export default function Verifikasi() {
         eyebrow="Validasi Bukti"
         title="Verifikasi Foto"
         subtitle="Tinjau foto progres lahan, rekomendasi warga sekitar, dan tentukan status verifikasi."
-        action={
-          <button onClick={loadPhotos} disabled={loading} className="btn-secondary">
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-            Segarkan
-          </button>
-        }
       >
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="grid grid-cols-1 gap-3 max-w-lg sm:grid-cols-3">

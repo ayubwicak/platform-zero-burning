@@ -10,7 +10,6 @@ import {
   Package,
   PackageCheck,
   Phone,
-  RefreshCw,
   Search,
   Truck,
   X,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import Badge from '../components/Badge';
+import Select from '../components/ui/Select';
 import api from '../lib/api';
 import { formatArea, formatCoord, formatDateTime } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
@@ -72,7 +72,7 @@ function ReceiptValue({ value }) {
 function DistributionModal({ claim, receipt, setReceipt, onClose, onConfirm, submitting, error }) {
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape' && !submitting) onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
@@ -209,7 +209,7 @@ function ClaimActionModal({ claim, type, onClose, onConfirm, submitting, error }
 
   useEffect(() => {
     const handleKey = (event) => {
-      if (event.key === 'Escape' && !submitting) onClose();
+      if (event.key === 'Escape' && !event.defaultPrevented && !submitting) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
@@ -264,21 +264,17 @@ function ClaimActionModal({ claim, type, onClose, onConfirm, submitting, error }
           <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
 
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
+            <label htmlFor="distribusi-reason-select" className="block text-xs font-semibold text-foreground mb-1.5">
               Alasan {isReject ? 'Penolakan' : 'Pembatalan'} <span className="text-destructive">*</span>
             </label>
-            <select
+            <Select
+              id="distribusi-reason-select"
+              aria-label={`Alasan ${isReject ? 'Penolakan' : 'Pembatalan'}`}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="input-field text-sm"
+              onChange={(val) => setReason(val)}
+              options={STANDARD_REASONS}
               disabled={submitting}
-            >
-              {STANDARD_REASONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div>
@@ -317,6 +313,7 @@ function ClaimActionModal({ claim, type, onClose, onConfirm, submitting, error }
               type="submit"
               disabled={submitting || (reason === 'Lainnya' && !note.trim())}
               className="btn-danger flex-1"
+              aria-label={isReject ? 'Konfirmasi Penolakan' : 'Konfirmasi Pembatalan'}
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -383,6 +380,13 @@ export default function Distribusi() {
 
   useEffect(() => {
     loadData();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadData]);
 
   useEffect(() => {
@@ -476,16 +480,6 @@ export default function Distribusi() {
         eyebrow="Penyaluran Bantuan"
         title="Distribusi Insentif"
         subtitle="Kelola antrean penyaluran bantuan, penolakan klaim tidak layak, dan pembatalan klaim."
-        action={
-          <button onClick={loadData} disabled={loading} className="btn-secondary">
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Segarkan
-          </button>
-        }
       >
         <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
           {[
