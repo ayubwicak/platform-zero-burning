@@ -276,7 +276,18 @@ export default function Register() {
             className="mt-0.5 h-4 w-4 rounded border-input accent-primary focus:ring-ring"
             required
           />
-          Saya setuju data saya dipakai untuk keperluan program Zero Burning.
+          <span>
+            Saya setuju data saya digunakan sesuai{' '}
+            <Link
+              to="/kebijakan-privasi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary underline hover:text-primary/80"
+            >
+              Kebijakan Privasi
+            </Link>{' '}
+            program Zero Burning.
+          </span>
         </label>
 
         {error && (
