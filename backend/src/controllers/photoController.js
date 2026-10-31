@@ -3,6 +3,13 @@ const fs = require('fs');
 const pool = require('../config/db');
 const { recordAudit } = require('../utils/auditLog');
 const { createNotification } = require('../utils/notificationService');
+const {
+  uploadFile,
+  getPhotoUrl,
+  resolvePhotoUrls,
+  deleteFile,
+  getStorageDriver,
+} = require('../utils/storage');
 
 function removeFile(filePath) {
   if (!filePath) return;
@@ -54,7 +61,22 @@ async function uploadPhoto(req, res, next) {
       return res.status(409).json({ error: 'Foto ini sudah pernah diunggah untuk lahan tersebut' });
     }
 
-    const photoUrl = `/uploads/${file.filename}`;
+    const objectKey = `photos/${file.filename}`;
+    let storedKey = null;
+
+    try {
+      const uploadRes = await uploadFile({
+        key: objectKey,
+        filePath: file.path,
+        contentType: file.mimetype,
+      });
+      storedKey = uploadRes.key;
+    } catch (storageErr) {
+      console.error('Storage upload error:', storageErr);
+      removeFile(file.path);
+      return res.status(500).json({ error: 'Gagal menyimpan foto ke storage' });
+    }
+
     const client = await pool.connect();
 
     try {
@@ -67,7 +89,7 @@ async function uploadPhoto(req, res, next) {
          VALUES (?, ?, ?, ?, ?, ?, 'menunggu_verifikasi', ?)`,
         [
           field_id,
-          photoUrl,
+          storedKey,
           latitude,
           longitude,
           req.geofencingDistance ?? 0,
@@ -88,7 +110,7 @@ async function uploadPhoto(req, res, next) {
         entityType: 'photo',
         entityId: photo.id,
         summary: `Petani mengunggah foto untuk lahan (field_id: ${field_id})`,
-        metadata: { field_id, photo_url: photoUrl, photo_hash: photoHash },
+        metadata: { field_id, photo_url: storedKey, photo_hash: photoHash },
       });
 
       // Notifikasi ke petugas dan admin bahwa ada foto baru yang menunggu verifikasi
@@ -107,10 +129,13 @@ async function uploadPhoto(req, res, next) {
 
       await client.query('COMMIT');
 
+      const viewableUrl = await getPhotoUrl(photo.photo_url);
+
       res.status(201).json({
         success: true,
         data: {
           ...photo,
+          photo_url: viewableUrl,
           status: photo.verification_status,
           geofencing_valid: true,
           distance: req.geofencingDistance,
@@ -118,9 +143,16 @@ async function uploadPhoto(req, res, next) {
       });
     } catch (err) {
       await client.query('ROLLBACK');
+      // Kompensasi: hapus objek storage jika transaksi DB gagal
+      if (storedKey) {
+        await deleteFile(storedKey).catch(() => {});
+      }
       throw err;
     } finally {
       client.release();
+      if (getStorageDriver() === 's3') {
+        removeFile(file.path);
+      }
     }
   } catch (err) {
     if (file) removeFile(file.path);
@@ -158,7 +190,8 @@ async function listMyPhotos(req, res, next) {
        LIMIT 30`,
       params
     );
-    res.json({ success: true, data: result.rows });
+    const rows = await resolvePhotoUrls(result.rows);
+    res.json({ success: true, data: rows });
   } catch (err) {
     next(err);
   }
