@@ -2,8 +2,8 @@
 
 | Atribut | Nilai |
 |---|---|
-| Diperbarui | 30 Oktober 2026 |
-| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, penyempurnaan alur klaim & voting warga, notifikasi real-time, penyempurnaan landing page publik A-E (SEO, WCAG AA, transparansi dampak, legalitas, FAQ terstruktur), dan CI pipeline |
+| Diperbarui | 31 Oktober 2026 |
+| Fase aktif | Fase 3 selesai; penguatan keamanan, responsivitas UI, penyempurnaan alur klaim & voting warga, notifikasi real-time, penyempurnaan landing page publik A-E, abstraksi storage permanen S3/R2, dan CI pipeline |
 | Dokumen acuan | [PERENCANAAN.md](./PERENCANAAN.md) |
 
 Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan yang memengaruhi status modul (wajib dalam PR yang sama).
@@ -34,7 +34,7 @@ Dokumen ini mencatat kondisi nyata sistem. Perbarui setiap kali ada perubahan ya
 | Proteksi route & menu | ✅ Selesai | Guard login/admin, sidebar dinamis berdasarkan role | `frontend-web/src/components/RouteGuards.jsx`, `Sidebar.jsx` |
 | Pengelolaan lahan | ✅ Selesai | List/tambah/detail/ubah/hapus (soft delete) + integrasi web; hapus diblokir bila ada klaim `diajukan` | `fieldController.js`, `pages/Fields.jsx` |
 | Pemantauan lahan | ✅ Selesai | `GET /api/fields` role-aware; petugas/admin melihat semua lahan aktif beserta pemilik, kontak, dan progres foto | `fieldController.js`, `pages/DataLahan.jsx` |
-| Unggah foto + hash | ✅ Selesai | Multer 5 MB, SHA-256, tolak duplikat, riwayat foto | `photoController.js`, `uploadMiddleware.js` |
+| Unggah foto & storage permanen | ✅ Selesai | Multer 5 MB, SHA-256, tolak duplikat, abstraksi storage (`utils/storage.js` driver local disk & S3/R2 presigned URL), transaksi kompensasi, dan migrasi idempoten | `photoController.js`, `uploadMiddleware.js`, `utils/storage.js`, `scripts/migrate-storage.js` |
 | Geofencing 50 m | ✅ Selesai | Haversine, tolak di server | `geofencingMiddleware.js` |
 | Verifikasi komunitas | ✅ Selesai | Upsert suara per petani/foto + halaman Verifikasi Warga untuk petani | `verificationController.js`, `pages/VerifikasiKomunitas.jsx` |
 | Verifikasi petugas | ✅ Selesai | API + UI verifikasi resmi; menentukan status foto | `verificationController.js`, `pages/Verifikasi.jsx` |

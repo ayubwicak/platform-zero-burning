@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { recordAudit } = require('../utils/auditLog');
 const { createNotification } = require('../utils/notificationService');
+const { resolvePhotoUrls } = require('../utils/storage');
 
 const PHOTO_STATUSES = ['menunggu_verifikasi', 'terverifikasi', 'ditolak'];
 const COMMUNITY_STATUSES = ['setuju', 'tidak_setuju'];
@@ -349,7 +350,8 @@ async function listCommunityPhotos(req, res, next) {
        LIMIT 50`,
       [verifierId]
     );
-    res.json({ success: true, data: result.rows, config: getVotingConfig() });
+    const rows = await resolvePhotoUrls(result.rows);
+    res.json({ success: true, data: rows, config: getVotingConfig() });
   } catch (err) {
     next(err);
   }
@@ -394,7 +396,8 @@ async function listPhotos(req, res, next) {
        LIMIT 100`,
       params
     );
-    res.json({ success: true, data: result.rows, config: getVotingConfig() });
+    const rows = await resolvePhotoUrls(result.rows);
+    res.json({ success: true, data: rows, config: getVotingConfig() });
   } catch (err) {
     next(err);
   }

@@ -9,26 +9,56 @@ function toNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+async function ensureFarmerId(req) {
+  if (req.user.role !== 'petani') return null;
+  if (req.user.farmerId) return req.user.farmerId;
+
+  try {
+    const check = await pool.query('SELECT id FROM farmers WHERE id_user = ?', [req.user.id]);
+    if (check.rows.length > 0) {
+      req.user.farmerId = check.rows[0].id;
+      return req.user.farmerId;
+    }
+
+    const userCheck = await pool.query('SELECT nik, phone, address FROM users WHERE id = ?', [req.user.id]);
+    const u = userCheck.rows[0] || {};
+    const ins = await pool.query(
+      'INSERT INTO farmers (id_user, nik, phone, address) VALUES (?, ?, ?, ?)',
+      [req.user.id, u.nik || '0000000000000000', u.phone || null, u.address || null]
+    );
+    req.user.farmerId = ins.rows[0].id;
+    return req.user.farmerId;
+  } catch (err) {
+    console.error('Error ensuring farmer profile:', err.message);
+    return null;
+  }
+}
+
 async function listFields(req, res, next) {
   const isFarmer = req.user.role === 'petani';
-  const farmerId = req.user.farmerId;
+  let farmerId = null;
 
-  if (isFarmer && !farmerId) {
-    return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
+  if (isFarmer) {
+    farmerId = await ensureFarmerId(req);
   }
 
   const params = [];
   let scope = '';
   if (isFarmer) {
-    scope = 'AND f.id_farmer = ?';
-    params.push(farmerId);
+    if (farmerId) {
+      scope = 'AND (f.id_farmer = ? OR (f.id_farmer IS NULL AND f.id_user = ?))';
+      params.push(farmerId, req.user.id);
+    } else {
+      scope = 'AND f.id_user = ?';
+      params.push(req.user.id);
+    }
   }
 
   try {
     const result = await pool.query(
       `SELECT f.*,
-              u.nama AS owner_name,
-              fa.phone AS owner_phone,
+              COALESCE(u.nama, '') AS owner_name,
+              COALESCE(fa.phone, u.phone, '') AS owner_phone,
               (SELECT fp2.verification_status
                  FROM field_photos fp2
                 WHERE fp2.field_id = f.id
@@ -40,8 +70,8 @@ async function listFields(req, res, next) {
               SUM(CASE WHEN fp.verification_status = 'ditolak' THEN 1 ELSE 0 END) AS rejected_photo_count,
               MAX(fp.created_at) AS last_photo_at
        FROM fields f
-       JOIN farmers fa ON fa.id = f.id_farmer
-       JOIN users u ON u.id = fa.id_user
+       LEFT JOIN farmers fa ON fa.id = f.id_farmer
+       LEFT JOIN users u ON u.id = COALESCE(fa.id_user, f.id_user)
        LEFT JOIN field_photos fp ON fp.field_id = f.id
        WHERE f.status = 'active' ${scope}
        GROUP BY f.id
@@ -87,7 +117,7 @@ function parseFieldInput(body) {
 }
 
 async function createField(req, res, next) {
-  const farmerId = req.user.farmerId;
+  const farmerId = await ensureFarmerId(req);
   if (!farmerId) {
     return res.status(403).json({ error: 'Profil petani tidak ditemukan' });
   }
@@ -153,8 +183,11 @@ async function getField(req, res, next) {
     }
 
     const field = result.rows[0];
-    if (req.user.role === 'petani' && field.id_farmer !== req.user.farmerId) {
-      return res.status(403).json({ error: 'Anda tidak memiliki akses ke lahan ini' });
+    if (req.user.role === 'petani') {
+      const farmerId = await ensureFarmerId(req);
+      if (field.id_farmer !== farmerId && field.id_user !== req.user.id) {
+        return res.status(403).json({ error: 'Anda tidak memiliki akses ke lahan ini' });
+      }
     }
 
     res.json({ success: true, data: field });
@@ -165,7 +198,7 @@ async function getField(req, res, next) {
 
 async function updateField(req, res, next) {
   const id = Number(req.params.id);
-  const farmerId = req.user.farmerId;
+  const farmerId = await ensureFarmerId(req);
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'ID lahan tidak valid' });
@@ -182,8 +215,8 @@ async function updateField(req, res, next) {
 
   try {
     const existing = await pool.query(
-      "SELECT id FROM fields WHERE id = ? AND id_farmer = ? AND status = 'active'",
-      [id, farmerId]
+      "SELECT id FROM fields WHERE id = ? AND (id_farmer = ? OR (id_farmer IS NULL AND id_user = ?)) AND status = 'active'",
+      [id, farmerId, req.user.id]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Lahan tidak ditemukan' });
@@ -192,9 +225,10 @@ async function updateField(req, res, next) {
     await pool.query(
       `UPDATE fields
        SET name = ?, area = ?, category = ?, crop_type = ?, latitude = ?, longitude = ?,
+           id_farmer = COALESCE(id_farmer, ?),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND id_farmer = ? AND status = 'active'`,
-      [name, area, cropType, cropType, latitude, longitude, id, farmerId]
+       WHERE id = ? AND status = 'active'`,
+      [name, area, cropType, cropType, latitude, longitude, farmerId, id]
     );
 
     const updated = await pool.query('SELECT * FROM fields WHERE id = ?', [id]);
@@ -217,7 +251,7 @@ async function updateField(req, res, next) {
 
 async function deleteField(req, res, next) {
   const id = Number(req.params.id);
-  const farmerId = req.user.farmerId;
+  const farmerId = await ensureFarmerId(req);
 
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'ID lahan tidak valid' });
@@ -228,8 +262,8 @@ async function deleteField(req, res, next) {
 
   try {
     const existing = await pool.query(
-      "SELECT id FROM fields WHERE id = ? AND id_farmer = ? AND status = 'active'",
-      [id, farmerId]
+      "SELECT id FROM fields WHERE id = ? AND (id_farmer = ? OR (id_farmer IS NULL AND id_user = ?)) AND status = 'active'",
+      [id, farmerId, req.user.id]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Lahan tidak ditemukan' });

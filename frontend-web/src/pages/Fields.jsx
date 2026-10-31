@@ -58,14 +58,23 @@ export default function Fields() {
   const [notice, setNotice] = useState('');
   const [form, setForm] = useState(emptyForm);
 
-  const loadFields = useCallback(async () => {
+  const loadFields = useCallback(async (retryCount = 1) => {
     setLoading(true);
     setError('');
     try {
       const response = await api.get('/fields');
       setFields(response.data.data || []);
     } catch (err) {
-      setError(err.response?.data?.error || 'Gagal memuat daftar lahan.');
+      if (retryCount > 0 && !err.response) {
+        await new Promise((r) => setTimeout(r, 600));
+        return loadFields(retryCount - 1);
+      }
+      const message =
+        err.response?.data?.error ||
+        (!err.response
+          ? 'Tidak dapat terhubung ke server. Periksa koneksi atau jalankan backend.'
+          : 'Gagal memuat daftar lahan.');
+      setError(message);
     } finally {
       setLoading(false);
     }
