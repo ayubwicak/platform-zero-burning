@@ -22,6 +22,7 @@ import Pengguna from './pages/Pengguna';
 import AuditLog from './pages/AuditLog';
 import Laporan from './pages/Laporan';
 import SelectDemo from './pages/SelectDemo';
+import Notifikasi from './pages/Notifikasi';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profil" element={<Profil />} />
+              <Route path="/notifikasi" element={<Notifikasi />} />
               <Route path="/katalog" element={<Katalog />} />
               <Route element={<RequireRoles roles={['petani']} />}>
                 <Route path="/fields" element={<Fields />} />

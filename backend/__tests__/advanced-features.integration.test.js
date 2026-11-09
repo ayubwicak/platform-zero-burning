@@ -258,7 +258,7 @@ describe('Advanced Features A, B, C Integration Tests', () => {
       claimId = cRes.body.data.id;
     });
 
-    it('Petugas dapat menolak klaim berstatus "diajukan" dengan alasan valid', async () => {
+    it('Petugas dapat menolak klaim berstatus "diajukan" dengan alasan valid dan tepat satu notifikasi', async () => {
       const res = await request(app)
         .post(`/api/claims/${claimId}/reject`)
         .set('Authorization', `Bearer ${officerToken}`)
@@ -276,21 +276,25 @@ describe('Advanced Features A, B, C Integration Tests', () => {
       expect(dbClaim.rows[0].status).toBe('ditolak');
       expect(dbClaim.rows[0].reason).toContain('Data tidak sesuai');
 
-      // Petani harus menerima notifikasi
+      // Petani harus menerima tepat satu notifikasi untuk klaim ini
       const notifRes = await request(app)
         .get('/api/notifications')
         .set('Authorization', `Bearer ${farmer1Token}`);
-      expect(notifRes.body.data.some((n) => n.type === 'claim.rejected')).toBe(true);
+      const claimNotifs = notifRes.body.data.filter(
+        (n) => n.type === 'claim.rejected' && Number(n.data?.claim_id) === Number(claimId)
+      );
+      expect(claimNotifs.length).toBe(1);
+      expect(claimNotifs[0].data.reason).toContain('Data tidak sesuai');
     });
 
-    it('Menolak klaim yang bukan "diajukan" harus menghasilkan 409 Conflict', async () => {
+    it('Menolak klaim yang bukan "diajukan" harus menghasilkan 409 Conflict dan klik ganda tidak membuat duplikat', async () => {
       // Tolak klaim pertama kali
       await request(app)
         .post(`/api/claims/${claimId}/reject`)
         .set('Authorization', `Bearer ${officerToken}`)
         .send({ reason: 'Petani tidak hadir', note: '' });
 
-      // Coba tolak lagi
+      // Coba tolak lagi (simulasi klik ganda / retry)
       const secondReject = await request(app)
         .post(`/api/claims/${claimId}/reject`)
         .set('Authorization', `Bearer ${officerToken}`)
@@ -298,6 +302,15 @@ describe('Advanced Features A, B, C Integration Tests', () => {
 
       expect(secondReject.status).toBe(409);
       expect(secondReject.body.error).toContain('tidak dapat ditolak');
+
+      // Pastikan tetap tepat 1 notifikasi di database untuk klaim ini
+      const notifsAfter = await request(app)
+        .get('/api/notifications')
+        .set('Authorization', `Bearer ${farmer1Token}`);
+      const rejectedNotifs = notifsAfter.body.data.filter(
+        (n) => n.type === 'claim.rejected' && Number(n.data?.claim_id) === Number(claimId)
+      );
+      expect(rejectedNotifs.length).toBe(1);
     });
 
     it('Pembatalan klaim disetujui hanya boleh dilakukan admin dan mengembalikan stok atomik', async () => {
@@ -554,6 +567,62 @@ describe('Advanced Features A, B, C Integration Tests', () => {
         .get('/api/notifications/unread-count')
         .set('Authorization', `Bearer ${farmer1Token}`);
       expect(countAfter.body.count).toBe(0);
+    });
+
+    it('createNotification menerapkan idempotensi untuk mencegah duplikasi event yang sama', async () => {
+      const { createNotification } = require('../src/utils/notificationService');
+      const testClaimId = 99999;
+
+      // Pemanggilan pertama
+      await createNotification(pool, {
+        userId: farmer1UserId,
+        type: 'claim.rejected',
+        title: 'Pengajuan Klaim Ditolak',
+        message: 'Pengajuan klaim insentif untuk lahan Uji coba ditolak. Alasan: Duplikat test',
+        data: { claim_id: testClaimId, status: 'ditolak', reason: 'Duplikat test' },
+      });
+
+      // Pemanggilan kedua dengan payload/claim_id yang sama
+      const notif2 = await createNotification(pool, {
+        userId: farmer1UserId,
+        type: 'claim.rejected',
+        title: 'Pengajuan Klaim Ditolak',
+        message: 'Pengajuan klaim insentif untuk lahan Uji coba ditolak. Alasan: Duplikat test',
+        data: { claim_id: testClaimId, status: 'ditolak', reason: 'Duplikat test' },
+      });
+
+      expect(notif2.deduplicated).toBe(true);
+
+      const allForUser = await request(app)
+        .get('/api/notifications')
+        .set('Authorization', `Bearer ${farmer1Token}`);
+      const testNotifs = allForUser.body.data.filter(
+        (n) => Number(n.data?.claim_id) === testClaimId
+      );
+      expect(testNotifs.length).toBe(1);
+    });
+
+    it('Mendukung pagination (page & limit) dan menyertakan metadata total, page, limit, total_pages', async () => {
+      // Buat 5 notifikasi untuk petani 1
+      for (let i = 1; i <= 5; i++) {
+        await pool.query(
+          `INSERT INTO notifications (user_id, type, title, message, created_at)
+           VALUES (?, 'test.page', ?, ?, CURRENT_TIMESTAMP)`,
+          [farmer1UserId, `Judul P${i}`, `Pesan Halaman ${i}`]
+        );
+      }
+
+      const pagedRes = await request(app)
+        .get('/api/notifications?page=1&limit=2')
+        .set('Authorization', `Bearer ${farmer1Token}`);
+
+      expect(pagedRes.status).toBe(200);
+      expect(pagedRes.body.data.length).toBe(2);
+      expect(pagedRes.body.pagination).toBeDefined();
+      expect(pagedRes.body.pagination.page).toBe(1);
+      expect(pagedRes.body.pagination.limit).toBe(2);
+      expect(pagedRes.body.pagination.total).toBeGreaterThanOrEqual(5);
+      expect(pagedRes.body.pagination.total_pages).toBeGreaterThanOrEqual(3);
     });
   });
 });

@@ -10,6 +10,23 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- **Halaman Notifikasi Terpusat & Pagination (`/notifikasi`):**
+  - Halaman baru `frontend-web/src/pages/Notifikasi.jsx` dengan dukungan pagination, filter status baca ("Semua", "Belum dibaca", "Sudah dibaca"), dan tombol cepat "Tandai semua dibaca".
+  - Dukungan parameter query `page` dan `limit` dengan metadata pagination (`page`, `limit`, `total`, `totalPages`, `unreadCount`) pada endpoint `GET /api/notifications` di `backend/src/controllers/notificationController.js`.
+  - Skrip pembersih duplikat non-production `backend/scripts/clean-duplicate-notifications.js` untuk merapikan data notifikasi riwayat pengujian.
+
+### Fixed
+
+- **Duplikasi dan Keterbacaan Notifikasi pada Navbar:**
+  - Menambahkan proteksi idempotensi pada `createNotification` (`backend/src/utils/notificationService.js`) berdasarkan `(user_id, type, claim_id/photo_id, status)` dan interval window 30 detik untuk mencegah notifikasi kembar akibat double-submit atau retry.
+  - Memperbaiki penguncian tombol konfirmasi pada modal tolak/batal klaim di `Distribusi.jsx` selama mutasi berjalan (`submittingAction`) guna mencegah klik ganda.
+  - Perbaikan antarmuka panel dropdown notifikasi di `Navbar.jsx`:
+    - Menampilkan alasan penolakan/pembatalan lengkap dengan label jelas `Alasan: ...`.
+    - Line-clamp 3 baris dengan interaksi toggle klik untuk membaca teks pesan lengkap.
+    - Penanda belum dibaca berupa titik hijau kecil dengan latar tint lembut; teks muted dan penanda "Dibaca" statis untuk item yang sudah dibaca.
+    - Ikon aksi tombol "Tandai dibaca" interaktif khusus pada item belum dibaca.
+    - Pengelompokan riwayat per waktu ("Hari ini", "Kemarin", "Lebih lama"), filter "Belum dibaca", batas 20 item per dropdown, dan tombol tautan langsung "Lihat semua" menuju `/notifikasi`.
+
 - **Penyimpanan Foto Permanen Abstraksi Storage (Tahap 1):**
   - Abstraksi penyimpanan berkas terpusat `backend/src/utils/storage.js` dengan driver ganda: `local` (default dev/test) dan `s3` (kompatibel AWS S3, Cloudflare R2, dan Supabase Storage).
   - Pemuatan driver dinamis melalui variabel lingkungan `STORAGE_DRIVER`, `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_BASE_URL`, dan `S3_FORCE_PATH_STYLE`.

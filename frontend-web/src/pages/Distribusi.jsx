@@ -455,7 +455,7 @@ export default function Distribusi() {
   }
 
   async function handleActionConfirm({ reason, note }) {
-    if (!actionClaim) return;
+    if (!actionClaim || submittingAction) return;
     setSubmittingAction(true);
     setActionError('');
     try {
