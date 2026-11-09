@@ -202,6 +202,26 @@ describe('Field Management Integration Tests', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('should automatically recover and return fields if farmer profile record was missing', async () => {
+      // Simulasikan record farmers terhapus sementara (set id_farmer di fields ke NULL)
+      const userRow = await pool.query('SELECT id FROM users WHERE email = ?', ['field-test@test.com']);
+      const userId = userRow.rows[0].id;
+      await pool.query('UPDATE fields SET id_farmer = NULL WHERE id_user = ?', [userId]);
+      await pool.query('DELETE FROM farmers WHERE id_user = ?', [userId]);
+
+      const res = await request(app)
+        .get('/api/fields')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+
+      // Verifikasi record farmers otomatis dipulihkan
+      const recovered = await pool.query('SELECT id FROM farmers WHERE id_user = ?', [userId]);
+      expect(recovered.rows.length).toBe(1);
+    });
   });
 
   describe('GET /api/fields/:id', () => {

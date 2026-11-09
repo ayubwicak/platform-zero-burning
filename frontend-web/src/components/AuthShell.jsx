@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import PageTransition from './PageTransition';
 import Reveal from './Reveal';
@@ -23,6 +23,7 @@ export default function AuthShell({ children, maxWidth = 'max-w-xl', variant }) 
     (lastVisitedAuthRoute === '/register' && currentPath === '/login');
 
   const animateBrand = !isTransitionBetweenAuth;
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     lastVisitedAuthRoute = currentPath;
@@ -42,11 +43,21 @@ export default function AuthShell({ children, maxWidth = 'max-w-xl', variant }) 
   return (
     <div className={`auth-shell font-sans${variantClass}`}>
       <aside className="auth-brand-panel relative hidden shrink-0 overflow-hidden bg-forest text-forest-foreground lg:block">
-        <img
-          src="/images/hero-rice-field.jpg"
-          alt="Petani menabur benih di sawah"
-          className="absolute inset-0 h-full w-full object-cover opacity-25"
-        />
+        {!imgError && (
+          <picture className="pointer-events-none absolute inset-0 h-full w-full">
+            <source srcSet="/images/hero-rice-field.webp" type="image/webp" />
+            <img
+              src="/images/hero-rice-field.jpg"
+              alt=""
+              aria-hidden="true"
+              width="1400"
+              height="788"
+              fetchpriority="high"
+              onError={() => setImgError(true)}
+              className="h-full w-full object-cover object-center opacity-25"
+            />
+          </picture>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/80 to-forest/40" />
         <div className="auth-aside-content relative flex h-full flex-col justify-between p-12">
           <Reveal variant="hero" delay={0} enabled={animateBrand}>

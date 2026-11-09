@@ -10,6 +10,15 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/) dan pe
 
 ### Added
 
+- **Penyimpanan Foto Permanen Abstraksi Storage (Tahap 1):**
+  - Abstraksi penyimpanan berkas terpusat `backend/src/utils/storage.js` dengan driver ganda: `local` (default dev/test) dan `s3` (kompatibel AWS S3, Cloudflare R2, dan Supabase Storage).
+  - Pemuatan driver dinamis melalui variabel lingkungan `STORAGE_DRIVER`, `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_BASE_URL`, dan `S3_FORCE_PATH_STYLE`.
+  - Pola penyimpanan privat: database hanya menyimpan object key (`photos/<filename>`), foto disajikan kepada klien terautentikasi melalui presigned URL GET temporer (default berlaku 10 menit).
+  - Mekanisme transaksi kompensasi saat unggah foto di `photoController.js`: jika penyimpanan gagal, transaksi DB dibatalkan; jika query DB gagal setelah unggah, objek storage otomatis dihapus untuk mencegah file yatim (orphan).
+  - Skrip migrasi idempoten `backend/scripts/migrate-storage.js` (`npm run storage:migrate`) untuk memindahkan file lama di `backend/uploads/` ke S3 dan memperbarui kolom database tanpa menghapus file lokal asli.
+  - Fallback transisi aman: path lokal lama (`/uploads/...`) dan URL eksternal (Unsplash seed) tetap terbaca valid.
+  - Unit test komprehensif `backend/__tests__/storage.test.js` (11 unit test untuk driver lokal dan mock S3 tanpa jaringan).
+
 - **Penyempurnaan Landing Page Publik `/` (Bagian A - E):**
   - **Bagian A (Kejujuran Konten & Dampak Nyata):**
     - File data terpusat `frontend-web/src/content/testimonials.js` dengan flag `verified: boolean`. Blok "Suara dari Lapangan" kini hanya dirender bila ada entri yang bernilai `verified: true`.

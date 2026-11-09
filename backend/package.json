@@ -11,9 +11,12 @@
     "seed:farmer": "node scripts/seed-farmer.js",
     "seed:officer": "node scripts/seed-officer.js",
     "setup:sqlite": "node setup-sqlite.js",
+    "storage:migrate": "node scripts/migrate-storage.js",
     "start:e2e": "node setup-sqlite.js && node src/server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^13.0.3",
     "cors": "^2.8.5",

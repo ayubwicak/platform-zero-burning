@@ -109,6 +109,34 @@ test.describe('Auth Pages', () => {
       await expect(page).toHaveURL('/');
     }
   });
+
+  for (const path of ['/login', '/register']) {
+    test(`${path} hero brand panel image loads properly without 404`, async ({ page }) => {
+      const failed404 = [];
+      page.on('response', (response) => {
+        if (response.status() === 404 && response.request().resourceType() === 'image') {
+          failed404.push(response.url());
+        }
+      });
+
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(path);
+
+      const brandPanel = page.locator('aside.auth-brand-panel');
+      await expect(brandPanel).toBeVisible();
+
+      const img = brandPanel.locator('img');
+      await expect(img).toBeVisible();
+
+      // Pastikan gambar berhasil dimuat sempurna (naturalWidth > 0)
+      await expect.poll(async () => {
+        return img.evaluate((el) => el.complete && el.naturalWidth > 0);
+      }, { message: `Image in ${path} failed to load` }).toBe(true);
+
+      // Pastikan tidak ada respons 404 untuk request gambar
+      expect(failed404).toHaveLength(0);
+    });
+  }
 });
 
 test.describe('Auth Desktop Fit', () => {
