@@ -13,11 +13,19 @@ async function listNotifications(req, res, next) {
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
   const unreadOnly = req.query.unread === 'true' || req.query.unread === '1';
   const cursor = parseInt(req.query.cursor, 10);
+  const page = parseInt(req.query.page, 10);
 
   // Jalankan pembersihan notifikasi lama di background secara non-blocking
   cleanOldNotifications(pool).catch(() => {});
 
   try {
+    let countQuery = 'SELECT COUNT(*) as total FROM notifications WHERE user_id = ?';
+    if (unreadOnly) {
+      countQuery += ' AND read_at IS NULL';
+    }
+    const countRes = await pool.query(countQuery, [userId]);
+    const total = parseInt(countRes.rows[0]?.total ?? countRes.rows[0]?.count ?? 0, 10);
+
     const params = [userId];
     let queryStr = `
       SELECT id, user_id, type, title, message, data, read_at, created_at
@@ -29,13 +37,18 @@ async function listNotifications(req, res, next) {
       queryStr += ' AND read_at IS NULL';
     }
 
-    if (cursor && !Number.isNaN(cursor)) {
-      queryStr += ' AND id < ?';
-      params.push(cursor);
+    if (page && page > 0) {
+      const offset = (page - 1) * limit;
+      queryStr += ' ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+    } else {
+      if (cursor && !Number.isNaN(cursor)) {
+        queryStr += ' AND id < ?';
+        params.push(cursor);
+      }
+      queryStr += ' ORDER BY created_at DESC, id DESC LIMIT ?';
+      params.push(limit);
     }
-
-    queryStr += ' ORDER BY created_at DESC, id DESC LIMIT ?';
-    params.push(limit);
 
     const result = await pool.query(queryStr, params);
 
@@ -55,10 +68,18 @@ async function listNotifications(req, res, next) {
       };
     });
 
+    const totalPages = Math.ceil(total / limit) || 1;
+
     res.json({
       success: true,
       data: items,
-      has_more: items.length === limit,
+      pagination: {
+        total,
+        page: page && page > 0 ? page : 1,
+        limit,
+        total_pages: totalPages,
+      },
+      has_more: page && page > 0 ? page < totalPages : items.length === limit,
     });
   } catch (err) {
     next(err);
