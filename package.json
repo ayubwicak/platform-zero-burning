@@ -5,7 +5,8 @@
   "description": "Platform Insentif Zero Burning - Monorepo (Backend + Frontend)",
   "scripts": {
     "install:all": "cd backend && npm install && cd ../frontend-web && npm install",
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend-web\"",
+    "dev": "concurrently -k \"npm run dev --prefix backend\" \"npm run dev --prefix frontend-web\"",
+    "clean:ports": "fuser -k 3000/tcp 5173/tcp || true",
     "start": "npm start --prefix backend",
     "build:web": "npm run build --prefix frontend-web",
     "db:setup": "node backend/setup-sqlite.js"
